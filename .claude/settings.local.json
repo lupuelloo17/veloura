@@ -5,7 +5,14 @@
       "Bash(curl -s http://localhost:3000)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git rm:*)",
+      "Bash(git remote:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(curl -s http://localhost:3000/clinica/clinica-lumiere/dashboard)",
+      "Bash(curl -s http://localhost:3000/login)"
     ]
   }
 }
