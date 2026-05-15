@@ -10,7 +10,7 @@ const MOCK_CLINICAS = {
     nombre: 'Clínica Lumière',
     slug: 'clinica-lumiere',
     logo_url: null,
-    color_primario: '#E8A0B0',
+    color_primario: '#C8A882',
     plan: 'premium',
     plan_activo: true,
     max_pacientes: 300,

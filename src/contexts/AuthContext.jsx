@@ -1,0 +1,114 @@
+import { createContext, useContext, useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
+
+// ── Mock users (used when Supabase is not configured) ─────────
+const MOCK_USERS = {
+  'admin@lumiere.com': {
+    id: 'mock-admin',
+    email: 'admin@lumiere.com',
+    password: 'demo1234',
+    nombre: 'Admin Lumière',
+    rol: 'admin',
+    clinica_slug: 'clinica-lumiere',
+    clinica_id: 'mock-lumiere',
+    foto: null,
+  },
+  'dra.garcia@lumiere.com': {
+    id: 'mock-garcia',
+    email: 'dra.garcia@lumiere.com',
+    password: 'demo1234',
+    nombre: 'Dra. García',
+    especialidad: 'Medicina Estética',
+    rol: 'medico',
+    clinica_slug: 'clinica-lumiere',
+    clinica_id: 'mock-lumiere',
+    foto: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&h=100&fit=crop&crop=face',
+  },
+}
+
+const SESSION_KEY = 'glowai_session'
+
+const AuthContext = createContext(null)
+
+export function AuthProvider({ children }) {
+  const [user, setUser]       = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
+
+  // Restore session on mount
+  useEffect(() => {
+    if (supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) setUser(buildUserFromSession(session))
+        setLoading(false)
+      })
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session ? buildUserFromSession(session) : null)
+      })
+      return () => subscription.unsubscribe()
+    } else {
+      // Mock: restore from localStorage
+      try {
+        const saved = localStorage.getItem(SESSION_KEY)
+        if (saved) setUser(JSON.parse(saved))
+      } catch { /* ignore */ }
+      setLoading(false)
+    }
+  }, [])
+
+  async function login(email, password) {
+    setError(null)
+    try {
+      if (supabase) {
+        const { data, error: err } = await supabase.auth.signInWithPassword({ email, password })
+        if (err) throw err
+        return buildUserFromSession(data.session)
+      } else {
+        // Mock auth
+        const mock = MOCK_USERS[email.toLowerCase()]
+        if (!mock || mock.password !== password) throw new Error('Credenciales incorrectas')
+        const { password: _, ...safeUser } = mock
+        localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser))
+        setUser(safeUser)
+        return safeUser
+      }
+    } catch (err) {
+      setError(err.message)
+      throw err
+    }
+  }
+
+  async function logout() {
+    if (supabase) {
+      await supabase.auth.signOut()
+    } else {
+      localStorage.removeItem(SESSION_KEY)
+    }
+    setUser(null)
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, loading, error, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>')
+  return ctx
+}
+
+function buildUserFromSession(session) {
+  const meta = session.user.app_metadata ?? {}
+  return {
+    id:           session.user.id,
+    email:        session.user.email,
+    rol:          meta.rol ?? 'medico',
+    clinica_id:   meta.clinica_id,
+    clinica_slug: meta.clinica_slug ?? 'clinica-lumiere',
+    nombre:       session.user.user_metadata?.nombre ?? session.user.email,
+    foto:         session.user.user_metadata?.foto ?? null,
+  }
+}
