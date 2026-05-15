@@ -5,6 +5,7 @@ import AnalisisPage from './pages/AnalisisPage'
 import ReservarPage from './pages/ReservarPage'
 import HistorialPage from './pages/HistorialPage'
 import SkinCheckPage from './pages/SkinCheckPage'
+import DermoscopiaPage from './pages/DermoscopiaPage'
 
 export default function App() {
   return (
@@ -18,7 +19,8 @@ export default function App() {
             <Route path="/analisis"    element={<AnalisisPage />} />
             <Route path="/reservar"    element={<ReservarPage />} />
             <Route path="/historial"   element={<HistorialPage />} />
-            <Route path="/skin-check"  element={<SkinCheckPage />} />
+            <Route path="/skin-check"    element={<SkinCheckPage />} />
+            <Route path="/dermoscopia"  element={<DermoscopiaPage />} />
           </Routes>
         </div>
       </div>

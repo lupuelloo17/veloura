@@ -4,7 +4,7 @@ import { Home, Scan, CalendarDays, Clock, Microscope } from 'lucide-react'
 const TABS = [
   { path: '/home',       icon: Home,        label: 'Inicio' },
   { path: '/analisis',   icon: Scan,        label: 'Análisis' },
-  { path: '/skin-check', icon: Microscope,  label: 'Dermos.' },
+  { path: '/dermoscopia', icon: Microscope,  label: 'Dermos.' },
   { path: '/reservar',   icon: CalendarDays,label: 'Reservar' },
   { path: '/historial',  icon: Clock,       label: 'Historial' },
 ]

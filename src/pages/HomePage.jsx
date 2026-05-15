@@ -1,6 +1,9 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Scan, CalendarDays, Clock, ChevronRight, Bell, Microscope } from 'lucide-react'
+import { Scan, CalendarDays, Clock, ChevronRight, Bell, Microscope, X, AlertTriangle } from 'lucide-react'
 import BottomNav from '../components/BottomNav'
+
+const DISCLAIMER_KEY = 'glowai_disclaimer_seen'
 
 const PATIENT = {
   name: 'Valentina',
@@ -25,7 +28,7 @@ const QUICK_ACTIONS = [
 const FEATURED_TOOLS = [
   {
     icon: Microscope,
-    path: '/skin-check',
+    path: '/dermoscopia',
     title: 'Dermoscopia asistida',
     desc: 'Evaluación de lesiones pigmentadas mediante lista de los 7 puntos',
     badge: 'Nuevo',
@@ -41,9 +44,23 @@ const TIPS = [
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const [showDisclaimer, setShowDisclaimer] = useState(false)
+
+  useEffect(() => {
+    if (!localStorage.getItem(DISCLAIMER_KEY)) {
+      // Small delay so the page renders before the sheet slides up
+      const t = setTimeout(() => setShowDisclaimer(true), 600)
+      return () => clearTimeout(t)
+    }
+  }, [])
+
+  function dismissDisclaimer() {
+    localStorage.setItem(DISCLAIMER_KEY, '1')
+    setShowDisclaimer(false)
+  }
 
   return (
-    <div className="flex flex-col flex-1 animate-fade-in">
+    <div className="flex flex-col flex-1 animate-fade-in relative">
       {/* Header */}
       <div className="bg-white px-6 pt-8 pb-5">
         <div className="flex items-start justify-between">
@@ -114,6 +131,28 @@ export default function HomePage() {
         <div>
           <p className="text-ink font-semibold text-sm mb-2">Herramientas clínicas</p>
           <div className="space-y-2">
+            {/* Dermoscopy CTA button */}
+            <button
+              onClick={() => navigate('/dermoscopia')}
+              className="w-full bg-ink rounded-2xl p-4 flex items-center gap-3 shadow-sm active:scale-95 transition-transform text-left"
+            >
+              <div className="w-11 h-11 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Microscope size={22} className="text-white" strokeWidth={1.8} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-white text-sm font-semibold">Exploración dermoscópica</p>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blush-400/30 text-blush-200">
+                    IA
+                  </span>
+                </div>
+                <p className="text-gray-400 text-xs leading-snug mt-0.5">
+                  Seven-Point Checklist · Argenziano 1998
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-600 flex-shrink-0" />
+            </button>
+
             {FEATURED_TOOLS.map(({ icon: Icon, path, title, desc, badge, bgColor, badgeColor }) => (
               <button
                 key={path}
@@ -185,6 +224,46 @@ export default function HomePage() {
       </div>
 
       <BottomNav />
+
+      {/* ── Floating disclaimer (first visit only) ── */}
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/40 z-20 transition-opacity duration-300 rounded-3xl"
+        style={{ opacity: showDisclaimer ? 1 : 0, pointerEvents: showDisclaimer ? 'auto' : 'none' }}
+        onClick={dismissDisclaimer}
+      />
+
+      {/* Bottom sheet */}
+      <div
+        className="absolute bottom-0 left-0 right-0 z-30 bg-white rounded-t-3xl px-5 pt-5 pb-6 shadow-2xl transition-transform duration-400"
+        style={{ transform: showDisclaimer ? 'translateY(0)' : 'translateY(100%)' }}
+      >
+        {/* Handle */}
+        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+
+        <div className="flex items-start gap-3 mb-4">
+          <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+            <AlertTriangle size={18} className="text-amber-500" />
+          </div>
+          <div>
+            <p className="text-ink font-semibold text-sm mb-1">Aviso clínico importante</p>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Esta herramienta es de apoyo diagnóstico preliminar y no sustituye la valoración clínica de un especialista en Dermatología.
+            </p>
+          </div>
+        </div>
+
+        <p className="text-gray-400 text-xs leading-relaxed mb-4">
+          Los análisis generados por inteligencia artificial tienen carácter orientativo. Ante cualquier lesión de sospecha, consulte siempre con un dermatólogo colegiado.
+        </p>
+
+        <button
+          onClick={dismissDisclaimer}
+          className="w-full bg-ink text-white font-semibold text-sm py-3.5 rounded-2xl active:scale-95 transition-transform"
+        >
+          Entendido
+        </button>
+      </div>
     </div>
   )
 }
