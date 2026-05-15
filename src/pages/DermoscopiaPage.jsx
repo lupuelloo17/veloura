@@ -99,6 +99,121 @@ function formatDatetime() {
   })
 }
 
+// ─── Cosmeceutical catalog ────────────────────────────────────────────────────
+
+const BRAND = {
+  zo:   { name: 'ZO Skin Health', bg: '#000000', text: '#FFFFFF' },
+  obagi:{ name: 'Obagi',          bg: '#1B3A6B', text: '#FFFFFF' },
+  sc:   { name: 'SkinCeuticals',  bg: '#8B6914', text: '#FFFFFF' },
+  mc:   { name: 'Medicube',       bg: '#E85D4A', text: '#FFFFFF' },
+}
+
+const ALL_PRODUCTS = [
+  // ── Pigmentation ──
+  { id: 'zo-brightalive', brand: 'zo',
+    name: 'Brightalive Skin Brightener',
+    indication: 'Hiperpigmentación irregular y discromía melanocítica',
+    active: 'Retinol estabilizado 0.1% + niacinamida',
+    pauta: 'Aplicación nocturna. Evitar exposición solar sin fotoprotección SPF50+',
+    rule: 'pigmentation' },
+  { id: 'obagi-clearfx', brand: 'obagi',
+    name: 'Nu-Derm Clear Fx',
+    indication: 'Hiperpigmentación postinflamatoria y lentigos solares',
+    active: 'Ácido kójico + arbutina. Sin hidroquinona',
+    pauta: 'Mañana y noche sobre piel limpia y seca',
+    rule: 'pigmentation' },
+  { id: 'sc-discolor', brand: 'sc',
+    name: 'Discoloration Defense',
+    indication: 'Discromía refractaria y melasma epidérmico',
+    active: 'Tranexámico 3% + niacinamida 5% + HEPES 5%',
+    pauta: 'Sérum de aplicación diaria, mañana y noche',
+    rule: 'pigmentation' },
+  // ── Regression ──
+  { id: 'zo-retinol1', brand: 'zo',
+    name: 'Retinol Skin Brightener 1%',
+    indication: 'Remodelación epidérmica y estimulación de colágeno dérmico',
+    active: 'Retinol encapsulado 1% + vitamina E',
+    pauta: 'Uso nocturno. Iniciar 2 noches/semana. Aumentar progresivamente',
+    rule: 'regression' },
+  { id: 'sc-ceferulic', brand: 'sc',
+    name: 'C E Ferulic',
+    indication: 'Fotoprotección antioxidante y reparación del ADN celular',
+    active: 'Vitamina C 15% + vitamina E 1% + ácido ferúlico 0.5%',
+    pauta: 'Aplicación matutina sobre piel limpia, previo a fotoprotector',
+    rule: 'regression' },
+  { id: 'obagi-profc', brand: 'obagi',
+    name: 'Professional-C Serum 20%',
+    indication: 'Daño actínico acumulado y disfunción de barrera cutánea',
+    active: 'L-Ascórbico puro 20%',
+    pauta: 'Mañana. Conservar en frío. Cambiar si vira a naranja',
+    rule: 'regression' },
+  // ── Vascular ──
+  { id: 'zo-rozatrol', brand: 'zo',
+    name: 'Rozatrol',
+    indication: 'Reactividad vascular y eritema perilesional',
+    active: 'ZO-RRS2 + ZPOLY + niacinamida',
+    pauta: 'Mañana y noche. Compatible con tratamientos tópicos prescritos',
+    rule: 'vascular' },
+  { id: 'sc-phyto', brand: 'sc',
+    name: 'Phyto Corrective Gel',
+    indication: 'Sensibilización cutánea y eritema asociado a lesiones activas',
+    active: 'Cucumber + thyme + dipeptide-2',
+    pauta: 'Aplicar en capa fina sobre la zona afectada 2 veces al día',
+    rule: 'vascular' },
+  // ── Maintenance / low risk ──
+  { id: 'mc-stick', brand: 'mc',
+    name: 'Red Erasing Stick',
+    indication: 'Rojeces puntuales y manchas postinflamatorias residuales',
+    active: 'Niacinamida 10% + centella asiática',
+    pauta: 'Aplicación localizada mañana y noche',
+    rule: 'maintenance' },
+  { id: 'mc-pad', brand: 'mc',
+    name: 'Zero Pore Pad',
+    indication: 'Hiperqueratosis folicular y poro dilatado perilesional',
+    active: 'BHA 0.5% + AHA 10% + PHA 5%',
+    pauta: '1 pad en noche, máximo 3 veces por semana. No usar sobre lesión activa',
+    rule: 'maintenance' },
+  // ── Universal (always eligible as fallback) ──
+  { id: 'zo-spf', brand: 'zo',
+    name: 'Sunscreen + Primer SPF30',
+    indication: 'Fotoprotección obligatoria en toda lesión pigmentada estudiada',
+    active: 'Filtros físicos + químicos de amplio espectro',
+    pauta: 'OBLIGATORIO cada mañana. Reaplicar cada 2h en exposición solar',
+    rule: 'universal' },
+]
+
+function selectProducts(results, morpho, score) {
+  const hasPigmentation = results[5] === 'present' ||
+    morpho['Cromatismo'] === 'Policrómico (>2 colores)'
+  const hasRegression   = results[7] === 'present'
+  const hasVascular     = results[3] === 'present' || score >= 2
+  const isLowRisk       = score <= 1
+
+  // Build ordered candidate list (no duplicates)
+  const seen = new Set()
+  const candidates = []
+
+  function add(rule) {
+    ALL_PRODUCTS.filter(p => p.rule === rule && !seen.has(p.id))
+      .forEach(p => { seen.add(p.id); candidates.push(p) })
+  }
+
+  if (hasPigmentation) add('pigmentation')
+  if (hasRegression)   add('regression')
+  if (hasVascular)     add('vascular')
+  if (isLowRisk)       add('maintenance')
+
+  // Always add SPF if not already included & there's room
+  if (!seen.has('zo-spf')) add('universal')
+
+  // If still empty, return full fallback
+  if (candidates.length === 0) {
+    return ALL_PRODUCTS.filter(p => p.rule === 'maintenance' || p.rule === 'universal').slice(0, 3)
+  }
+
+  return candidates.slice(0, 3)
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function CriterionCard({ criterion, result, index, visible }) {
@@ -148,6 +263,51 @@ function MorphoCard({ param, value }) {
     <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center justify-between gap-2">
       <p className="text-gray-600 text-xs leading-snug flex-1">{param}</p>
       <span className="text-gray-900 text-xs font-semibold text-right flex-shrink-0 max-w-[120px]">{value}</span>
+    </div>
+  )
+}
+
+function ProductCard({ product }) {
+  const brand = BRAND[product.brand]
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Brand header */}
+      <div
+        className="px-3 py-2 flex items-center justify-between"
+        style={{ backgroundColor: brand.bg }}
+      >
+        <span className="text-xs font-bold tracking-wide" style={{ color: brand.text }}>
+          {brand.name}
+        </span>
+        <span
+          className="text-[9px] font-semibold px-1.5 py-0.5 rounded border border-white/30"
+          style={{ color: brand.text, opacity: 0.85 }}
+        >
+          Uso bajo supervisión médica
+        </span>
+      </div>
+      {/* Body */}
+      <div className="px-4 py-3 space-y-2">
+        <p className="text-gray-900 text-sm font-bold leading-snug">{product.name}</p>
+        <div>
+          <p className="text-gray-400 text-[10px] uppercase tracking-wide font-semibold mb-0.5">
+            Indicación clínica
+          </p>
+          <p className="text-gray-700 text-xs leading-relaxed">{product.indication}</p>
+        </div>
+        <div>
+          <p className="text-gray-400 text-[10px] uppercase tracking-wide font-semibold mb-0.5">
+            Principio activo
+          </p>
+          <p className="text-gray-700 text-xs leading-relaxed">{product.active}</p>
+        </div>
+        <div>
+          <p className="text-gray-400 text-[10px] uppercase tracking-wide font-semibold mb-0.5">
+            Pauta de aplicación
+          </p>
+          <p className="text-gray-700 text-xs leading-relaxed">{product.pauta}</p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -234,6 +394,7 @@ export default function DermoscopiaPage() {
   const majorPositive = CRITERIA.filter(c => c.major  && results[c.id] === 'present').length
   const minorPositive = CRITERIA.filter(c => !c.major && results[c.id] === 'present').length
   const datetime = formatDatetime()
+  const products = step === 'report' ? selectProducts(results, morpho, score) : []
 
   // ── Render ──
   return (
@@ -524,6 +685,37 @@ mediante exploración dermatoscópica
 presencial realizada por facultativo
 especialista en Dermatología.`}
               </pre>
+            </div>
+
+            {/* ── Cosmeceutical protocol ── */}
+            <div
+              style={{
+                opacity: reportVisible ? 1 : 0,
+                transition: 'opacity 0.4s ease 0.3s',
+              }}
+            >
+              <div className="border-t border-gray-200 pt-4 mb-3">
+                <h2 className="text-gray-900 font-semibold text-sm">
+                  Protocolo cosmecéutico complementario
+                </h2>
+                <p className="text-gray-400 text-xs leading-relaxed mt-1">
+                  Los siguientes productos de cosmética médica son compatibles con los
+                  hallazgos de la exploración. Su uso no sustituye el tratamiento prescrito
+                  por su dermatólogo.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {products.map(p => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+
+              <p className="text-gray-400 text-[10px] leading-relaxed mt-3 px-1">
+                GlowAI no mantiene relación comercial con las marcas citadas. Las
+                recomendaciones se basan en la composición y evidencia clínica publicada
+                de cada formulación.
+              </p>
             </div>
 
             {/* Action buttons */}
