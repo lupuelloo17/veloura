@@ -4,23 +4,29 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 
 // Patient-facing pages
-import WelcomePage     from './pages/WelcomePage'
-import HomePage        from './pages/HomePage'
-import AnalisisPage    from './pages/AnalisisPage'
-import ReservarPage    from './pages/ReservarPage'
-import HistorialPage   from './pages/HistorialPage'
-import SkinCheckPage   from './pages/SkinCheckPage'
-import DermoscopiaPage from './pages/DermoscopiaPage'
-import LoginPage       from './pages/LoginPage'
-import DemoPage        from './pages/DemoPage'
-import DemoBanner      from './components/DemoBanner'
+import LandingPage          from './pages/LandingPage'
+import WelcomePage          from './pages/WelcomePage'
+import HomePage             from './pages/HomePage'
+import AnalisisPage         from './pages/AnalisisPage'
+import ReservarPage         from './pages/ReservarPage'
+import HistorialPage        from './pages/HistorialPage'
+import SkinCheckPage        from './pages/SkinCheckPage'
+import DermoscopiaPage      from './pages/DermoscopiaPage'
+import LoginPage            from './pages/LoginPage'
+import DemoPage             from './pages/DemoPage'
+import DemoBanner           from './components/DemoBanner'
+import RegistroPacientePage from './pages/RegistroPacientePage'
+import PoliticaPrivacidadPage from './pages/PoliticaPrivacidadPage'
 
 // Clinic (multi-tenant)
 import { ClinicProvider }       from './contexts/ClinicContext'
+import { CitasProvider }        from './contexts/CitasContext'
 import DashboardPage            from './pages/clinica/DashboardPage'
 import PacientesPage            from './pages/clinica/PacientesPage'
 import PacienteDetallePage      from './pages/clinica/PacienteDetallePage'
 import AnalisisClinicaPage      from './pages/clinica/AnalisisClinicaPage'
+import AgendaPage               from './pages/clinica/AgendaPage'
+import MisCitasPacientePage     from './pages/clinica/MisCitasPacientePage'
 
 // ── Protected route: redirects to /login if unauthenticated ──
 function RequireAuth({ children }) {
@@ -35,13 +41,17 @@ function RequireAuth({ children }) {
 function ClinicRoutes() {
   return (
     <ClinicProvider>
-      <Routes>
-        <Route path="dashboard"    element={<DashboardPage />} />
-        <Route path="pacientes"    element={<PacientesPage />} />
-        <Route path="paciente/:id" element={<PacienteDetallePage />} />
-        <Route path="analisis"     element={<AnalisisClinicaPage />} />
-        <Route path="*"            element={<Navigate to="dashboard" replace />} />
-      </Routes>
+      <CitasProvider>
+        <Routes>
+          <Route path="dashboard"          element={<DashboardPage />} />
+          <Route path="pacientes"          element={<PacientesPage />} />
+          <Route path="paciente/:id"       element={<PacienteDetallePage />} />
+          <Route path="analisis"           element={<AnalisisClinicaPage />} />
+          <Route path="agenda"             element={<AgendaPage />} />
+          <Route path="mi-perfil/citas"    element={<MisCitasPacientePage />} />
+          <Route path="*"                  element={<Navigate to="dashboard" replace />} />
+        </Routes>
+      </CitasProvider>
     </ClinicProvider>
   )
 }
@@ -75,8 +85,13 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* ── Public ── */}
+          <Route path="/"                    element={<LandingPage />} />
+          <Route path="/politica-privacidad" element={<PoliticaPrivacidadPage />} />
+          <Route path="/registro/:slug"      element={<PatientShell><RegistroPacientePage /></PatientShell>} />
+
           {/* ── Patient-facing ── */}
-          <Route path="/" element={<PatientShell><WelcomePage /></PatientShell>} />
+          <Route path="/bienvenida"  element={<PatientShell><WelcomePage /></PatientShell>} />
           <Route path="/home"        element={<PatientShell><HomePage /></PatientShell>} />
           <Route path="/analisis"    element={<PatientShell><AnalisisPage /></PatientShell>} />
           <Route path="/reservar"    element={<PatientShell><ReservarPage /></PatientShell>} />

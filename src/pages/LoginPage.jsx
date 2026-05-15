@@ -1,7 +1,30 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, LogIn, AlertCircle, Share, ArrowUp } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+
+function useInstallBanner() {
+  const [show, setShow] = useState(false)
+
+  useEffect(() => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true
+
+    if (isMobile && !isStandalone) {
+      const dismissed = sessionStorage.getItem('pwa-banner-dismissed')
+      if (!dismissed) setShow(true)
+    }
+  }, [])
+
+  function dismiss() {
+    sessionStorage.setItem('pwa-banner-dismissed', '1')
+    setShow(false)
+  }
+
+  return { show, dismiss }
+}
 
 const DEMO_ACCOUNTS = [
   {
@@ -21,6 +44,7 @@ const DEMO_ACCOUNTS = [
 export default function LoginPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
+  const { show: showBanner, dismiss: dismissBanner } = useInstallBanner()
 
   const [email, setEmail]         = useState('')
   const [password, setPassword]   = useState('')
@@ -133,6 +157,33 @@ export default function LoginPage() {
           </button>
         </form>
       </div>
+
+      {/* PWA install banner */}
+      {showBanner && (
+        <div
+          className="mx-5 mb-4 rounded-2xl px-4 py-3 flex items-center gap-3"
+          style={{ backgroundColor: '#FDF0F4', border: '1px solid #F5C6D5' }}
+        >
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: '#D4537E' }}
+          >
+            <ArrowUp size={16} className="text-white" />
+          </div>
+          <p className="text-xs text-gray-600 flex-1 leading-snug">
+            Instala GlowAI en tu movil — toca{' '}
+            <Share size={11} className="inline-block mx-0.5 text-gray-500" />{' '}
+            compartir y luego <strong className="text-gray-800">Anadir a inicio</strong>
+          </p>
+          <button
+            onClick={dismissBanner}
+            className="text-gray-300 hover:text-gray-400 text-lg leading-none flex-shrink-0 px-1"
+            aria-label="Cerrar"
+          >
+            x
+          </button>
+        </div>
+      )}
 
       {/* Demo accounts section */}
       <div className="px-7 pb-8">

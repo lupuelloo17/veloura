@@ -1,7 +1,10 @@
 export const PLANES = {
   esencial: {
     nombre: 'Plan Esencial',
-    precio_cop: 990000,
+    precio: 149,
+    moneda: 'EUR',
+    periodo: 'mes',
+    descripcion: 'Para clínicas que empiezan',
     max_pacientes: 100,
     max_medicos: 1,
     max_sedes: 1,
@@ -19,7 +22,10 @@ export const PLANES = {
   },
   premium: {
     nombre: 'Plan Premium',
-    precio_cop: 1990000,
+    precio: 249,
+    moneda: 'EUR',
+    periodo: 'mes',
+    descripcion: 'El más elegido por clínicas en crecimiento',
     max_pacientes: 300,
     max_medicos: 4,
     max_sedes: 1,
@@ -37,7 +43,10 @@ export const PLANES = {
   },
   elite: {
     nombre: 'Plan Élite',
-    precio_cop: 3490000,
+    precio: 399,
+    moneda: 'EUR',
+    periodo: 'mes',
+    descripcion: 'Para grupos de clínicas y franquicias',
     max_pacientes: Infinity,
     max_medicos: Infinity,
     max_sedes: Infinity,
@@ -67,7 +76,12 @@ export const FEATURE_LABELS = {
   multisede:           'Gestión multi-sede',
 }
 
-export function formatCOP(amount) {
-  if (amount === Infinity) return 'Ilimitado'
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount)
+// Formato: 149 € · 1.990 € · "Ilimitado"
+export function formatEUR(amount) {
+  if (amount === Infinity || amount == null) return 'Ilimitado'
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(amount)
 }

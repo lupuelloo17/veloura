@@ -1,9 +1,12 @@
+import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ChevronRight, CalendarDays, Clock, LogOut, Microscope, CheckCircle2 } from 'lucide-react'
+import { ChevronRight, CalendarDays, LogOut, Microscope, CheckCircle2, Play } from 'lucide-react'
 import { useClinic } from '../../contexts/ClinicContext'
 import { useAuth } from '../../contexts/AuthContext'
+import { useCitas, ESTADO_STYLE } from '../../contexts/CitasContext'
 import FeatureGate from '../../components/FeatureGate'
 import ClinicLayout from './ClinicLayout'
+import { fTime } from '../../services/recordatorios'
 
 const MY_PATIENTS = [
   {
@@ -18,23 +21,37 @@ const MY_PATIENTS = [
   },
 ]
 
-const TODAY_APPTS = [
-  { id: 1, hora: '09:00', paciente: 'Sofía Restrepo',    tratamiento: 'Consulta inicial + Dermoscopia', completada: false },
-  { id: 2, hora: '11:00', paciente: 'Valentina Morales', tratamiento: 'Seguimiento Peeling Enzimático',  completada: true  },
-]
-
 const RIESGO_STYLE = {
   bajo:     { bg: '#dcfce7', text: '#15803d' },
   moderado: { bg: '#fef9c3', text: '#a16207' },
   alto:     { bg: '#fee2e2', text: '#b91c1c' },
 }
 
+const DEMO_TODAY = new Date('2026-05-15')
+
 export default function MedicoDashboardPage() {
   const navigate  = useNavigate()
   const { slug }  = useParams()
   const { clinica } = useClinic()
   const { user, logout } = useAuth()
+  const { citas } = useCitas()
   const brand = clinica?.color_primario ?? '#C8A882'
+
+  const citasHoy = useMemo(() =>
+    citas
+      .filter(c => {
+        const f = c.fecha instanceof Date ? c.fecha : new Date(c.fecha)
+        return f.getFullYear() === DEMO_TODAY.getFullYear() &&
+               f.getMonth()    === DEMO_TODAY.getMonth()    &&
+               f.getDate()     === DEMO_TODAY.getDate()
+      })
+      .sort((a, b) => {
+        const fa = a.fecha instanceof Date ? a.fecha : new Date(a.fecha)
+        const fb = b.fecha instanceof Date ? b.fecha : new Date(b.fecha)
+        return fa - fb
+      }),
+    [citas]
+  )
 
   async function handleLogout() {
     await logout()
@@ -90,8 +107,8 @@ export default function MedicoDashboardPage() {
           <div className="grid grid-cols-3 gap-2">
             {[
               { label: 'Mis pacientes', value: MY_PATIENTS.length },
-              { label: 'Citas hoy',     value: TODAY_APPTS.length },
-              { label: 'Pendientes',    value: TODAY_APPTS.filter(a => !a.completada).length },
+              { label: 'Citas hoy',     value: citasHoy.length },
+              { label: 'Pendientes',    value: citasHoy.filter(a => a.estado === 'pendiente').length },
             ].map(({ label, value }) => (
               <div key={label} className="bg-white rounded-2xl p-3 text-center shadow-sm">
                 <p className="text-gray-900 text-2xl font-bold">{value}</p>
@@ -100,37 +117,73 @@ export default function MedicoDashboardPage() {
             ))}
           </div>
 
-          {/* Today's appointments */}
+          {/* Today's appointments — sección Hoy */}
           <div className="bg-white rounded-2xl p-4 shadow-sm">
-            <p className="text-gray-900 font-semibold text-sm mb-3 flex items-center gap-2">
-              <CalendarDays size={14} className="text-gray-400" />
-              Mis citas de hoy
-            </p>
-            <div className="space-y-2">
-              {TODAY_APPTS.map(a => (
-                <div
-                  key={a.id}
-                  className={`flex items-center gap-3 py-2.5 px-3 rounded-xl ${
-                    a.completada ? 'bg-gray-50 opacity-60' : 'bg-white border border-gray-100'
-                  }`}
-                >
-                  <div
-                    className="w-12 h-10 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ backgroundColor: a.completada ? '#d1d5db' : brand }}
-                  >
-                    {a.hora}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-900 text-sm font-medium truncate">{a.paciente}</p>
-                    <p className="text-gray-400 text-xs truncate">{a.tratamiento}</p>
-                  </div>
-                  {a.completada
-                    ? <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />
-                    : <div className="w-2 h-2 rounded-full flex-shrink-0 animate-pulse" style={{ backgroundColor: brand }} />
-                  }
-                </div>
-              ))}
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-gray-900 font-semibold text-sm flex items-center gap-2">
+                <CalendarDays size={14} className="text-gray-400" />
+                Hoy
+              </p>
+              <button
+                onClick={() => navigate(`/clinica/${slug}/agenda`)}
+                className="text-xs font-semibold flex items-center gap-0.5"
+                style={{ color: brand }}
+              >
+                Ver agenda <ChevronRight size={12} />
+              </button>
             </div>
+
+            {citasHoy.length === 0 ? (
+              <p className="text-gray-400 text-xs text-center py-4">Sin citas para hoy</p>
+            ) : (
+              <div className="space-y-2">
+                {citasHoy.map(cita => {
+                  const f = cita.fecha instanceof Date ? cita.fecha : new Date(cita.fecha)
+                  const s = ESTADO_STYLE[cita.estado]
+                  const completada = cita.estado === 'completada'
+                  return (
+                    <div
+                      key={cita.id}
+                      className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl border"
+                      style={{ borderColor: completada ? '#f3f4f6' : s.border, backgroundColor: completada ? '#fafafa' : s.bg + '40' }}
+                    >
+                      {/* Hora */}
+                      <div
+                        className="w-12 h-10 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style={{ backgroundColor: completada ? '#e5e7eb' : brand, color: '#fff' }}
+                      >
+                        {fTime(f)}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold truncate ${completada ? 'text-gray-400' : 'text-gray-900'}`}>
+                          {cita.paciente_nombre}
+                        </p>
+                        <p className="text-gray-400 text-xs truncate">{cita.tratamiento}</p>
+                      </div>
+
+                      {/* Estado + acción */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {completada
+                          ? <CheckCircle2 size={16} className="text-green-500" />
+                          : (
+                            <button
+                              onClick={() => navigate(`/clinica/${slug}/paciente/${cita.paciente_id}`)}
+                              className="flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-lg transition-all active:scale-95"
+                              style={{ backgroundColor: brand, color: '#fff' }}
+                              title="Iniciar sesión"
+                            >
+                              <Play size={9} /> Iniciar
+                            </button>
+                          )
+                        }
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* My patients */}

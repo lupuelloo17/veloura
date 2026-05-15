@@ -2,19 +2,20 @@ import { useNavigate, useParams } from 'react-router-dom'
 import {
   Users, CalendarDays, TrendingUp, Microscope,
   ChevronRight, AlertCircle, ShieldCheck, LogOut,
-  Building2, CreditCard,
+  Building2, CreditCard, CheckCircle2, UserX, Star,
 } from 'lucide-react'
 import { useClinic } from '../../contexts/ClinicContext'
 import { useAuth } from '../../contexts/AuthContext'
+import { useCitas } from '../../contexts/CitasContext'
 import FeatureGate from '../../components/FeatureGate'
 import ClinicLayout from './ClinicLayout'
-import { formatCOP } from '../../config/planes'
+import { formatEUR } from '../../config/planes'
 
 const STATS = [
   { label: 'Pacientes',     value: 148,  sub: 'de 300 máx.',    icon: Users        },
   { label: 'Sesiones/mes',  value: 34,   sub: 'últimos 30 días', icon: CalendarDays },
   { label: 'Análisis IA',   value: 27,   sub: 'dermoscópicos',   icon: Microscope   },
-  { label: 'Ing. estimado', value: '~$8.4M', sub: 'COP este mes', icon: TrendingUp },
+  { label: 'Ing. estimado', value: '~12.400 €', sub: 'este mes', icon: TrendingUp },
 ]
 
 const DOCTORS = [
@@ -29,12 +30,38 @@ const ALERTS = [
   { tipo: 'capacidad',  texto: 'Capacidad al 49% (148/300 pacientes)',  color: '#16a34a' },
 ]
 
+function getCitasMetrics(citas) {
+  // Semana actual: lu 2026-05-11 → do 2026-05-17
+  const weekStart = new Date('2026-05-11T00:00:00')
+  const weekEnd   = new Date('2026-05-17T23:59:59')
+  const estaSemana = citas.filter(c => {
+    const f = c.fecha instanceof Date ? c.fecha : new Date(c.fecha)
+    return f >= weekStart && f <= weekEnd
+  })
+
+  const total     = citas.length
+  const confirmadas = citas.filter(c => ['confirmada','completada'].includes(c.estado)).length
+  const noShows   = citas.filter(c => c.estado === 'no_asistio').length
+  const tasa_conf = total > 0 ? Math.round((confirmadas / total) * 100) : 0
+  const tasa_ns   = total > 0 ? Math.round((noShows / total) * 100) : 0
+
+  // Tratamiento más solicitado este mes
+  const freq = {}
+  citas.forEach(c => { freq[c.tratamiento] = (freq[c.tratamiento] || 0) + 1 })
+  const topTrat = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0] ?? '—'
+  const topTratShort = topTrat.length > 18 ? topTrat.slice(0, 18) + '…' : topTrat
+
+  return { citasSemana: estaSemana.length, tasa_conf, tasa_ns, topTrat: topTratShort }
+}
+
 export default function AdminDashboardPage() {
   const navigate   = useNavigate()
   const { slug }   = useParams()
   const { clinica, plan } = useClinic()
   const { user, logout }  = useAuth()
+  const { citas }         = useCitas()
   const brand = clinica?.color_primario ?? '#C8A882'
+  const citasMetrics = getCitasMetrics(citas)
 
   async function handleLogout() {
     await logout()
@@ -85,7 +112,7 @@ export default function AdminDashboardPage() {
             style={{ backgroundColor: brand + '18', color: brand }}
           >
             <CreditCard size={11} />
-            {plan?.nombre} · {formatCOP(plan?.precio_cop ?? 0)} / mes
+            {plan?.nombre} · {formatEUR(plan?.precio_eur ?? 0)} / mes
           </div>
         </div>
 
@@ -100,6 +127,42 @@ export default function AdminDashboardPage() {
                 <p className="text-gray-400 text-[10px] mt-0.5">{sub}</p>
               </div>
             ))}
+          </div>
+
+          {/* Métricas de citas */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-gray-700 text-sm font-semibold">Agenda & Citas</p>
+              <button
+                onClick={() => navigate(`/clinica/${slug}/agenda`)}
+                className="text-xs font-semibold flex items-center gap-0.5"
+                style={{ color: brand }}
+              >
+                Ver agenda <ChevronRight size={12} />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white rounded-2xl p-3.5 shadow-sm">
+                <CalendarDays size={14} className="text-gray-400 mb-1.5" />
+                <p className="text-gray-900 text-2xl font-bold">{citasMetrics.citasSemana}</p>
+                <p className="text-gray-700 text-xs font-medium">Citas esta semana</p>
+              </div>
+              <div className="bg-white rounded-2xl p-3.5 shadow-sm">
+                <CheckCircle2 size={14} className="text-green-500 mb-1.5" />
+                <p className="text-gray-900 text-2xl font-bold">{citasMetrics.tasa_conf}%</p>
+                <p className="text-gray-700 text-xs font-medium">Tasa confirmación</p>
+              </div>
+              <div className="bg-white rounded-2xl p-3.5 shadow-sm">
+                <UserX size={14} className="text-red-400 mb-1.5" />
+                <p className="text-gray-900 text-2xl font-bold">{citasMetrics.tasa_ns}%</p>
+                <p className="text-gray-700 text-xs font-medium">Tasa no-shows</p>
+              </div>
+              <div className="bg-white rounded-2xl p-3.5 shadow-sm">
+                <Star size={14} className="text-amber-400 mb-1.5" />
+                <p className="text-gray-900 text-sm font-bold leading-snug">{citasMetrics.topTrat}</p>
+                <p className="text-gray-400 text-[10px] mt-0.5">Top tratamiento</p>
+              </div>
+            </div>
           </div>
 
           {/* Alerts */}

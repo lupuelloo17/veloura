@@ -1,5 +1,6 @@
 import { useClinic } from '../../contexts/ClinicContext'
 import ClinicNav from '../../components/ClinicNav'
+import RecordatoriosBanner from '../../components/RecordatoriosBanner'
 import { AlertTriangle } from 'lucide-react'
 
 export default function ClinicLayout({ children }) {
@@ -26,6 +27,7 @@ export default function ClinicLayout({ children }) {
 
   return (
     <div className="flex flex-col flex-1">
+      <RecordatoriosBanner />
       <div className="flex-1 overflow-y-auto">
         {children}
       </div>

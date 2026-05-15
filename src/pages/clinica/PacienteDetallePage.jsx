@@ -1,33 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CalendarDays, Microscope, FileText, Phone, Mail } from 'lucide-react'
+import { ArrowLeft, Phone, Mail, AlertCircle, BellOff } from 'lucide-react'
 import { useClinic } from '../../contexts/ClinicContext'
 import FeatureGate from '../../components/FeatureGate'
 import ClinicLayout from './ClinicLayout'
-
-// ── Mock patient data keyed by id ─────────────────────────────
-const MOCK_PATIENT = {
-  id: 'p1',
-  nombre: 'Valentina', apellido: 'Morales',
-  email: 'valentina.morales@email.com',
-  telefono: '+57 310 555 0101',
-  fecha_nacimiento: '1994-03-15',
-  medico: 'Dra. Carmen López',
-  tipo_piel: 'Mixta',
-  alergias: 'Ninguna conocida',
-  creado_en: '2025-07-03',
-}
-
-const MOCK_SESIONES = [
-  { id: 's1', fecha: '18 oct 2025', tratamiento: 'Peeling Enzimático',            medico: 'Dra. López', nota: 'Piel notablemente más uniforme.', puntuacion: null },
-  { id: 's2', fecha: '5 sep 2025',  tratamiento: 'Vitamina C + Ácido Hialurónico', medico: 'Dra. López', nota: 'Mejora en luminosidad.',          puntuacion: null },
-  { id: 's3', fecha: '12 ago 2025', tratamiento: 'Hidratación Profunda',           medico: 'Dra. Ruiz',  nota: 'Primera sesión.',                 puntuacion: null },
-]
-
-const MOCK_ANALISIS = [
-  { id: 'a1', fecha: '15 oct 2025', puntuacion: 3, nivel: 'moderado', criterios_pos: 2 },
-  { id: 'a2', fecha: '10 ago 2025', puntuacion: 1, nivel: 'bajo',     criterios_pos: 1 },
-]
+import PACIENTES, { SESIONES_DB, ANALISIS_DB } from '../../data/pacientes'
+import { supabase } from '../../lib/supabase'
 
 const RIESGO_STYLE = {
   bajo:     { bg: '#dcfce7', text: '#15803d' },
@@ -38,17 +16,116 @@ const RIESGO_STYLE = {
 const TABS = ['Información', 'Sesiones', 'Análisis']
 
 export default function PacienteDetallePage() {
-  const navigate    = useNavigate()
-  const { slug }    = useParams()
-  const { clinica } = useClinic()
-  const brand       = clinica?.color_primario ?? '#E8A0B0'
-  const [tab, setTab] = useState(0)
+  const navigate     = useNavigate()
+  // ── FIX 1: leer `id` de la URL ──────────────────────────────────────────
+  const { slug, id } = useParams()
+  const { clinica }  = useClinic()
+  const brand        = clinica?.color_primario ?? '#C8A882'
 
-  const edad = new Date().getFullYear() - new Date(MOCK_PATIENT.fecha_nacimiento).getFullYear()
+  const [tab,      setTab]      = useState(0)
+  const [paciente, setPaciente] = useState(null)
+  const [sesiones, setSesiones] = useState([])
+  const [analisis, setAnalisis] = useState([])
+  const [cargando, setCargando] = useState(true)
+
+  useEffect(() => {
+    // ── BUG FIX A: reset state immediately when id changes ───────────
+    // Without this, navigating p1 → p2 keeps p1 data while p2 loads
+    setPaciente(null)
+    setSesiones([])
+    setAnalisis([])
+    setTab(0)
+
+    if (!id) { setCargando(false); return }
+
+    if (supabase) {
+      // ── Supabase mode: fetch real data by UUID ─────────────────────
+      setCargando(true)
+      Promise.all([
+        supabase.from('pacientes').select('*').eq('id', id).single(),
+        supabase.from('sesiones').select('*').eq('paciente_id', id).order('fecha', { ascending: false }),
+        supabase.from('analisis_dermoscopicos').select('*').eq('paciente_id', id).order('fecha', { ascending: false }),
+      ]).then(([{ data: p, error: pe }, { data: s }, { data: a }]) => {
+        if (pe) {
+          // ── BUG FIX B: Supabase failed (RLS / not found) → try static ──
+          console.warn('[PacienteDetalle] Supabase error, falling back to static:', pe.message)
+          const staticP = PACIENTES.find(sp => sp.id === id) ?? null
+          setPaciente(staticP)
+          setSesiones(SESIONES_DB[id] ?? [])
+          setAnalisis(ANALISIS_DB[id] ?? [])
+        } else {
+          // ── BUG FIX C: normalize Supabase session field names ─────────
+          // DB uses tipo_tratamiento / notas_clinicas; UI reads tratamiento / nota
+          const normSesiones = (s ?? []).map(row => ({
+            ...row,
+            tratamiento: row.tipo_tratamiento ?? row.tratamiento,
+            nota:        row.notas_clinicas   ?? row.nota,
+            medico:      row.medico           ?? 'Dra. García',
+            fecha:       row.fecha
+              ? new Date(row.fecha).toLocaleDateString('es-ES')
+              : row.fecha,
+          }))
+          const normAnalisis = (a ?? []).map(row => ({
+            ...row,
+            nivel:         row.nivel_riesgo    ?? row.nivel,
+            puntuacion:    row.puntuacion_total ?? row.puntuacion,
+            criterios_pos: row.criterios_pos   ?? 0,
+            fecha:         row.fecha
+              ? new Date(row.fecha).toLocaleDateString('es-ES')
+              : row.fecha,
+          }))
+          setPaciente(p)
+          setSesiones(normSesiones)
+          setAnalisis(normAnalisis)
+        }
+        setCargando(false)
+      })
+    } else {
+      // ── Mock mode: look up in static data ─────────────────────────
+      setPaciente(PACIENTES.find(p => p.id === id) ?? null)
+      setSesiones(SESIONES_DB[id] ?? [])
+      setAnalisis(ANALISIS_DB[id] ?? [])
+      setCargando(false)
+    }
+  }, [id])
+
+  if (cargando && !paciente) {
+    return (
+      <ClinicLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-400 text-sm">Cargando…</p>
+        </div>
+      </ClinicLayout>
+    )
+  }
+
+  // ── FIX 3: pantalla de error si el id no existe ──────────────────────────
+  if (!paciente) {
+    return (
+      <ClinicLayout>
+        <div className="flex flex-col items-center justify-center h-64 px-5 text-center">
+          <AlertCircle size={40} className="text-gray-300 mb-3" />
+          <p className="text-gray-500 font-semibold text-sm">Paciente no encontrado</p>
+          <p className="text-gray-400 text-xs mt-1 mb-4">ID: {id}</p>
+          <button
+            onClick={() => navigate(`/clinica/${slug}/pacientes`)}
+            className="text-sm font-semibold underline"
+            style={{ color: brand }}
+          >
+            Volver a la lista
+          </button>
+        </div>
+      </ClinicLayout>
+    )
+  }
+
+  const alergiasDestacadas = paciente.alergias &&
+    !paciente.alergias.toLowerCase().includes('ninguna')
 
   return (
     <ClinicLayout>
       <div className="animate-fade-in">
+
         {/* Header */}
         <div className="bg-white px-5 pt-7 pb-4 border-b border-gray-100">
           <div className="flex items-center gap-3 mb-4">
@@ -58,27 +135,44 @@ export default function PacienteDetallePage() {
             >
               <ArrowLeft size={18} />
             </button>
-            <div>
-              <h1 className="text-gray-900 font-bold text-base leading-tight">
-                {MOCK_PATIENT.nombre} {MOCK_PATIENT.apellido}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-gray-900 font-bold text-base leading-tight truncate">
+                {paciente.nombre} {paciente.apellido}
               </h1>
-              <p className="text-gray-400 text-xs">{edad} años · {MOCK_PATIENT.medico}</p>
+              <p className="text-gray-400 text-xs">
+                {paciente.edad ? `${paciente.edad} años · ` : ''}{paciente.medico ?? 'Dra. García'}
+              </p>
             </div>
+            {/* Marketing badge */}
+            {!paciente.marketing_aceptado && (
+              <div
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold flex-shrink-0"
+                style={{ backgroundColor: '#f3f4f6', color: '#6b7280' }}
+                title="Sin consentimiento de marketing"
+              >
+                <BellOff size={11} /> Sin marketing
+              </div>
+            )}
           </div>
 
           {/* Avatar + quick stats */}
           <div className="flex items-center gap-4">
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
-              style={{ backgroundColor: brand }}
-            >
-              {MOCK_PATIENT.nombre[0]}{MOCK_PATIENT.apellido[0]}
-            </div>
+            {paciente.foto_perfil
+              ? <img src={paciente.foto_perfil} alt={paciente.nombre} className="w-16 h-16 rounded-2xl object-cover flex-shrink-0" />
+              : (
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
+                  style={{ backgroundColor: brand }}
+                >
+                  {paciente.nombre[0]}{paciente.apellido?.[0] ?? ''}
+                </div>
+              )
+            }
             <div className="flex gap-4">
               {[
-                { label: 'Sesiones',  value: MOCK_SESIONES.length },
-                { label: 'Análisis',  value: MOCK_ANALISIS.length },
-                { label: 'Tipo piel', value: MOCK_PATIENT.tipo_piel },
+                { label: 'Visitas',   value: paciente.total_visitas },
+                { label: 'Análisis',  value: analisis.length },
+                { label: 'Tipo piel', value: paciente.tipo_piel ?? '—' },
               ].map(s => (
                 <div key={s.label} className="text-center">
                   <p className="text-gray-900 font-bold text-base">{s.value}</p>
@@ -111,38 +205,103 @@ export default function PacienteDetallePage() {
           {/* ── Tab 0: Info ── */}
           {tab === 0 && (
             <>
+              {/* Alergias destacadas en amarillo */}
+              {alergiasDestacadas && (
+                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+                  <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-amber-700 text-xs font-semibold">Alerta de alergias</p>
+                    <p className="text-amber-600 text-xs mt-0.5">{paciente.alergias}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Marketing warning */}
+              {!paciente.marketing_aceptado && (
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3">
+                  <BellOff size={14} className="text-gray-400 flex-shrink-0" />
+                  <p className="text-gray-500 text-xs">
+                    Esta paciente <strong>no ha dado consentimiento de marketing</strong>. No enviar comunicaciones comerciales.
+                  </p>
+                </div>
+              )}
+
+              {/* Contacto */}
               <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
                 <p className="text-gray-900 font-semibold text-sm">Datos de contacto</p>
                 <div className="flex items-center gap-2">
                   <Mail size={14} className="text-gray-400" />
-                  <span className="text-gray-700 text-sm">{MOCK_PATIENT.email}</span>
+                  <span className="text-gray-700 text-sm">{paciente.email}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone size={14} className="text-gray-400" />
-                  <span className="text-gray-700 text-sm">{MOCK_PATIENT.telefono}</span>
-                </div>
+                {paciente.telefono && (
+                  <div className="flex items-center gap-2">
+                    <Phone size={14} className="text-gray-400" />
+                    <span className="text-gray-700 text-sm">{paciente.telefono}</span>
+                  </div>
+                )}
               </div>
-              <div className="bg-white rounded-2xl p-4 shadow-sm space-y-2">
+
+              {/* Ficha clínica */}
+              <div className="bg-white rounded-2xl p-4 shadow-sm space-y-2.5">
                 <p className="text-gray-900 font-semibold text-sm">Ficha clínica</p>
                 {[
-                  { label: 'Tipo de piel',   value: MOCK_PATIENT.tipo_piel     },
-                  { label: 'Alergias',       value: MOCK_PATIENT.alergias      },
-                  { label: 'Médico asig.',   value: MOCK_PATIENT.medico        },
-                  { label: 'Paciente desde', value: MOCK_PATIENT.creado_en     },
+                  { label: 'Tipo de piel',   value: paciente.tipo_piel  ?? '—' },
+                  { label: 'Alergias',
+                    value: (
+                      <span style={{ color: alergiasDestacadas ? '#d97706' : undefined }}>
+                        {paciente.alergias ?? '—'}
+                      </span>
+                    )
+                  },
+                  { label: 'Medicamentos',   value: paciente.medicamentos ?? '—' },
+                  { label: 'Motivo',         value: paciente.motivo_consulta ?? '—' },
+                  { label: 'Cómo nos conoció', value: paciente.como_nos_conocio ?? '—' },
+                  { label: 'Riesgo',
+                    value: (
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize"
+                        style={{ backgroundColor: RIESGO_STYLE[paciente.riesgo]?.bg, color: RIESGO_STYLE[paciente.riesgo]?.text }}
+                      >
+                        {paciente.riesgo}
+                      </span>
+                    )
+                  },
+                  { label: 'Paciente desde', value: paciente.creado_en ?? '—' },
                 ].map(({ label, value }) => (
-                  <div key={label} className="flex items-center justify-between">
-                    <span className="text-gray-500 text-xs">{label}</span>
-                    <span className="text-gray-900 text-xs font-semibold">{value}</span>
+                  <div key={label} className="flex items-start justify-between gap-3">
+                    <span className="text-gray-400 text-xs flex-shrink-0">{label}</span>
+                    <span className="text-gray-800 text-xs font-semibold text-right">{value}</span>
                   </div>
                 ))}
               </div>
+
+              {/* Tratamientos previos */}
+              {paciente.tratamientos_previos?.length > 0 && (
+                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                  <p className="text-gray-900 font-semibold text-sm mb-2">Tratamientos previos</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {paciente.tratamientos_previos.map(t => (
+                      <span
+                        key={t}
+                        className="text-xs px-2.5 py-1 rounded-full font-medium"
+                        style={{ backgroundColor: brand + '18', color: brand }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
 
           {/* ── Tab 1: Sesiones ── */}
           {tab === 1 && (
             <div className="space-y-2">
-              {MOCK_SESIONES.map(s => (
+              {sesiones.length === 0 && (
+                <p className="text-center text-gray-400 text-sm py-8">Sin sesiones registradas</p>
+              )}
+              {sesiones.map(s => (
                 <div key={s.id} className="bg-white rounded-2xl p-4 shadow-sm">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <p className="text-gray-900 text-sm font-semibold">{s.tratamiento}</p>
@@ -152,9 +311,7 @@ export default function PacienteDetallePage() {
                   <p className="text-gray-600 text-xs leading-relaxed">{s.nota}</p>
                 </div>
               ))}
-              <button
-                className="w-full bg-white border border-dashed border-gray-200 text-xs font-medium text-gray-400 py-3 rounded-2xl"
-              >
+              <button className="w-full bg-white border border-dashed border-gray-200 text-xs font-medium text-gray-400 py-3 rounded-2xl">
                 + Nueva sesión
               </button>
             </div>
@@ -164,7 +321,10 @@ export default function PacienteDetallePage() {
           {tab === 2 && (
             <FeatureGate feature="dermoscopia_ia">
               <div className="space-y-2">
-                {MOCK_ANALISIS.map(a => {
+                {analisis.length === 0 && (
+                  <p className="text-center text-gray-400 text-sm py-8">Sin análisis registrados</p>
+                )}
+                {analisis.map(a => {
                   const rs = RIESGO_STYLE[a.nivel]
                   return (
                     <div key={a.id} className="bg-white rounded-2xl p-4 shadow-sm">

@@ -7,7 +7,7 @@ import { PLANES } from '../config/planes'
 const MOCK_CLINICAS = {
   'clinica-lumiere': {
     id: 'mock-lumiere',
-    nombre: 'Clínica Lumière',
+    nombre: 'Clínica Lumière Valencia',
     slug: 'clinica-lumiere',
     logo_url: null,
     color_primario: '#C8A882',
@@ -15,23 +15,29 @@ const MOCK_CLINICAS = {
     plan_activo: true,
     max_pacientes: 300,
     max_medicos: 4,
-    ciudad: 'Bogotá',
-    pais: 'Colombia',
-    fecha_renovacion: '2026-05-15T00:00:00Z',
+    ciudad: 'Valencia',
+    pais: 'España',
+    direccion: 'Calle Colón 12, 46004 Valencia',
+    email: 'info@clinicalumiere.es',
+    telefono: '+34 963 123 456',
+    fecha_renovacion: '2027-05-15T00:00:00Z',
   },
-  'derma-bogota': {
+  'derma-madrid': {
     id: 'mock-derma',
-    nombre: 'DermaCenter Bogotá',
-    slug: 'derma-bogota',
+    nombre: 'DermaCenter Madrid',
+    slug: 'derma-madrid',
     logo_url: null,
     color_primario: '#1B3A6B',
     plan: 'elite',
     plan_activo: true,
     max_pacientes: Infinity,
     max_medicos: Infinity,
-    ciudad: 'Bogotá',
-    pais: 'Colombia',
-    fecha_renovacion: '2027-01-01T00:00:00Z',
+    ciudad: 'Madrid',
+    pais: 'España',
+    direccion: 'Calle Serrano 45, 28001 Madrid',
+    email: 'info@dermacenter.es',
+    telefono: '+34 913 456 789',
+    fecha_renovacion: '2028-01-01T00:00:00Z',
   },
 }
 
@@ -68,6 +74,7 @@ export function ClinicProvider({ children }) {
   async function loadClinica(slugParam) {
     setLoading(true)
     setError(null)
+    console.log('[ClinicContext] loading slug:', slugParam)
     try {
       if (supabase) {
         const { data, error: err } = await supabase
@@ -75,14 +82,22 @@ export function ClinicProvider({ children }) {
           .select('*')
           .eq('slug', slugParam)
           .single()
-        if (err) throw err
-        setClinica(data)
-      } else {
-        // Fallback to mock data
-        const mock = MOCK_CLINICAS[slugParam]
-        if (!mock) throw new Error(`Clínica "${slugParam}" no encontrada`)
-        setClinica(mock)
+
+        console.log('[ClinicContext] Supabase result:', { data, err })
+
+        if (data) {
+          setClinica(data)
+          return
+        }
+
+        // Supabase failed (RLS / not found) — fall back to mock
+        console.warn('[ClinicContext] Supabase error, falling back to mock:', err?.message)
       }
+
+      // Mock fallback
+      const mock = MOCK_CLINICAS[slugParam]
+      if (!mock) throw new Error(`Clínica "${slugParam}" no encontrada`)
+      setClinica(mock)
     } catch (err) {
       setError(err.message)
     } finally {

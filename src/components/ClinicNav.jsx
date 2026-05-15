@@ -12,7 +12,7 @@ export default function ClinicNav() {
     { label: 'Dashboard',  icon: LayoutDashboard, path: `/clinica/${slug}/dashboard` },
     { label: 'Pacientes',  icon: Users,            path: `/clinica/${slug}/pacientes` },
     { label: 'Análisis',   icon: Microscope,       path: `/clinica/${slug}/analisis`  },
-    { label: 'Citas',      icon: CalendarDays,     path: `/clinica/${slug}/citas`     },
+    { label: 'Agenda',     icon: CalendarDays,     path: `/clinica/${slug}/agenda`    },
   ]
 
   const brand = clinica?.color_primario ?? '#E8A0B0'
