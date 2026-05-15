@@ -78,6 +78,16 @@ export function AuthProvider({ children }) {
     }
   }
 
+  function loginAsDemo(rol) {
+    const email = rol === 'admin' ? 'admin@lumiere.com' : 'dra.garcia@lumiere.com'
+    const mock  = MOCK_USERS[email]
+    const { password: _, ...safeUser } = mock
+    const demoUser = { ...safeUser, isDemoMode: true }
+    localStorage.setItem(SESSION_KEY, JSON.stringify(demoUser))
+    setUser(demoUser)
+    return demoUser
+  }
+
   async function logout() {
     if (supabase) {
       await supabase.auth.signOut()
@@ -87,8 +97,10 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  const isDemoMode = user?.isDemoMode === true
+
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, error, login, loginAsDemo, logout, isDemoMode }}>
       {children}
     </AuthContext.Provider>
   )

@@ -12,6 +12,8 @@ import HistorialPage   from './pages/HistorialPage'
 import SkinCheckPage   from './pages/SkinCheckPage'
 import DermoscopiaPage from './pages/DermoscopiaPage'
 import LoginPage       from './pages/LoginPage'
+import DemoPage        from './pages/DemoPage'
+import DemoBanner      from './components/DemoBanner'
 
 // Clinic (multi-tenant)
 import { ClinicProvider }       from './contexts/ClinicContext'
@@ -49,6 +51,7 @@ function PatientShell({ children }) {
   return (
     <div className="min-h-screen bg-blush-50 flex items-start justify-center py-6 px-4">
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl overflow-hidden min-h-[780px] flex flex-col">
+        <DemoBanner />
         {children}
       </div>
     </div>
@@ -59,6 +62,7 @@ function ClinicShell({ children }) {
   return (
     <div className="min-h-screen bg-gray-100 flex items-start justify-center py-6 px-4">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden min-h-[780px] flex flex-col">
+        <DemoBanner />
         {children}
       </div>
     </div>
@@ -80,8 +84,9 @@ export default function App() {
           <Route path="/skin-check"  element={<PatientShell><SkinCheckPage /></PatientShell>} />
           <Route path="/dermoscopia" element={<PatientShell><DermoscopiaPage /></PatientShell>} />
 
-          {/* ── Login ── */}
+          {/* ── Login / Demo ── */}
           <Route path="/login" element={<PatientShell><LoginPage /></PatientShell>} />
+          <Route path="/demo"  element={<PatientShell><DemoPage /></PatientShell>} />
 
           {/* ── Clinic dashboard (protected) ── */}
           <Route
