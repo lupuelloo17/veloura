@@ -12,7 +12,8 @@
       "Bash(git push:*)",
       "Bash(npm install:*)",
       "Bash(curl -s http://localhost:3000/clinica/clinica-lumiere/dashboard)",
-      "Bash(curl -s http://localhost:3000/login)"
+      "Bash(curl -s http://localhost:3000/login)",
+      "Bash(curl:*)"
     ]
   }
 }
