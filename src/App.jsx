@@ -15,8 +15,10 @@ import DermoscopiaPage      from './pages/DermoscopiaPage'
 import LoginPage            from './pages/LoginPage'
 import DemoPage             from './pages/DemoPage'
 import DemoBanner           from './components/DemoBanner'
-import RegistroPacientePage from './pages/RegistroPacientePage'
+import RegistroPacientePage  from './pages/RegistroPacientePage'
 import PoliticaPrivacidadPage from './pages/PoliticaPrivacidadPage'
+import PreciosPage            from './pages/PreciosPage'
+import PagoExitosoPage        from './pages/PagoExitosoPage'
 
 // Clinic (multi-tenant)
 import { ClinicProvider }       from './contexts/ClinicContext'
@@ -87,6 +89,8 @@ export default function App() {
         <Routes>
           {/* ── Public ── */}
           <Route path="/"                    element={<LandingPage />} />
+          <Route path="/precios"             element={<PreciosPage />} />
+          <Route path="/pago-exitoso"        element={<PagoExitosoPage />} />
           <Route path="/politica-privacidad" element={<PoliticaPrivacidadPage />} />
           <Route path="/registro/:slug"      element={<PatientShell><RegistroPacientePage /></PatientShell>} />
 

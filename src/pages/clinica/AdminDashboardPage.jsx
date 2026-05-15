@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Users, CalendarDays, TrendingUp, Microscope,
   ChevronRight, AlertCircle, ShieldCheck, LogOut,
   Building2, CreditCard, CheckCircle2, UserX, Star,
+  ExternalLink, RefreshCw,
 } from 'lucide-react'
 import { useClinic } from '../../contexts/ClinicContext'
 import { useAuth } from '../../contexts/AuthContext'
@@ -63,9 +65,41 @@ export default function AdminDashboardPage() {
   const brand = clinica?.color_primario ?? '#C8A882'
   const citasMetrics = getCitasMetrics(citas)
 
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError,   setPortalError]   = useState(null)
+
+  const pagoFallido = clinica?.stripe_subscription_status === 'past_due'
+  const planActivo  = clinica?.plan_activo !== false
+
   async function handleLogout() {
     await logout()
     navigate('/login', { replace: true })
+  }
+
+  async function handlePortal() {
+    if (!clinica?.stripe_customer_id) {
+      navigate('/precios')
+      return
+    }
+    setPortalLoading(true)
+    setPortalError(null)
+    try {
+      const res = await fetch('/api/create-portal-session', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          customerId:  clinica.stripe_customer_id,
+          clinicaSlug: clinica.slug,
+        }),
+      })
+      const { url, error } = await res.json()
+      if (error) throw new Error(error)
+      window.location.href = url
+    } catch (err) {
+      setPortalError(err.message)
+    } finally {
+      setPortalLoading(false)
+    }
   }
 
   const today = new Date().toLocaleDateString('es-ES', {
@@ -112,11 +146,84 @@ export default function AdminDashboardPage() {
             style={{ backgroundColor: brand + '18', color: brand }}
           >
             <CreditCard size={11} />
-            {plan?.nombre} · {formatEUR(plan?.precio_eur ?? 0)} / mes
+            {plan?.nombre} · {formatEUR(plan?.precio ?? 0)} / mes
           </div>
         </div>
 
         <div className="bg-gray-50 px-5 py-4 space-y-4">
+
+          {/* ── Pago fallido — banner rojo ── */}
+          {pagoFallido && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 flex items-start gap-3">
+              <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-red-700 text-xs font-semibold">Pago fallido</p>
+                <p className="text-red-600 text-xs mt-0.5">
+                  Actualiza tu método de pago para no perder el acceso.
+                </p>
+              </div>
+              <button
+                onClick={handlePortal}
+                className="text-red-600 text-xs font-semibold underline flex-shrink-0"
+              >
+                Actualizar
+              </button>
+            </div>
+          )}
+
+          {/* ── Suscripción ── */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <p className="text-gray-900 font-semibold text-sm mb-3 flex items-center gap-2">
+              <CreditCard size={14} className="text-gray-400" /> Mi suscripción
+            </p>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-xs font-bold px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: brand + '18', color: brand }}
+                  >
+                    {plan?.nombre ?? 'Sin plan'}
+                  </span>
+                  <span
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                      planActivo && !pagoFallido
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-600'
+                    }`}
+                  >
+                    {pagoFallido ? 'Pago pendiente' : planActivo ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+                {clinica?.fecha_renovacion && (
+                  <p className="text-gray-400 text-[10px] mt-1 flex items-center gap-1">
+                    <RefreshCw size={9} />
+                    Renueva el {new Date(clinica.fecha_renovacion).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="text-gray-900 text-lg font-extrabold">{formatEUR(plan?.precio ?? 0)}</p>
+                <p className="text-gray-400 text-[10px]">/ mes</p>
+              </div>
+            </div>
+
+            {portalError && (
+              <p className="text-red-500 text-xs mb-2">{portalError}</p>
+            )}
+
+            <button
+              onClick={handlePortal}
+              disabled={portalLoading}
+              className="w-full py-2.5 rounded-xl text-xs font-semibold border border-gray-200 text-gray-600 flex items-center justify-center gap-1.5 hover:bg-gray-50 transition-colors active:scale-95"
+            >
+              {portalLoading
+                ? 'Abriendo portal…'
+                : <><ExternalLink size={12} /> Gestionar suscripción</>
+              }
+            </button>
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-2 gap-2">
             {STATS.map(({ label, value, sub, icon: Icon }) => (
