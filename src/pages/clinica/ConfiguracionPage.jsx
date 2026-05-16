@@ -650,7 +650,7 @@ export default function ConfiguracionPage() {
   const [toast, setToast]               = useState(null)
 
   // Role guard
-  if (user && user.rol !== 'admin' && user.rol !== 'admin_clinica') {
+  if (user && user.rol !== 'admin') {
     return <Navigate to={`/clinica/${slug}/dashboard`} replace />
   }
 

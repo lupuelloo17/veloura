@@ -10,7 +10,7 @@ export default function ClinicNav() {
   const { clinica } = useClinic()
   const { user }    = useAuth()
 
-  const isAdmin = user?.rol === 'admin' || user?.rol === 'admin_clinica'
+  const isAdmin = user?.rol === 'admin'
 
   const TABS = [
     { label: 'Dashboard',  icon: LayoutDashboard, path: `/clinica/${slug}/dashboard` },
