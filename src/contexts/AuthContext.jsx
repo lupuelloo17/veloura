@@ -137,21 +137,42 @@ function sessionToBase(session) {
 }
 
 // Enriches user with rol + clinica_id from usuarios table (fire-and-forget)
-// Queries by email (more reliable than id when seed UUIDs differ from auth.uid)
 function enrichFromDB(userId, setUser, email) {
-  const query = email
-    ? supabase.from('usuarios').select('rol, clinica_id, nombre').eq('email', email).single()
-    : supabase.from('usuarios').select('rol, clinica_id, nombre').eq('id', userId).single()
+  _enrichFromDB(userId, setUser, email).catch(e => console.error('[enrichFromDB]', e))
+}
 
-  query
-    .then(({ data }) => {
-      if (!data) return
-      setUser(prev => prev ? {
-        ...prev,
-        rol:        data.rol        ?? prev.rol,
-        clinica_id: data.clinica_id ?? prev.clinica_id,
-        nombre:     data.nombre     ?? prev.nombre,
-      } : prev)
-    })
-    .catch(() => { /* silent */ })
+async function _enrichFromDB(userId, setUser, email) {
+  // 1. Intenta por id
+  let { data } = await supabase
+    .from('usuarios')
+    .select('rol, clinica_id, nombre')
+    .eq('id', userId)
+    .single()
+
+  // 2. Si no encuentra, busca por email y actualiza el id para que coincida
+  if (!data && email) {
+    const { data: found } = await supabase
+      .from('usuarios')
+      .select('rol, clinica_id, nombre')
+      .eq('email', email)
+      .single()
+
+    if (found) {
+      data = found
+      // Actualiza el id del registro para que coincida con auth.uid()
+      await supabase
+        .from('usuarios')
+        .update({ id: userId })
+        .eq('email', email)
+    }
+  }
+
+  if (!data) return
+
+  setUser(prev => prev ? {
+    ...prev,
+    rol:        data.rol        ?? prev.rol,
+    clinica_id: data.clinica_id ?? prev.clinica_id,
+    nombre:     data.nombre     ?? prev.nombre,
+  } : prev)
 }
