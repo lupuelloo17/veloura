@@ -78,12 +78,7 @@ export default function LoginPage() {
       {/* Top section */}
       <div className="flex-1 flex flex-col items-center justify-center px-7 pt-14 pb-6">
         {/* Logo */}
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl mb-5 shadow-sm"
-          style={{ backgroundColor: '#C8A882' }}
-        >
-          🌸
-        </div>
+        <img src="/logo.png" alt="GlowAI" style={{ height: '120px' }} className="w-auto mb-5" />
         <p className="text-gray-400 text-xs tracking-widest uppercase font-semibold mb-1">
           Clínica Lumière
         </p>

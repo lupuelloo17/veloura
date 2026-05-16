@@ -60,15 +60,7 @@ export default function LandingPage() {
       {/* ── NAV ── */}
       <nav className="sticky top-0 bg-white/95 backdrop-blur border-b border-gray-100 z-30">
         <div className="max-w-5xl mx-auto px-5 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-              style={{ backgroundColor: BRAND }}
-            >
-              G
-            </div>
-            <span className="font-bold text-gray-900 text-base">GlowAI</span>
-          </div>
+          <img src="/logo.png" alt="GlowAI" className="h-10 w-auto" />
           <div className="flex items-center gap-3">
             <a href="#planes" className="text-gray-500 text-sm font-medium hidden sm:block hover:text-gray-800 transition-colors">
               Planes
@@ -86,6 +78,7 @@ export default function LandingPage() {
 
       {/* ── HERO ── */}
       <section className="max-w-5xl mx-auto px-5 pt-16 pb-14 text-center">
+        <img src="/logo.png" alt="GlowAI" style={{ height: '180px' }} className="w-auto mx-auto mb-8" />
         <div
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold mb-6"
           style={{ backgroundColor: BRAND + '18', color: BRAND }}

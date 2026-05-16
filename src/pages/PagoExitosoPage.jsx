@@ -24,6 +24,9 @@ export default function PagoExitosoPage() {
           transform: visible ? 'translateY(0)' : 'translateY(20px)',
         }}
       >
+        {/* Logo */}
+        <img src="/logo.png" alt="GlowAI" style={{ height: '80px' }} className="w-auto mx-auto mb-6" />
+
         {/* Animated check */}
         <div
           className="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 transition-transform duration-500"
