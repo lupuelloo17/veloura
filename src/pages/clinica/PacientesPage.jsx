@@ -28,7 +28,7 @@ export default function PacientesPage() {
 
   // ── Cargar pacientes desde Supabase cuando esté disponible ──────
   useEffect(() => {
-    if (!supabase || !clinica?.id) return
+    if (!supabase || !clinica?.id || clinica._isMock) return
     setCargando(true)
     supabase
       .from('pacientes')
@@ -36,7 +36,7 @@ export default function PacientesPage() {
       .eq('clinica_id', clinica.id)
       .order('creado_en', { ascending: false })
       .then(({ data, error }) => {
-        if (!error && data) setPacientes(data)
+        if (!error && data?.length) setPacientes(data)
         setCargando(false)
       })
   }, [clinica?.id])

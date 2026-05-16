@@ -24,12 +24,12 @@ export const ESTADO_STYLE = {
 
 // ── Lista de pacientes para el selector ───────────────────────────────────
 export const MOCK_PACIENTES_LISTA = [
-  { id: 'p1', nombre: 'Ana Martínez',    email: 'ana.martinez@email.es',   telefono: '+34 612 345 678', ultima_visita: '12/11/2025', foto: null, rgpd_aceptado: true, marketing_aceptado: true  },
-  { id: 'p2', nombre: 'Carmen López',    email: 'carmen.lopez@email.es',   telefono: '+34 698 765 432', ultima_visita: '05/12/2025', foto: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face', rgpd_aceptado: true, marketing_aceptado: false },
-  { id: 'p3', nombre: 'María Fernández', email: 'maria.fdez@email.es',     telefono: '+34 655 123 456', ultima_visita: '18/01/2026', foto: null, rgpd_aceptado: true, marketing_aceptado: true  },
-  { id: 'p4', nombre: 'Laura Sánchez',   email: 'laura.sanchez@email.es',  telefono: '+34 677 234 567', ultima_visita: '02/02/2026', foto: null, rgpd_aceptado: true, marketing_aceptado: false },
-  { id: 'p5', nombre: 'Isabel Torres',   email: 'isabel.torres@email.es',  telefono: '+34 634 456 789', ultima_visita: '14/03/2026', foto: null, rgpd_aceptado: true, marketing_aceptado: true  },
-  { id: 'p6', nombre: 'Patricia Ruiz',   email: 'patricia.ruiz@email.es',  telefono: '+34 612 789 012', ultima_visita: '28/03/2026', foto: null, rgpd_aceptado: true, marketing_aceptado: true  },
+  { id: '1', nombre: 'Ana Martínez',    email: 'ana.martinez@email.es',   telefono: '+34 612 345 678', ultima_visita: '12/11/2025', foto: null, rgpd_aceptado: true, marketing_aceptado: true  },
+  { id: '2', nombre: 'Carmen López',    email: 'carmen.lopez@email.es',   telefono: '+34 698 765 432', ultima_visita: '05/12/2025', foto: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face', rgpd_aceptado: true, marketing_aceptado: false },
+  { id: '3', nombre: 'María Fernández', email: 'maria.fdez@email.es',     telefono: '+34 655 123 456', ultima_visita: '18/01/2026', foto: null, rgpd_aceptado: true, marketing_aceptado: true  },
+  { id: '4', nombre: 'Laura Sánchez',   email: 'laura.sanchez@email.es',  telefono: '+34 677 234 567', ultima_visita: '02/02/2026', foto: null, rgpd_aceptado: true, marketing_aceptado: false },
+  { id: '5', nombre: 'Isabel Torres',   email: 'isabel.torres@email.es',  telefono: '+34 634 456 789', ultima_visita: '14/03/2026', foto: null, rgpd_aceptado: true, marketing_aceptado: true  },
+  { id: '6', nombre: 'Patricia Ruiz',   email: 'patricia.ruiz@email.es',  telefono: '+34 612 789 012', ultima_visita: '28/03/2026', foto: null, rgpd_aceptado: true, marketing_aceptado: true  },
 ]
 
 // ── Helper ─────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ const INITIAL_CITAS = [
   // ── Lunes 11 mayo ──────────────────────────────────────────────────────
   {
     id: 'c1', clinica_id: 'mock-lumiere',
-    paciente_id: 'p6', paciente_nombre: 'Patricia Ruiz',
+    paciente_id: '6', paciente_nombre: 'Patricia Ruiz',
     paciente_foto: null,
     medico_id: 'mock-garcia', medico_nombre: 'Dra. María García',
     tratamiento: 'Consulta inicial', precio: 80,
@@ -55,7 +55,7 @@ const INITIAL_CITAS = [
   },
   {
     id: 'c2', clinica_id: 'mock-lumiere',
-    paciente_id: 'p5', paciente_nombre: 'Isabel Torres',
+    paciente_id: '5', paciente_nombre: 'Isabel Torres',
     paciente_foto: null,
     medico_id: 'mock-garcia', medico_nombre: 'Dra. María García',
     tratamiento: 'Toxina botulínica', precio: 250,
@@ -69,7 +69,7 @@ const INITIAL_CITAS = [
   // ── Martes 12 mayo ─────────────────────────────────────────────────────
   {
     id: 'c3', clinica_id: 'mock-lumiere',
-    paciente_id: 'p3', paciente_nombre: 'María Fernández',
+    paciente_id: '3', paciente_nombre: 'María Fernández',
     paciente_foto: null,
     medico_id: 'mock-garcia', medico_nombre: 'Dra. María García',
     tratamiento: 'Peeling químico', precio: 120,
@@ -83,7 +83,7 @@ const INITIAL_CITAS = [
   // ── Miércoles 13 mayo ──────────────────────────────────────────────────
   {
     id: 'c4', clinica_id: 'mock-lumiere',
-    paciente_id: 'p4', paciente_nombre: 'Laura Sánchez',
+    paciente_id: '4', paciente_nombre: 'Laura Sánchez',
     paciente_foto: null,
     medico_id: 'mock-garcia', medico_nombre: 'Dra. María García',
     tratamiento: 'Tratamiento antimanchas', precio: 200,
@@ -95,7 +95,7 @@ const INITIAL_CITAS = [
   },
   {
     id: 'c5', clinica_id: 'mock-lumiere',
-    paciente_id: 'p1', paciente_nombre: 'Ana Martínez',
+    paciente_id: '1', paciente_nombre: 'Ana Martínez',
     paciente_foto: null,
     medico_id: 'mock-garcia', medico_nombre: 'Dra. María García',
     tratamiento: 'Radiofrecuencia facial', precio: 180,
@@ -109,7 +109,7 @@ const INITIAL_CITAS = [
   // ── Jueves 14 mayo ─────────────────────────────────────────────────────
   {
     id: 'c6', clinica_id: 'mock-lumiere',
-    paciente_id: 'p2', paciente_nombre: 'Carmen López',
+    paciente_id: '2', paciente_nombre: 'Carmen López',
     paciente_foto: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face',
     medico_id: 'mock-garcia', medico_nombre: 'Dra. María García',
     tratamiento: 'Mesoterapia facial', precio: 150,
@@ -123,7 +123,7 @@ const INITIAL_CITAS = [
   // ── Viernes 15 mayo (hoy) ──────────────────────────────────────────────
   {
     id: 'c7', clinica_id: 'mock-lumiere',
-    paciente_id: 'p1', paciente_nombre: 'Ana Martínez',
+    paciente_id: '1', paciente_nombre: 'Ana Martínez',
     paciente_foto: null,
     medico_id: 'mock-garcia', medico_nombre: 'Dra. María García',
     tratamiento: 'Revisión y seguimiento', precio: 50,
@@ -135,7 +135,7 @@ const INITIAL_CITAS = [
   },
   {
     id: 'c8', clinica_id: 'mock-lumiere',
-    paciente_id: 'p2', paciente_nombre: 'Carmen López',
+    paciente_id: '2', paciente_nombre: 'Carmen López',
     paciente_foto: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face',
     medico_id: 'mock-garcia', medico_nombre: 'Dra. María García',
     tratamiento: 'Ácido hialurónico labios', precio: 350,
