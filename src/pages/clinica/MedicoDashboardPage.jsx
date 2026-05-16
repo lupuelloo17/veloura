@@ -7,19 +7,11 @@ import { useCitas, ESTADO_STYLE } from '../../contexts/CitasContext'
 import FeatureGate from '../../components/FeatureGate'
 import ClinicLayout from './ClinicLayout'
 import { fTime } from '../../services/recordatorios'
+import PACIENTES from '../../data/pacientes'
 
-const MY_PATIENTS = [
-  {
-    id: 'p1', nombre: 'Valentina Morales', ultima_sesion: '18 oct 2025',
-    sesiones: 6, riesgo: 'moderado',
-    foto: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&crop=face',
-  },
-  {
-    id: 'p2', nombre: 'Sofía Restrepo', ultima_sesion: '5 nov 2025',
-    sesiones: 3, riesgo: 'bajo',
-    foto: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face',
-  },
-]
+// IDs (from src/data/pacientes.js) assigned to the demo médico (Dra. García).
+// Derived from the central PACIENTES list so the cards link to real detail pages.
+const MEDICO_PATIENT_IDS = ['1', '2', '3']
 
 const RIESGO_STYLE = {
   bajo:     { bg: '#dcfce7', text: '#15803d' },
@@ -52,6 +44,23 @@ export default function MedicoDashboardPage() {
       }),
     [citas]
   )
+
+  // Pacientes asignados a esta doctora (subconjunto de PACIENTES por id).
+  // Mantiene la forma { id, nombre, foto, sesiones, ultima_sesion, riesgo }
+  // que usa el resto del componente y, lo más importante, links que sí existen.
+  const MY_PATIENTS = useMemo(() => (
+    MEDICO_PATIENT_IDS
+      .map(id => PACIENTES.find(p => p.id === id))
+      .filter(Boolean)
+      .map(p => ({
+        id:            p.id,
+        nombre:        `${p.nombre} ${p.apellido}`,
+        foto:          p.foto_perfil ?? null,
+        sesiones:      p.total_visitas,
+        ultima_sesion: p.ultima_visita,
+        riesgo:        p.riesgo,
+      }))
+  ), [])
 
   async function handleLogout() {
     await logout()
@@ -207,11 +216,20 @@ export default function MedicoDashboardPage() {
                     onClick={() => navigate(`/clinica/${slug}/paciente/${p.id}`)}
                     className="w-full bg-white rounded-2xl p-3.5 flex items-center gap-3 shadow-sm text-left active:scale-95 transition-transform"
                   >
-                    <img
-                      src={p.foto}
-                      alt={p.nombre}
-                      className="w-11 h-11 rounded-xl object-cover flex-shrink-0"
-                    />
+                    {p.foto ? (
+                      <img
+                        src={p.foto}
+                        alt={p.nombre}
+                        className="w-11 h-11 rounded-xl object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                        style={{ backgroundColor: brand }}
+                      >
+                        {p.nombre.split(' ').map(s => s[0]).slice(0, 2).join('')}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-gray-900 text-sm font-semibold truncate">{p.nombre}</p>
                       <p className="text-gray-400 text-xs">{p.sesiones} sesiones · {p.ultima_sesion}</p>
