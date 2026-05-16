@@ -7,6 +7,7 @@ import { PLANES } from '../config/planes'
 const MOCK_CLINICAS = {
   'clinica-lumiere': {
     id: 'mock-lumiere',
+    _isMock: true,
     nombre: 'Clínica Lumière Valencia',
     slug: 'clinica-lumiere',
     logo_url: null,
@@ -24,6 +25,7 @@ const MOCK_CLINICAS = {
   },
   'derma-madrid': {
     id: 'mock-derma',
+    _isMock: true,
     nombre: 'DermaCenter Madrid',
     slug: 'derma-madrid',
     logo_url: null,

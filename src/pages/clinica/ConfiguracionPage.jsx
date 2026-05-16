@@ -98,7 +98,7 @@ function SecIdentidad({ clinica, brand, onSave }) {
     setSaving(true)
     let logo_url = clinica?.logo_url ?? null
 
-    if (logoFile && supabase) {
+    if (logoFile && supabase && !clinica._isMock) {
       const ext  = logoFile.name.split('.').pop()
       const path = `${clinica.id}.${ext}`
       const { error: upErr } = await supabase.storage
@@ -197,14 +197,14 @@ function SecIdentidad({ clinica, brand, onSave }) {
 // ── SECCIÓN 2: EQUIPO ────────────────────────────────────────────
 const EMPTY_MEDICO = { nombre: '', especialidad: '', colegiado: '', email: '', telefono: '', foto: '' }
 
-function SecEquipo({ clinica, brand }) {
+function SecEquipo({ clinica, brand, showToast }) {
   const [medicos, setMedicos] = useState([])
   const [modal, setModal]     = useState(null) // null | { mode:'add'|'edit', data }
   const [form, setForm]       = useState(EMPTY_MEDICO)
   const [saving, setSaving]   = useState(false)
 
   useEffect(() => {
-    if (supabase && clinica?.id) {
+    if (supabase && clinica?.id && !clinica._isMock) {
       supabase.from('medicos').select('*').eq('clinica_id', clinica.id)
         .then(({ data }) => { if (data?.length) setMedicos(data) })
     } else {
@@ -218,21 +218,25 @@ function SecEquipo({ clinica, brand }) {
   async function toggleActivo(m) {
     const updated = { ...m, activo: !m.activo }
     setMedicos(prev => prev.map(x => x.id === m.id ? updated : x))
-    if (supabase) await supabase.from('medicos').update({ activo: !m.activo }).eq('id', m.id)
+    if (supabase && !clinica._isMock) await supabase.from('medicos').update({ activo: !m.activo }).eq('id', m.id)
   }
 
   async function handleSave() {
     setSaving(true)
     if (modal.mode === 'add') {
-      if (supabase && clinica?.id) {
-        const { data } = await supabase.from('medicos').insert([{ ...form, clinica_id: clinica.id, activo: true }]).select().single()
+      if (supabase && clinica?.id && !clinica._isMock) {
+        const { data, error } = await supabase.from('medicos').insert([{ ...form, clinica_id: clinica.id, activo: true }]).select().single()
+        if (error) { showToast('Error al añadir médico: ' + error.message, 'error'); setSaving(false); return }
         if (data) setMedicos(prev => [...prev, data])
       } else {
         setMedicos(prev => [...prev, { ...form, id: 'm' + Date.now(), activo: true }])
       }
     } else {
       setMedicos(prev => prev.map(m => m.id === modal.id ? { ...m, ...form } : m))
-      if (supabase) await supabase.from('medicos').update(form).eq('id', modal.id)
+      if (supabase && !clinica._isMock) {
+        const { error } = await supabase.from('medicos').update(form).eq('id', modal.id)
+        if (error) { showToast('Error al guardar: ' + error.message, 'error'); setSaving(false); return }
+      }
     }
     setSaving(false)
     setModal(null)
@@ -321,7 +325,7 @@ function SecEquipo({ clinica, brand }) {
 // ── SECCIÓN 3: CATÁLOGO ──────────────────────────────────────────
 const EMPTY_TRAT = { nombre: '', descripcion: '', duracion_minutos: 60, precio: '', color: '#C8A882', activo: true }
 
-function SecCatalogo({ clinica, brand }) {
+function SecCatalogo({ clinica, brand, showToast }) {
   const [lista, setLista]   = useState([])
   const [modal, setModal]   = useState(null)
   const [form, setForm]     = useState(EMPTY_TRAT)
@@ -329,7 +333,7 @@ function SecCatalogo({ clinica, brand }) {
   const [confirm, setConfirm] = useState(null) // id to delete
 
   useEffect(() => {
-    if (supabase && clinica?.id) {
+    if (supabase && clinica?.id && !clinica._isMock) {
       supabase.from('tratamientos').select('*').eq('clinica_id', clinica.id).order('nombre')
         .then(({ data }) => { if (data?.length) setLista(data) })
     } else {
@@ -341,22 +345,26 @@ function SecCatalogo({ clinica, brand }) {
 
   async function toggleActivo(t) {
     setLista(prev => prev.map(x => x.id === t.id ? { ...x, activo: !x.activo } : x))
-    if (supabase) await supabase.from('tratamientos').update({ activo: !t.activo }).eq('id', t.id)
+    if (supabase && !clinica._isMock) await supabase.from('tratamientos').update({ activo: !t.activo }).eq('id', t.id)
   }
 
   async function handleSave() {
     setSaving(true)
     const payload = { ...form, precio: parseFloat(form.precio) || null }
     if (modal.mode === 'add') {
-      if (supabase && clinica?.id) {
-        const { data } = await supabase.from('tratamientos').insert([{ ...payload, clinica_id: clinica.id }]).select().single()
+      if (supabase && clinica?.id && !clinica._isMock) {
+        const { data, error } = await supabase.from('tratamientos').insert([{ ...payload, clinica_id: clinica.id }]).select().single()
+        if (error) { showToast('Error al añadir tratamiento: ' + error.message, 'error'); setSaving(false); return }
         if (data) setLista(prev => [...prev, data])
       } else {
         setLista(prev => [...prev, { ...payload, id: 't' + Date.now() }])
       }
     } else {
       setLista(prev => prev.map(x => x.id === modal.id ? { ...x, ...payload } : x))
-      if (supabase) await supabase.from('tratamientos').update(payload).eq('id', modal.id)
+      if (supabase && !clinica._isMock) {
+        const { error } = await supabase.from('tratamientos').update(payload).eq('id', modal.id)
+        if (error) { showToast('Error al guardar: ' + error.message, 'error'); setSaving(false); return }
+      }
     }
     setSaving(false)
     setModal(null)
@@ -364,7 +372,7 @@ function SecCatalogo({ clinica, brand }) {
 
   async function handleDelete(id) {
     setLista(prev => prev.filter(x => x.id !== id))
-    if (supabase) await supabase.from('tratamientos').delete().eq('id', id)
+    if (supabase && !clinica._isMock) await supabase.from('tratamientos').delete().eq('id', id)
     setConfirm(null)
   }
 
@@ -557,9 +565,11 @@ function SecSuscripcion({ clinica, plan, brand }) {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
 
+  const isMock = clinica?._isMock
+
   async function handlePortal() {
-    if (!clinica?.stripe_customer_id) {
-      setError('No hay suscripción activa. Activa un plan en /precios.')
+    if (isMock || !clinica?.stripe_customer_id) {
+      setError('Esta función requiere una suscripción activa en producción. Usa "Cambiar de plan" para activar uno.')
       return
     }
     setLoading(true)
@@ -569,6 +579,10 @@ function SecSuscripcion({ clinica, plan, brand }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerId: clinica.stripe_customer_id }),
       })
+      if (!res.ok) {
+        if (res.status === 404) throw new Error('API no disponible localmente. Ejecuta "vercel dev" para probar.')
+        throw new Error(`Error ${res.status}`)
+      }
       const { url, error: e } = await res.json()
       if (e) throw new Error(e)
       window.location.href = url
@@ -578,7 +592,7 @@ function SecSuscripcion({ clinica, plan, brand }) {
     }
   }
 
-  const status = clinica?.stripe_subscription_status ?? 'inactive'
+  const status = clinica?.stripe_subscription_status ?? (isMock ? 'active' : 'inactive')
   const statusLabel = { active: 'Activa', trialing: 'Prueba', past_due: 'Pago fallido', canceled: 'Cancelada', inactive: 'Inactiva' }
   const statusColor = { active: '#16a34a', trialing: '#2563eb', past_due: '#dc2626', canceled: '#6b7280', inactive: '#9ca3af' }
 
@@ -611,22 +625,30 @@ function SecSuscripcion({ clinica, plan, brand }) {
         )}
       </div>
 
+      {isMock && (
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 text-blue-700 text-xs mb-4">
+          <ShieldCheck size={13} /> Modo demo — los cambios de plan se procesan en producción con Stripe.
+        </div>
+      )}
+
       {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
 
       <div className="space-y-2">
-        <button
-          onClick={handlePortal}
-          disabled={loading}
-          className="w-full py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-all"
-          style={{ backgroundColor: brand }}
-        >
-          <ExternalLink size={15} /> {loading ? 'Abriendo…' : 'Gestionar suscripción'}
-        </button>
+        {!isMock && (
+          <button
+            onClick={handlePortal}
+            disabled={loading}
+            className="w-full py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-all"
+            style={{ backgroundColor: brand }}
+          >
+            <ExternalLink size={15} /> {loading ? 'Abriendo…' : 'Gestionar suscripción'}
+          </button>
+        )}
         <Link
           to="/precios"
           className="w-full py-3 rounded-2xl text-sm font-semibold flex items-center justify-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
         >
-          Cambiar de plan
+          {isMock ? 'Ver planes y activar suscripción' : 'Cambiar de plan'}
         </Link>
       </div>
     </div>
@@ -662,7 +684,7 @@ export default function ConfiguracionPage() {
   }
 
   async function handleSaveClinica(fields) {
-    if (supabase && clinica?.id) {
+    if (supabase && clinica?.id && !clinica._isMock) {
       const { data, error } = await supabase
         .from('clinicas')
         .update(fields)
@@ -703,8 +725,8 @@ export default function ConfiguracionPage() {
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-5">
           {tab === 'identidad'      && <SecIdentidad       clinica={clinica} brand={brand} onSave={handleSaveClinica} />}
-          {tab === 'equipo'         && <SecEquipo           clinica={clinica} brand={brand} />}
-          {tab === 'catalogo'       && <SecCatalogo         clinica={clinica} brand={brand} />}
+          {tab === 'equipo'         && <SecEquipo           clinica={clinica} brand={brand} showToast={showToast} />}
+          {tab === 'catalogo'       && <SecCatalogo         clinica={clinica} brand={brand} showToast={showToast} />}
           {tab === 'notificaciones' && <SecNotificaciones   clinica={clinica} brand={brand} onSave={handleSaveClinica} />}
           {tab === 'suscripcion'    && <SecSuscripcion      clinica={clinica} plan={plan}  brand={brand} />}
         </div>
