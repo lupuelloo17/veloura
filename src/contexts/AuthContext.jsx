@@ -125,7 +125,7 @@ export function useAuth() {
 // Returns user object from session synchronously (no DB call)
 function sessionToBase(session) {
   const meta = session.user.app_metadata ?? {}
-  return {
+  const base = {
     id:           session.user.id,
     email:        session.user.email,
     rol:          meta.rol ?? 'medico',
@@ -134,10 +134,25 @@ function sessionToBase(session) {
     nombre:       session.user.user_metadata?.nombre ?? session.user.email,
     foto:         session.user.user_metadata?.foto ?? null,
   }
+  return applyMockOverride(base)
+}
+
+// If the email is in MOCK_USERS, override rol/clinica/nombre/foto with mock values.
+// This guarantees demo accounts (admin@lumiere.com, dra.garcia@lumiere.com) get the
+// correct role even when the usuarios table row is missing or blocked by RLS.
+function applyMockOverride(base) {
+  if (!base?.email) return base
+  const mock = MOCK_USERS[base.email.toLowerCase()]
+  if (!mock) return base
+  const { password: _pw, id: _mid, email: _me, ...mockFields } = mock
+  return { ...base, ...mockFields }
 }
 
 // Enriches user with rol + clinica_id from usuarios table (fire-and-forget)
 function enrichFromDB(userId, setUser, email) {
+  // Demo accounts: trust the MOCK_USERS override done in sessionToBase and skip the DB lookup.
+  // Avoids accidentally overwriting rol='admin' with a stale row in the usuarios table.
+  if (email && MOCK_USERS[email.toLowerCase()]) return
   _enrichFromDB(userId, setUser, email).catch(e => console.error('[enrichFromDB]', e))
 }
 
