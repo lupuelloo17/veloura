@@ -1,7 +1,3 @@
-// ── Hora de referencia para el modo demo ──────────────────────────────────
-// Simula que la app carga a las 08:30 del 2026-05-15
-// Con datos reales de Supabase, usar: const now = new Date()
-const MOCK_NOW = new Date('2026-05-15T08:30:00')
 
 // ── Helpers de formato ────────────────────────────────────────────────────
 export function fTime(date) {
@@ -32,7 +28,7 @@ export function dismissReminder(id) {
 
 // ── Lógica principal ───────────────────────────────────────────────────────
 export function checkRecordatorios(citas) {
-  const now      = MOCK_NOW
+  const now      = new Date()
   const dismissed = getDismissed()
   const result   = []
 

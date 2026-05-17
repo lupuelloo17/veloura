@@ -24,6 +24,8 @@ import PagoExitosoPage        from './pages/PagoExitosoPage'
 import { ClinicProvider }       from './contexts/ClinicContext'
 import { CitasProvider }        from './contexts/CitasContext'
 import DashboardPage            from './pages/clinica/DashboardPage'
+import AdminDashboardPage       from './pages/clinica/AdminDashboardPage'
+import MedicoDashboardPage      from './pages/clinica/MedicoDashboardPage'
 import PacientesPage            from './pages/clinica/PacientesPage'
 import PacienteDetallePage      from './pages/clinica/PacienteDetallePage'
 import AnalisisClinicaPage      from './pages/clinica/AnalisisClinicaPage'
@@ -101,6 +103,16 @@ function AnalisisPorRol() {
   return <AnalisisClinicaPage />
 }
 
+// ── /dashboard renderiza distinto componente según rol:
+// admin ve métricas de clínica + Stripe; medico ve su agenda propia;
+// recepcion ve el dashboard general.
+function DashboardPorRol() {
+  const { user } = useAuth()
+  if (user?.rol === 'admin')   return <AdminDashboardPage />
+  if (user?.rol === 'medico')  return <MedicoDashboardPage />
+  return <DashboardPage />
+}
+
 // ── Clinic routes wrapped in ClinicProvider ───────────────────
 function ClinicRoutes() {
   return (
@@ -108,7 +120,7 @@ function ClinicRoutes() {
       <CitasProvider>
         <Routes>
           {/* ── Staff (admin/medico/recepcion) ── */}
-          <Route path="dashboard"     element={<RequireRole roles={STAFF_ROLES}><DashboardPage /></RequireRole>} />
+          <Route path="dashboard"     element={<RequireRole roles={STAFF_ROLES}><DashboardPorRol /></RequireRole>} />
           <Route path="pacientes"     element={<RequireRole roles={STAFF_ROLES}><PacientesPage /></RequireRole>} />
           <Route path="paciente/:id"  element={<RequireRole roles={STAFF_ROLES}><PacienteDetallePage /></RequireRole>} />
           <Route path="agenda"        element={<RequireRole roles={STAFF_ROLES}><AgendaPage /></RequireRole>} />

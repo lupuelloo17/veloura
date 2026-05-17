@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ChevronRight, CalendarDays, LogOut, Microscope, CheckCircle2, Play } from 'lucide-react'
 import { useClinic } from '../../contexts/ClinicContext'
@@ -7,19 +7,13 @@ import { useCitas, ESTADO_STYLE } from '../../contexts/CitasContext'
 import FeatureGate from '../../components/FeatureGate'
 import ClinicLayout from './ClinicLayout'
 import { fTime } from '../../services/recordatorios'
-import PACIENTES from '../../data/pacientes'
-
-// IDs (from src/data/pacientes.js) assigned to the demo médico (Dra. García).
-// Derived from the central PACIENTES list so the cards link to real detail pages.
-const MEDICO_PATIENT_IDS = ['1', '2', '3']
+import { supabase } from '../../lib/supabase'
 
 const RIESGO_STYLE = {
   bajo:     { bg: '#dcfce7', text: '#15803d' },
   moderado: { bg: '#fef9c3', text: '#a16207' },
   alto:     { bg: '#fee2e2', text: '#b91c1c' },
 }
-
-const DEMO_TODAY = new Date('2026-05-15')
 
 export default function MedicoDashboardPage() {
   const navigate  = useNavigate()
@@ -29,13 +23,15 @@ export default function MedicoDashboardPage() {
   const { citas } = useCitas()
   const brand = clinica?.color_primario ?? '#C8A882'
 
+  const today = new Date()
+
   const citasHoy = useMemo(() =>
     citas
       .filter(c => {
         const f = c.fecha instanceof Date ? c.fecha : new Date(c.fecha)
-        return f.getFullYear() === DEMO_TODAY.getFullYear() &&
-               f.getMonth()    === DEMO_TODAY.getMonth()    &&
-               f.getDate()     === DEMO_TODAY.getDate()
+        return f.getFullYear() === today.getFullYear() &&
+               f.getMonth()    === today.getMonth()    &&
+               f.getDate()     === today.getDate()
       })
       .sort((a, b) => {
         const fa = a.fecha instanceof Date ? a.fecha : new Date(a.fecha)
@@ -45,22 +41,25 @@ export default function MedicoDashboardPage() {
     [citas]
   )
 
-  // Pacientes asignados a esta doctora (subconjunto de PACIENTES por id).
-  // Mantiene la forma { id, nombre, foto, sesiones, ultima_sesion, riesgo }
-  // que usa el resto del componente y, lo más importante, links que sí existen.
-  const MY_PATIENTS = useMemo(() => (
-    MEDICO_PATIENT_IDS
-      .map(id => PACIENTES.find(p => p.id === id))
-      .filter(Boolean)
-      .map(p => ({
-        id:            p.id,
-        nombre:        `${p.nombre} ${p.apellido}`,
-        foto:          p.foto_perfil ?? null,
-        sesiones:      p.total_visitas,
-        ultima_sesion: p.ultima_visita,
-        riesgo:        p.riesgo,
-      }))
-  ), [])
+  // Pacientes asignados al médico actual — cargados desde Supabase.
+  // La RLS garantiza que solo devuelve filas donde medico_id = auth.uid().
+  const [myPatients, setMyPatients] = useState([])
+  useEffect(() => {
+    if (!supabase) return
+    supabase
+      .from('pacientes')
+      .select('id, nombre, apellido, foto_perfil, total_visitas, ultima_visita, riesgo')
+      .then(({ data }) => {
+        if (data) setMyPatients(data.map(p => ({
+          id:            p.id,
+          nombre:        `${p.nombre} ${p.apellido}`,
+          foto:          p.foto_perfil ?? null,
+          sesiones:      p.total_visitas ?? 0,
+          ultima_sesion: p.ultima_visita ?? '—',
+          riesgo:        p.riesgo ?? 'bajo',
+        })))
+      })
+  }, [])
 
   async function handleLogout() {
     await logout()
@@ -115,7 +114,7 @@ export default function MedicoDashboardPage() {
           {/* Quick stats */}
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: 'Mis pacientes', value: MY_PATIENTS.length },
+              { label: 'Mis pacientes', value: myPatients.length },
               { label: 'Citas hoy',     value: citasHoy.length },
               { label: 'Pendientes',    value: citasHoy.filter(a => a.estado === 'pendiente').length },
             ].map(({ label, value }) => (
@@ -208,7 +207,7 @@ export default function MedicoDashboardPage() {
               </button>
             </div>
             <div className="space-y-2">
-              {MY_PATIENTS.map(p => {
+              {myPatients.map(p => {
                 const rs = RIESGO_STYLE[p.riesgo]
                 return (
                   <button
