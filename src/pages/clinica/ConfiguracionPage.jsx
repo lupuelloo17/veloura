@@ -351,14 +351,17 @@ function SecCatalogo({ clinica, brand, showToast }) {
   const [saving, setSaving] = useState(false)
   const [confirm, setConfirm] = useState(null) // id to delete
 
-  useEffect(() => {
+  async function cargarTratamientos() {
     if (supabase && clinica?.id && !clinica._isMock) {
-      supabase.from('tratamientos').select('*').eq('clinica_id', clinica.id).order('nombre')
-        .then(({ data }) => { if (data?.length) setLista(data) })
+      const { data, error } = await supabase.from('tratamientos').select('*').eq('clinica_id', clinica.id).order('nombre')
+      console.log('[SecCatalogo] cargarTratamientos:', { data, error })
+      if (!error && data) setLista(data)
     } else {
       setLista(MOCK_TRATAMIENTOS)
     }
-  }, [clinica?.id])
+  }
+
+  useEffect(() => { cargarTratamientos() }, [clinica?.id])
 
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -370,19 +373,24 @@ function SecCatalogo({ clinica, brand, showToast }) {
   async function handleSave() {
     setSaving(true)
     const payload = { ...form, precio: parseFloat(form.precio) || null }
+    console.log('[SecCatalogo] handleSave mode:', modal.mode, 'clinica.id:', clinica?.id, payload)
     if (modal.mode === 'add') {
       if (supabase && clinica?.id && !clinica._isMock) {
         const { data, error } = await supabase.from('tratamientos').insert([{ ...payload, clinica_id: clinica.id }]).select().single()
+        console.log('[SecCatalogo] INSERT resultado:', { data, error })
         if (error) { showToast('Error al añadir tratamiento: ' + error.message, 'error'); setSaving(false); return }
-        if (data) setLista(prev => [...prev, data])
+        await cargarTratamientos()
       } else {
         setLista(prev => [...prev, { ...payload, id: 't' + Date.now() }])
       }
     } else {
-      setLista(prev => prev.map(x => x.id === modal.id ? { ...x, ...payload } : x))
-      if (supabase && !clinica._isMock) {
+      if (supabase && clinica?.id && !clinica._isMock) {
         const { error } = await supabase.from('tratamientos').update(payload).eq('id', modal.id)
+        console.log('[SecCatalogo] UPDATE resultado:', { error })
         if (error) { showToast('Error al guardar: ' + error.message, 'error'); setSaving(false); return }
+        await cargarTratamientos()
+      } else {
+        setLista(prev => prev.map(x => x.id === modal.id ? { ...x, ...payload } : x))
       }
     }
     setSaving(false)
@@ -711,6 +719,8 @@ export default function ConfiguracionPage() {
   }
 
   async function handleSaveClinica(fields) {
+    console.log('[handleSaveClinica] clinica.id:', clinica?.id, 'isMock:', clinica?._isMock)
+    console.log('[handleSaveClinica] campos:', fields)
     if (supabase && clinica?.id && !clinica._isMock) {
       const { data, error } = await supabase
         .from('clinicas')
@@ -718,12 +728,15 @@ export default function ConfiguracionPage() {
         .eq('id', clinica.id)
         .select()
         .single()
+      console.log('[handleSaveClinica] resultado:', { data, error })
       if (error) { showToast('Error al guardar: ' + error.message, 'error'); return }
       setClinica(data)
+      await refreshClinica()
+      showToast('Cambios guardados correctamente ✓')
     } else {
       setClinica(prev => ({ ...prev, ...fields }))
+      showToast('Cambios guardados correctamente ✓')
     }
-    showToast('Cambios guardados correctamente ✓')
   }
 
   return (
