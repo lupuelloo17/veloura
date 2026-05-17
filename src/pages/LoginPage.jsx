@@ -87,7 +87,7 @@ export default function LoginPage() {
       {/* Top section */}
       <div className="flex-1 flex flex-col items-center justify-center px-7 pt-14 pb-6">
         {/* Logo */}
-        <img src="/logo.png" alt="Veloura" style={{ height: '120px' }} className="w-auto mb-5" />
+        <img src="/veloura-isotipo.svg" alt="Veloura" style={{ height: '110px' }} className="w-auto mb-5" />
         <p className="text-gray-400 text-xs tracking-widest uppercase font-semibold mb-1">
           Clínica Lumière
         </p>

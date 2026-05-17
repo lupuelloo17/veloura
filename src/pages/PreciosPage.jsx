@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Check, Zap, ArrowLeft } from 'lucide-react'
 import { PLANES, FEATURE_LABELS, formatEUR } from '../config/planes'
 
-const BRAND = '#C8A882'
+const BRAND = '#C9A46A'  // Veloura gold
 
 const PLAN_ORDER = ['esencial', 'premium', 'elite']
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { CheckCircle2, ArrowRight } from 'lucide-react'
 
-const BRAND = '#C8A882'
+const BRAND = '#C9A46A'  // Veloura gold
 
 export default function PagoExitosoPage() {
   const [searchParams] = useSearchParams()
@@ -25,7 +25,7 @@ export default function PagoExitosoPage() {
         }}
       >
         {/* Logo */}
-        <img src="/logo.png" alt="Veloura" style={{ height: '80px' }} className="w-auto mx-auto mb-6" />
+        <img src="/veloura-isotipo.svg" alt="Veloura" style={{ height: '80px' }} className="w-auto mx-auto mb-6" />
 
         {/* Animated check */}
         <div

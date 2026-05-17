@@ -8,11 +8,10 @@ del paciente con histórico clínico personalizado.
 
 ## 🌐 Demo en vivo
 
-**👉 [Abrir Veloura en producción](https://glowai-41ucc1lwe-lupufu-s-projects.vercel.app)**
+**👉 [https://veloura-estetica.vercel.app](https://veloura-estetica.vercel.app)**
 
-> Si la URL queda obsoleta (Vercel emite una URL nueva por cada deploy), busca
-> la actual en **[Vercel Dashboard → veloura → Production Deployment](https://vercel.com/lupufu-s-projects/veloura)**.
-> Cuando el dominio `veloura.app` esté conectado, esta URL será fija.
+URL estable que siempre apunta al último deploy de producción. Cuando el
+dominio definitivo `veloura.app` esté conectado, sustituirá a esta.
 
 ### Cuentas de demostración
 

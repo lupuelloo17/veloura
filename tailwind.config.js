@@ -7,6 +7,23 @@ export default {
   theme: {
     extend: {
       colors: {
+        // ── Paleta oficial Veloura ────────────────────────────────
+        veloura: {
+          gold:   '#C9A46A',  // primario — botones, acentos, branding
+          cream:  '#F7F3EE',  // fondo cálido
+          white:  '#FFFFFF',
+          dark:   '#2D2A26',  // carbón — textos principales y fondo oscuro
+          // Variaciones del gold para estados
+          'gold-50':  '#FAF5EC',
+          'gold-100': '#F0E2C6',
+          'gold-200': '#E1C690',
+          'gold-300': '#D2AB67',
+          'gold-400': '#C9A46A',
+          'gold-500': '#B98A4F',
+          'gold-600': '#9C7338',
+          'gold-700': '#7D5C2C',
+        },
+        // ── Compat: blush legacy (clínica Lumière y app antigua) ──
         blush: {
           50:  '#FDF2F4',
           100: '#FAE6EB',
@@ -17,10 +34,12 @@ export default {
           600: '#C44E68',
           700: '#A3324B',
         },
-        ink: '#2D2D2D',
+        ink: '#2D2A26',  // alineado con veloura.dark
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans:    ['Inter', 'system-ui', 'sans-serif'],
+        // Serif para wordmark y headings de branding (similar al logo)
+        display: ['"Cormorant Garamond"', '"Playfair Display"', 'Georgia', 'serif'],
       },
     },
   },

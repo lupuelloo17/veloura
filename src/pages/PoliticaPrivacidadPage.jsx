@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, Shield } from 'lucide-react'
 
-const BRAND = '#D4537E'
+const BRAND = '#C9A46A'  // Veloura gold
 
 export default function PoliticaPrivacidadPage() {
   const navigate = useNavigate()
