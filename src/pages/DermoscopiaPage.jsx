@@ -839,7 +839,7 @@ especialista en Dermatología.`}
               </div>
 
               <p className="text-gray-400 text-[10px] leading-relaxed mt-3 px-1">
-                GlowAI no mantiene relación comercial con las marcas citadas. Las
+                Veloura no mantiene relación comercial con las marcas citadas. Las
                 recomendaciones se basan en la composición y evidencia clínica publicada
                 de cada formulación.
               </p>

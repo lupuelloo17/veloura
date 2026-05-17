@@ -60,7 +60,7 @@ export default function LandingPage() {
       {/* ── NAV ── */}
       <nav className="sticky top-0 bg-white/95 backdrop-blur border-b border-gray-100 z-30">
         <div className="max-w-5xl mx-auto px-5 py-3 flex items-center justify-between">
-          <img src="/logo.png" alt="GlowAI" className="h-10 w-auto" />
+          <img src="/logo.png" alt="Veloura" className="h-10 w-auto" />
           <div className="flex items-center gap-3">
             <a href="#planes" className="text-gray-500 text-sm font-medium hidden sm:block hover:text-gray-800 transition-colors">
               Planes
@@ -78,7 +78,7 @@ export default function LandingPage() {
 
       {/* ── HERO ── */}
       <section className="max-w-5xl mx-auto px-5 pt-16 pb-14 text-center">
-        <img src="/logo.png" alt="GlowAI" style={{ height: '180px' }} className="w-auto mx-auto mb-8" />
+        <img src="/logo.png" alt="Veloura" style={{ height: '180px' }} className="w-auto mx-auto mb-8" />
         <div
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold mb-6"
           style={{ backgroundColor: BRAND + '18', color: BRAND }}
@@ -90,7 +90,7 @@ export default function LandingPage() {
           <span style={{ color: BRAND }}>estética necesitaba</span>
         </h1>
         <p className="text-gray-500 text-lg max-w-xl mx-auto mb-8 leading-relaxed">
-          GlowAI digitaliza tu clínica en minutos: agenda, historial clínico, recordatorios automáticos y cumplimiento RGPD incluidos.
+          Veloura digitaliza tu clínica en minutos: agenda, historial clínico, recordatorios automáticos y cumplimiento RGPD incluidos.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <a
@@ -299,7 +299,7 @@ export default function LandingPage() {
       {/* ── FOOTER ── */}
       <footer className="border-t border-gray-100 py-8">
         <div className="max-w-5xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
-          <p>GlowAI · Valencia, España · contacto@glowai.app</p>
+          <p>Veloura · Valencia, España · contacto@veloura.app</p>
           <div className="flex items-center gap-4">
             <Link to="/politica-privacidad" className="hover:text-gray-600 transition-colors">
               Política de Privacidad

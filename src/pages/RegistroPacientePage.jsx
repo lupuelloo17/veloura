@@ -233,7 +233,7 @@ export default function RegistroPacientePage() {
       // 7. WhatsApp de bienvenida — pendiente de integración con Twilio/WhatsApp Business API.
       //    El número del paciente está en `whatsapp` (paso 1). Cuando esté disponible:
       //      POST /api/whatsapp-bienvenida { to: whatsapp, nombre: nombreCompleto, slug }
-      console.warn('[GlowAI] WhatsApp de bienvenida no enviado — integración Twilio pendiente')
+      console.warn('[Veloura] WhatsApp de bienvenida no enviado — integración Twilio pendiente')
 
       navigate(`/clinica/${clinicaSlug}/mi-perfil`, { replace: true })
     } catch (err) {

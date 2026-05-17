@@ -47,7 +47,7 @@ export default function PoliticaPrivacidadPage() {
           <Field label="Email de contacto" value="[email@clinica.es]" />
           <p className="text-sm mt-3 leading-relaxed">
             La clínica, en adelante «el Responsable», determina los fines y medios del
-            tratamiento de sus datos personales a través de la plataforma GlowAI.
+            tratamiento de sus datos personales a través de la plataforma Veloura.
           </p>
         </Section>
 
@@ -140,7 +140,7 @@ export default function PoliticaPrivacidadPage() {
         {/* Footer */}
         <div className="border-t border-gray-100 pt-6 text-center">
           <p className="text-xs text-gray-400">
-            GlowAI · Valencia, España · contacto@glowai.app
+            Veloura · Valencia, España · contacto@veloura.app
           </p>
         </div>
       </div>

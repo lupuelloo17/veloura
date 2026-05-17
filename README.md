@@ -1,4 +1,4 @@
-# GlowAI — Plataforma de medicina estética
+# Veloura — La plataforma inteligente para clínicas estéticas
 
 Aplicación SaaS para clínicas de medicina estética. Gestión de pacientes,
 agenda, análisis dermoscópicos asistidos, protocolos de tratamiento y portal
@@ -8,12 +8,11 @@ del paciente con histórico clínico personalizado.
 
 ## 🌐 Demo en vivo
 
-**👉 [Abrir GlowAI en producción](https://glowai-41ucc1lwe-lupufu-s-projects.vercel.app)**
+**👉 [Abrir Veloura en producción](https://glowai-41ucc1lwe-lupufu-s-projects.vercel.app)**
 
-> Si la URL de arriba ha quedado obsoleta (Vercel emite una URL nueva por cada
-> deploy), busca la URL actual en **[Vercel Dashboard → glowai → Production
-> Deployment](https://vercel.com/lupufu-s-projects/glowai)** o configura un
-> dominio estable en Settings → Domains.
+> Si la URL queda obsoleta (Vercel emite una URL nueva por cada deploy), busca
+> la actual en **[Vercel Dashboard → veloura → Production Deployment](https://vercel.com/lupufu-s-projects/veloura)**.
+> Cuando el dominio `veloura.app` esté conectado, esta URL será fija.
 
 ### Cuentas de demostración
 
@@ -27,6 +26,19 @@ Tres perfiles preconfigurados, todos con contraseña `demo1234`:
 
 Al hacer login, el sistema redirige automáticamente al portal correspondiente
 según el rol del usuario.
+
+---
+
+## 🎨 Brand
+
+| Elemento | Valor |
+|---|---|
+| Gold primario | `#C9A46A` |
+| Negro carbón | `#2D2A26` |
+| Crema fondo | `#F7F3EE` |
+| Blanco | `#FFFFFF` |
+
+Tagline: *La plataforma inteligente para clínicas estéticas.*
 
 ---
 
@@ -47,7 +59,7 @@ según el rol del usuario.
 
 ## 🔐 Seguridad por rol
 
-La app tiene **defensa en profundidad** combinando:
+Defensa en profundidad combinando:
 
 1. **Guardas de ruta en el cliente** (`RequireRole` en `src/App.jsx`): un paciente
    que intenta entrar a `/dashboard` es redirigido a `/mi-perfil` y viceversa.
@@ -65,8 +77,8 @@ navegador con su access token, **no puede leer datos ajenos**.
 ## 🚀 Setup local
 
 ```bash
-git clone https://github.com/lupuelloo17/glowai.git
-cd glowai
+git clone https://github.com/lupuelloo17/veloura.git
+cd veloura
 npm install
 cp .env.example .env
 # Edita .env con tus credenciales de Supabase y Stripe
@@ -106,7 +118,7 @@ para que las cuentas demo funcionen sin verificación.
 ## 📁 Estructura
 
 ```
-glowai/
+veloura/
 ├── src/
 │   ├── App.jsx                       # Rutas + RequireAuth/RequireRole + shells
 │   ├── contexts/

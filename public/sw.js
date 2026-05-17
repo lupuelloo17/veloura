@@ -12,8 +12,9 @@
 // IMPORTANTE: bumpear CACHE_VERSION en cada release importante para forzar
 // purga del caché viejo. Vite genera hashes propios para los assets, pero el
 // caché del HTML/manifest necesita esta señal manual.
-const CACHE_VERSION = 'v3-2026-05-17'
-const CACHE_NAME    = `glowai-${CACHE_VERSION}`
+// Rebrand Veloura: prefijo de cache cambia para invalidar todo lo anterior
+const CACHE_VERSION = 'veloura-v1-2026-05-17'
+const CACHE_NAME    = `veloura-${CACHE_VERSION}`
 
 const PRECACHE_URLS = [
   '/',

@@ -1,13 +1,13 @@
 {
-  "name": "GlowAI",
-  "short_name": "GlowAI",
-  "description": "Tu piel, analizada con inteligencia artificial",
+  "name": "Veloura",
+  "short_name": "Veloura",
+  "description": "La plataforma inteligente para clínicas estéticas",
   "start_url": "/login",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FFFFFF",
-  "theme_color": "#D4537E",
+  "background_color": "#F7F3EE",
+  "theme_color": "#C9A46A",
   "icons": [
     {
       "src": "/logo.png",

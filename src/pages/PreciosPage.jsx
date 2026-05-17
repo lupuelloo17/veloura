@@ -69,9 +69,9 @@ export default function PreciosPage() {
               className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold text-sm"
               style={{ backgroundColor: BRAND }}
             >
-              G
+              V
             </div>
-            <span className="font-bold text-gray-900 text-base">GlowAI</span>
+            <span className="font-bold text-gray-900 text-base">Veloura</span>
           </div>
           <Link to="/login" className="text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
             Acceder
@@ -188,7 +188,7 @@ export default function PreciosPage() {
       {/* Footer */}
       <footer className="border-t border-gray-100 py-6">
         <div className="max-w-5xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
-          <p>GlowAI · Valencia, España · contacto@glowai.app</p>
+          <p>Veloura · Valencia, España · contacto@veloura.app</p>
           <div className="flex items-center gap-4">
             <Link to="/politica-privacidad" className="hover:text-gray-600 transition-colors">Política de Privacidad</Link>
             <Link to="/" className="hover:text-gray-600 transition-colors">Inicio</Link>

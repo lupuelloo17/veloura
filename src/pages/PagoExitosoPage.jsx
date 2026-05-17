@@ -25,7 +25,7 @@ export default function PagoExitosoPage() {
         }}
       >
         {/* Logo */}
-        <img src="/logo.png" alt="GlowAI" style={{ height: '80px' }} className="w-auto mx-auto mb-6" />
+        <img src="/logo.png" alt="Veloura" style={{ height: '80px' }} className="w-auto mx-auto mb-6" />
 
         {/* Animated check */}
         <div
@@ -39,7 +39,7 @@ export default function PagoExitosoPage() {
         </div>
 
         <h1 className="text-3xl font-extrabold text-gray-900 mb-3">
-          ¡Bienvenida a GlowAI!
+          ¡Bienvenida a Veloura!
         </h1>
         <p className="text-gray-500 text-base leading-relaxed mb-2">
           Tu suscripción está activa.

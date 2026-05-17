@@ -73,7 +73,7 @@ export default function DemoPage() {
         </div>
         <h1 className="text-gray-900 font-bold text-xl leading-tight">Demo interactiva</h1>
         <p className="text-gray-400 text-sm mt-1 leading-relaxed">
-          Explora GlowAI desde el rol que quieras. Sin registro, sin contraseña.
+          Explora Veloura desde el rol que quieras. Sin registro, sin contraseña.
         </p>
       </div>
 
@@ -110,7 +110,7 @@ export default function DemoPage() {
       {/* Footer */}
       <div className="bg-white px-6 py-5 border-t border-gray-100">
         <p className="text-gray-400 text-xs text-center leading-relaxed">
-          GlowAI · Prototipo v0.1 · Datos 100% ficticios
+          Veloura · Prototipo v0.1 · Datos 100% ficticios
         </p>
         <button
           onClick={() => navigate('/login')}

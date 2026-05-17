@@ -87,7 +87,7 @@ export default function LoginPage() {
       {/* Top section */}
       <div className="flex-1 flex flex-col items-center justify-center px-7 pt-14 pb-6">
         {/* Logo */}
-        <img src="/logo.png" alt="GlowAI" style={{ height: '120px' }} className="w-auto mb-5" />
+        <img src="/logo.png" alt="Veloura" style={{ height: '120px' }} className="w-auto mb-5" />
         <p className="text-gray-400 text-xs tracking-widest uppercase font-semibold mb-1">
           Clínica Lumière
         </p>
@@ -175,7 +175,7 @@ export default function LoginPage() {
             <ArrowUp size={16} className="text-white" />
           </div>
           <p className="text-xs text-gray-600 flex-1 leading-snug">
-            Instala GlowAI en tu movil — toca{' '}
+            Instala Veloura en tu movil — toca{' '}
             <Share size={11} className="inline-block mx-0.5 text-gray-500" />{' '}
             compartir y luego <strong className="text-gray-800">Anadir a inicio</strong>
           </p>
