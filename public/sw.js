@@ -1,4 +1,4 @@
-// GlowAI Service Worker
+// Veloura Service Worker
 //
 // Estrategia:
 //   - Documentos/HTML: network-first → si la red falla, caché.
@@ -10,18 +10,19 @@
 //   - API: network-only con fallback a caché si no hay red.
 //
 // IMPORTANTE: bumpear CACHE_VERSION en cada release importante para forzar
-// purga del caché viejo. Vite genera hashes propios para los assets, pero el
-// caché del HTML/manifest necesita esta señal manual.
-// Rebrand Veloura: prefijo de cache cambia para invalidar todo lo anterior
-const CACHE_VERSION = 'veloura-v1-2026-05-17'
+// purga del caché viejo. Bump al actualizar logo/branding para que los
+// usuarios reciban la nueva versión sin limpiar caché manualmente.
+const CACHE_VERSION = 'veloura-v2-2026-05-18'
 const CACHE_NAME    = `veloura-${CACHE_VERSION}`
 
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.svg',
-  '/icon-512.svg',
+  '/favicon.svg',
+  '/apple-touch-icon.svg',
+  '/veloura-isotipo.svg',
+  '/veloura-wordmark.svg',
 ]
 
 // ── INSTALL: precarga shell, toma control inmediato ───────────────────────
