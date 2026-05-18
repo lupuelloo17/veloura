@@ -160,6 +160,14 @@ export default function RegistroPacientePage() {
       const userId = authData.user?.id
       if (!userId) throw new Error('No se pudo crear la cuenta')
 
+      // Si Supabase requiere confirmación de email, no habrá sesión activa
+      // y los inserts posteriores fallarían por RLS. Lo detectamos y avisamos.
+      if (!authData.session) {
+        throw new Error(
+          'Cuenta creada — revisa tu email para confirmar tu dirección antes de iniciar sesión.'
+        )
+      }
+
       // 3. Insert usuarios (id = auth.uid). El trigger sync_user_app_metadata
       //    actualizará raw_app_meta_data en auth.users automáticamente.
       const { error: uErr } = await supabase
@@ -168,6 +176,7 @@ export default function RegistroPacientePage() {
           id:         userId,
           clinica_id: clinicaId,
           nombre:     nombreCompleto.trim(),
+          email:      email.trim().toLowerCase(),
           rol:        'paciente',
           activo:     true,
         })
