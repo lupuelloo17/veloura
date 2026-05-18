@@ -137,22 +137,20 @@ function sessionToBase(session) {
   return applyMockOverride(base)
 }
 
-// If the email is in MOCK_USERS, override rol/clinica/nombre/foto with mock values.
-// This guarantees demo accounts (admin@lumiere.com, dra.garcia@lumiere.com) get the
-// correct role even when the usuarios table row is missing or blocked by RLS.
+// If the email is in MOCK_USERS, override display fields (rol, nombre, foto)
+// but preserve DB-critical fields (clinica_id, clinica_slug) from the real JWT.
+// This ensures demo accounts get correct roles without breaking real DB operations.
 function applyMockOverride(base) {
   if (!base?.email) return base
   const mock = MOCK_USERS[base.email.toLowerCase()]
   if (!mock) return base
-  const { password: _pw, id: _mid, email: _me, ...mockFields } = mock
+  // Exclude clinica_id and clinica_slug — these must come from the real JWT app_metadata
+  const { password: _pw, id: _mid, email: _me, clinica_id: _cid, clinica_slug: _cs, ...mockFields } = mock
   return { ...base, ...mockFields }
 }
 
 // Enriches user with rol + clinica_id from usuarios table (fire-and-forget)
 function enrichFromDB(userId, setUser, email) {
-  // Demo accounts: trust the MOCK_USERS override done in sessionToBase and skip the DB lookup.
-  // Avoids accidentally overwriting rol='admin' with a stale row in the usuarios table.
-  if (email && MOCK_USERS[email.toLowerCase()]) return
   _enrichFromDB(userId, setUser, email).catch(e => console.error('[enrichFromDB]', e))
 }
 
