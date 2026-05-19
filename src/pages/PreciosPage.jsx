@@ -46,9 +46,16 @@ export default function PreciosPage() {
       })
       const text = await res.text()
       if (!text) throw new Error('Las funciones API solo funcionan en producción (Vercel). Ejecuta "vercel dev" para probar en local.')
-      const { url, error: apiErr } = JSON.parse(text)
-      if (apiErr) throw new Error(apiErr)
-      window.location.href = url
+      let data
+      try {
+        data = JSON.parse(text)
+      } catch {
+        console.error('Respuesta no-JSON del servidor:', text)
+        throw new Error('Error del servidor al procesar el pago. Revisa los logs de Vercel.')
+      }
+      if (!res.ok || data.error) throw new Error(data.error || 'Error al procesar el pago')
+      if (!data.url) throw new Error('No se recibió URL de pago')
+      window.location.href = data.url
     } catch (err) {
       setError(err.message)
       setLoadingPlan(null)

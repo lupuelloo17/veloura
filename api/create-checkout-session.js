@@ -1,7 +1,5 @@
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-
 // Parse body — vercel dev pre-parses, production sends raw stream
 function parseBody(req) {
   if (req.body && typeof req.body === 'object') return Promise.resolve(req.body)
@@ -22,6 +20,12 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') { res.status(200).end(); return }
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
+
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(500).json({ error: 'STRIPE_SECRET_KEY no configurada en el servidor' })
+  }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
   try {
     const { priceId, clinicaId, clinicaNombre, email } = await parseBody(req)
