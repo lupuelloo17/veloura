@@ -50,7 +50,6 @@ export default async function handler(req, res) {
       locale: 'es',
       billing_address_collection: 'required',
       automatic_tax: { enabled: true },
-      customer_update: { address: 'auto' },
       ...(email ? { customer_email: email } : {}),
     })
 
