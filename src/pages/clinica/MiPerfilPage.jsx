@@ -238,12 +238,7 @@ export default function MiPerfilPage() {
             <ChevronRight size={14} className="text-gray-300 flex-shrink-0" />
           </button>
 
-          {/* ── SECCIÓN — Mis datos personales ── */}
-          <SeccionDatos
-            brand={brand}
-            paciente={paciente}
-            setPaciente={setPaciente}
-          />
+
         </div>
       </div>
 
