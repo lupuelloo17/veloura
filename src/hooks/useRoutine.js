@@ -62,16 +62,28 @@ export function useRoutine(userEmail, clinicaId) {
 
       if (pasosError) throw pasosError
 
-      // 4. Cargar médicos
+      // 4. Cargar médicos via email (medico_id apunta a usuarios.id, no a medicos.id)
       let medicosMap = {}
       if (medicoIds.length > 0) {
-        const { data: medicosData, error: medicosError } = await supabase
-          .from('medicos')
-          .select('id, nombre, foto, especialidad')
+        const { data: usuariosMedicos } = await supabase
+          .from('usuarios')
+          .select('id, email')
           .in('id', medicoIds)
 
-        if (medicosError) throw medicosError
-        medicosMap = Object.fromEntries((medicosData || []).map(m => [m.id, m]))
+        const emails = (usuariosMedicos || []).map(u => u.email).filter(Boolean)
+        if (emails.length) {
+          const { data: medicosData } = await supabase
+            .from('medicos')
+            .select('id, nombre, foto, especialidad, email')
+            .in('email', emails)
+
+          if (medicosData) {
+            ;(usuariosMedicos || []).forEach(u => {
+              const medico = medicosData.find(m => m.email === u.email)
+              if (medico) medicosMap[u.id] = medico
+            })
+          }
+        }
       }
 
       // 5. Combinar rutinas con pasos y médico

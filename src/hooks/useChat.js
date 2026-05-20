@@ -101,18 +101,25 @@ export function useChat(userEmail, clinicaId) {
       const pId = pacienteData.id
       const mId = pacienteData.medico_id
 
-      // 2. Obtener médico
-      const { data: medicoData, error: errM } = await supabase
-        .from('medicos')
-        .select('id, nombre, foto, especialidad')
+      // 2. Obtener médico via email (medico_id apunta a usuarios.id, no a medicos.id)
+      const { data: usuarioMedico } = await supabase
+        .from('usuarios')
+        .select('email')
         .eq('id', mId)
         .single()
+
+      if (usuarioMedico?.email) {
+        const { data: medicoData } = await supabase
+          .from('medicos')
+          .select('id, nombre, foto, especialidad')
+          .eq('email', usuarioMedico.email)
+          .single()
+        if (!cancelled) setMedico(medicoData ?? null)
+      }
 
       if (!cancelled) {
         setPacienteId(pId)
         setMedicoId(mId)
-        setMedico(medicoData ?? null)
-        if (errM) setError(errM.message)
       }
 
       // 3. Cargar mensajes y suscribir
