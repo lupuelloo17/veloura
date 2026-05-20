@@ -24,7 +24,7 @@ import NuevaContrasenaPage    from './pages/NuevaContrasenaPage'
 import RegistroClinicaPage    from './pages/RegistroClinicaPage'
 
 // Clinic (multi-tenant)
-import { ClinicProvider }       from './contexts/ClinicContext'
+import { ClinicProvider, useClinic } from './contexts/ClinicContext'
 import { CitasProvider }        from './contexts/CitasContext'
 import DashboardPage            from './pages/clinica/DashboardPage'
 import AdminDashboardPage       from './pages/clinica/AdminDashboardPage'
