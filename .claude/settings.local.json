@@ -16,7 +16,10 @@
       "Bash(curl:*)",
       "Bash(rm -rf node_modules/.vite)",
       "Bash(npm run:*)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(git clone:*)",
+      "Bash(cp -r marketingskills/skills/* .agents/skills/)",
+      "Bash(mkdir:*)"
     ]
   }
 }

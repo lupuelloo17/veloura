@@ -39,7 +39,9 @@ import MiPerfilPage             from './pages/clinica/MiPerfilPage'
 import MisAnalisisPage          from './pages/clinica/MisAnalisisPage'
 import ClinicLayout             from './pages/clinica/ClinicLayout'
 import { EvolucionPageStandalone } from './pages/clinica/EvolucionPage'
+import MiEvolucionPage from './pages/paciente/MiEvolucionPage'
 import ChatPacientePage         from './pages/clinica/ChatPacientePage'
+import MisMensajesPage from './pages/paciente/MisMensajesPage'
 import ConversacionesPage       from './pages/clinica/ConversacionesPage'
 
 // Wrapper que renderiza DermoscopiaPage dentro del ClinicLayout del paciente.
@@ -101,6 +103,17 @@ function RoleHomeRedirect() {
   return <Navigate to={`/clinica/${slug}/${dest}`} replace />
 }
 
+function MiEvolucionWrapper() {
+  const { user }    = useAuth()
+  const { clinica } = useClinic()
+  return (
+    <MiEvolucionPage
+      pacienteId={user?.id}
+      clinicaId={clinica?.id ?? user?.clinica_id}
+    />
+  )
+}
+
 // ── /analisis renderiza distinto componente según rol:
 // staff ve la lista clínica completa; paciente ve solo sus análisis.
 function AnalisisPorRol() {
@@ -135,8 +148,8 @@ function ClinicRoutes() {
           {/* ── Paciente ── */}
           <Route path="mi-perfil"              element={<RequireRole roles={['paciente']}><MiPerfilPage /></RequireRole>} />
           <Route path="mi-perfil/citas"        element={<RequireRole roles={['paciente']}><MisCitasPacientePage /></RequireRole>} />
-          <Route path="mi-perfil/evolucion"    element={<RequireRole roles={['paciente']}><EvolucionPageStandalone /></RequireRole>} />
-          <Route path="mi-perfil/chat"         element={<RequireRole roles={['paciente']}><ChatPacientePage /></RequireRole>} />
+          <Route path="mi-perfil/evolucion"    element={<RequireRole roles={['paciente']}><MiEvolucionWrapper /></RequireRole>} />
+          <Route path="mi-perfil/chat"         element={<RequireRole roles={['paciente']}><MisMensajesPage /></RequireRole>} />
           <Route path="dermoscopia"            element={<RequireRole roles={['paciente']}><DermoscopiaWrapper /></RequireRole>} />
 
           {/* ── Conversaciones staff ── */}
