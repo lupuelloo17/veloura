@@ -159,12 +159,12 @@ export default function MiEvolucionPage() {
                 {/* Slider antes/después */}
                 {fotoAntes && fotoDespues ? (
                   <BeforeAfterSlider
-                    antesUrl={fotoAntes.url}
-                    despuesUrl={fotoDespues.url}
+                    antesUrl={fotoAntes.foto_url}
+                    despuesUrl={fotoDespues.foto_url}
                     label={`Sesión ${sesionSeleccionada}`}
                     zona={fotoAntes.zona_corporal || fotoDespues.zona_corporal}
-                    fecha_antes={formatFecha(fotoAntes.created_at)}
-                    fecha_despues={formatFecha(fotoDespues.created_at)}
+                    fecha_antes={formatFecha(fotoAntes.creado_en)}
+                    fecha_despues={formatFecha(fotoDespues.creado_en)}
                   />
                 ) : (
                   <div style={{
@@ -173,7 +173,7 @@ export default function MiEvolucionPage() {
                   }}>
                     {(fotoAntes || fotoDespues) && (
                       <img
-                        src={(fotoAntes || fotoDespues).url}
+                        src={(fotoAntes || fotoDespues).foto_url}
                         alt="Evolución"
                         style={{ width: '100%', borderRadius: '12px', objectFit: 'cover', maxHeight: '260px' }}
                       />
@@ -195,13 +195,13 @@ export default function MiEvolucionPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                       {fotosProgreso.map(f => (
                         <div key={f.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '1' }}>
-                          <img src={f.url} alt="Progreso" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={f.foto_url} alt="Progreso" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           <span style={{
                             position: 'absolute', bottom: '4px', left: '4px',
                             background: 'rgba(0,0,0,0.5)', color: '#FFF',
                             fontSize: '9px', padding: '2px 6px', borderRadius: '6px',
                           }}>
-                            {formatFecha(f.created_at)}
+                            {formatFecha(f.creado_en)}
                           </span>
                           {f.notas && (
                             <span style={{
@@ -242,7 +242,7 @@ export default function MiEvolucionPage() {
                         borderRadius: '12px', overflow: 'hidden',
                       }}>
                         <div style={{ aspectRatio: '1', overflow: 'hidden' }}>
-                          <img src={f.url} alt={f.fase} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={f.foto_url} alt={f.fase} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
                         <div style={{ padding: '8px 10px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -256,7 +256,7 @@ export default function MiEvolucionPage() {
                             <span style={{ color: '#9CA3AF', fontSize: '10px' }}>S{f.sesNum}</span>
                           </div>
                           <p style={{ margin: '0 0 2px', color: '#6B7280', fontSize: '11px' }}>
-                            {formatFecha(f.created_at)}
+                            {formatFecha(f.creado_en)}
                           </p>
                           {f.zona_corporal && (
                             <p style={{ margin: 0, color: '#9CA3AF', fontSize: '10px' }}>{f.zona_corporal}</p>

@@ -14,11 +14,11 @@ export function useEvolution(pacienteId, clinicaId) {
 
     try {
       const { data, error: fetchErr } = await supabase
-        .from('fotos_evolucion')
-        .select('id, fase, zona_corporal, notas, sesion_numero, url, created_at')
+        .from('evoluciones')
+        .select('id, fase, zona_corporal, notas, sesion_numero, foto_url, creado_en')
         .eq('paciente_id', pacienteId)
         .eq('clinica_id',  clinicaId)
-        .order('created_at', { ascending: false })
+        .order('creado_en', { ascending: false })
 
       if (fetchErr) throw fetchErr
 
@@ -53,10 +53,10 @@ export function useEvolution(pacienteId, clinicaId) {
 
     const { data: pub } = supabase.storage.from('evoluciones').getPublicUrl(path)
 
-    const { error: dbErr } = await supabase.from('fotos_evolucion').insert({
+    const { error: dbErr } = await supabase.from('evoluciones').insert({
       paciente_id:    pacienteId,
       clinica_id:     clinicaId,
-      url:            pub.publicUrl,
+      foto_url:       pub.publicUrl,
       fase,
       zona_corporal,
       notas,
