@@ -2,7 +2,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, Microscope, CalendarDays, Settings,
-  Home, User as UserIcon, ImageIcon, MessageCircle,
+  Home, User as UserIcon, ImageIcon, MessageCircle, ClipboardList,
 } from 'lucide-react'
 import { useClinic } from '../contexts/ClinicContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -66,10 +66,11 @@ export default function ClinicNav() {
 
   const TABS = isPaciente
     ? [
-        { label: 'Inicio',    icon: Home,           path: `/clinica/${slug}/mi-perfil` },
-        { label: 'Evolución', icon: ImageIcon,       path: `/clinica/${slug}/mi-perfil/evolucion` },
-        { label: 'Chat',      icon: MessageCircle,   path: `/clinica/${slug}/mi-perfil/chat`, badge: unread },
-        { label: 'Datos',     icon: UserIcon,        path: `/clinica/${slug}/mi-perfil`, hash: '#datos' },
+        { label: 'Inicio',    icon: Home,          path: `/clinica/${slug}/mi-perfil` },
+        { label: 'Evolución', icon: ImageIcon,      path: `/clinica/${slug}/mi-perfil/evolucion` },
+        { label: 'Rutina',    icon: ClipboardList,  path: `/clinica/${slug}/mi-perfil/rutina` },
+        { label: 'Chat',      icon: MessageCircle,  path: `/clinica/${slug}/mi-perfil/chat`, badge: unread },
+        { label: 'Datos',     icon: UserIcon,       path: `/clinica/${slug}/mi-perfil/datos` },
       ]
     : isMedico
     ? [
