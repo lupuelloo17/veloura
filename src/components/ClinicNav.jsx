@@ -128,23 +128,22 @@ export default function ClinicNav() {
             key={`${path}${tabHash ?? ''}`}
             onClick={() => navigate(path + (tabHash ?? ''))}
             style={{
-              flex: 1,
+              position: 'relative',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '3px',
+              flex: 1,
               minHeight: '56px',
               cursor: 'pointer',
               border: 'none',
               background: 'transparent',
-              transition: 'all 0.18s',
-              padding: 0,
-              position: 'relative',
+              padding: '0 4px',
             }}
           >
             {/* Icono con badge */}
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', display: 'inline-flex' }}>
               <i
                 className={`ti ${ICON_MAP[icon]}`}
                 style={{
@@ -157,8 +156,8 @@ export default function ClinicNav() {
               {badge > 0 && (
                 <span style={{
                   position: 'absolute',
-                  top: 0,
-                  right: '-4px',
+                  top: '-4px',
+                  right: '-6px',
                   minWidth: '14px',
                   height: '14px',
                   borderRadius: '50%',
