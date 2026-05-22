@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { PLANES } from '../config/planes'
+import { applyClinicTheme, resetTheme } from '../lib/theme'
 
 // ── Mock data (used when Supabase is not configured) ──────────
 const MOCK_CLINICAS = {
@@ -66,10 +67,12 @@ export function ClinicProvider({ children }) {
     if (clinica.logo_url) {
       root.style.setProperty('--logo-url', `url(${clinica.logo_url})`)
     }
+    applyClinicTheme(clinica.color_primario)
     // Restore defaults on unmount
     return () => {
       root.style.setProperty('--color-brand', '#E8A0B0')
       root.style.removeProperty('--logo-url')
+      resetTheme()
     }
   }, [clinica])
 
