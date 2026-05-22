@@ -1,12 +1,21 @@
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import {
-  LayoutDashboard, Users, Microscope, CalendarDays, Settings,
-  Home, User as UserIcon, ImageIcon, MessageCircle, ClipboardList,
-} from 'lucide-react'
 import { useClinic } from '../contexts/ClinicContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+
+const ICON_MAP = {
+  dashboard:      'ti-layout-dashboard',
+  pacientes:      'ti-users',
+  analisis:       'ti-microscope',
+  agenda:         'ti-calendar',
+  configuracion:  'ti-settings',
+  inicio:         'ti-home',
+  evolucion:      'ti-photo',
+  rutina:         'ti-clipboard-list',
+  chat:           'ti-message-circle',
+  datos:          'ti-user',
+}
 
 export default function ClinicNav() {
   const navigate           = useNavigate()
@@ -28,7 +37,6 @@ export default function ClinicNav() {
 
     async function fetchUnread() {
       if (isPaciente) {
-        // Paciente: mensajes del médico que no ha leído
         const { count } = await supabase
           .from('mensajes')
           .select('id', { count: 'exact', head: true })
@@ -37,7 +45,6 @@ export default function ClinicNav() {
           .neq('remitente_id', user.id)
         if (!cancelled) setUnread(count ?? 0)
       } else if (isMedico) {
-        // Médico: solo mensajes dirigidos a él específicamente
         const { count } = await supabase
           .from('mensajes')
           .select('id', { count: 'exact', head: true })
@@ -45,7 +52,6 @@ export default function ClinicNav() {
           .eq('leido', false)
         if (!cancelled) setUnread(count ?? 0)
       } else {
-        // Admin/recepcion: todos los no leídos de la clínica
         const { count } = await supabase
           .from('mensajes')
           .select('id', { count: 'exact', head: true })
@@ -56,7 +62,6 @@ export default function ClinicNav() {
     }
 
     fetchUnread()
-    // Escuchar cambios en mensajes para actualizar badge
     const ch = supabase
       .channel(`nav-unread-${user.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'mensajes' }, fetchUnread)
@@ -66,45 +71,47 @@ export default function ClinicNav() {
 
   const TABS = isPaciente
     ? [
-        { label: 'Inicio',    icon: Home,          path: `/clinica/${slug}/mi-perfil` },
-        { label: 'Evolución', icon: ImageIcon,      path: `/clinica/${slug}/mi-perfil/evolucion` },
-        { label: 'Rutina',    icon: ClipboardList,  path: `/clinica/${slug}/mi-perfil/rutina` },
-        { label: 'Chat',      icon: MessageCircle,  path: `/clinica/${slug}/mi-perfil/chat`, badge: unread },
-        { label: 'Datos',     icon: UserIcon,       path: `/clinica/${slug}/mi-perfil/datos` },
+        { label: 'Inicio',    icon: 'inicio',        path: `/clinica/${slug}/mi-perfil` },
+        { label: 'Evolución', icon: 'evolucion',     path: `/clinica/${slug}/mi-perfil/evolucion` },
+        { label: 'Rutina',    icon: 'rutina',        path: `/clinica/${slug}/mi-perfil/rutina` },
+        { label: 'Chat',      icon: 'chat',          path: `/clinica/${slug}/mi-perfil/chat`, badge: unread },
+        { label: 'Datos',     icon: 'datos',         path: `/clinica/${slug}/mi-perfil/datos` },
       ]
     : isMedico
     ? [
-        { label: 'Dashboard', icon: LayoutDashboard, path: `/clinica/${slug}/dashboard` },
-        { label: 'Pacientes', icon: Users,           path: `/clinica/${slug}/pacientes` },
-        { label: 'Análisis',  icon: Microscope,      path: `/clinica/${slug}/analisis`  },
-        { label: 'Agenda',    icon: CalendarDays,    path: `/clinica/${slug}/agenda`    },
-        { label: 'Chat',      icon: MessageCircle,   path: `/clinica/${slug}/conversaciones`, badge: unread },
+        { label: 'Dashboard', icon: 'dashboard',     path: `/clinica/${slug}/dashboard` },
+        { label: 'Pacientes', icon: 'pacientes',     path: `/clinica/${slug}/pacientes` },
+        { label: 'Análisis',  icon: 'analisis',      path: `/clinica/${slug}/analisis`  },
+        { label: 'Agenda',    icon: 'agenda',        path: `/clinica/${slug}/agenda`    },
+        { label: 'Chat',      icon: 'chat',          path: `/clinica/${slug}/conversaciones`, badge: unread },
       ]
     : isAdmin
     ? [
-        { label: 'Dashboard', icon: LayoutDashboard, path: `/clinica/${slug}/dashboard` },
-        { label: 'Pacientes', icon: Users,           path: `/clinica/${slug}/pacientes` },
-        { label: 'Análisis',  icon: Microscope,      path: `/clinica/${slug}/analisis`  },
-        { label: 'Chat',      icon: MessageCircle,   path: `/clinica/${slug}/conversaciones`, badge: unread },
-        { label: 'Config',    icon: Settings,        path: `/clinica/${slug}/configuracion` },
+        { label: 'Dashboard', icon: 'dashboard',     path: `/clinica/${slug}/dashboard` },
+        { label: 'Pacientes', icon: 'pacientes',     path: `/clinica/${slug}/pacientes` },
+        { label: 'Análisis',  icon: 'analisis',      path: `/clinica/${slug}/analisis`  },
+        { label: 'Chat',      icon: 'chat',          path: `/clinica/${slug}/conversaciones`, badge: unread },
+        { label: 'Config',    icon: 'configuracion', path: `/clinica/${slug}/configuracion` },
       ]
     : [
-        { label: 'Dashboard', icon: LayoutDashboard, path: `/clinica/${slug}/dashboard` },
-        { label: 'Pacientes', icon: Users,           path: `/clinica/${slug}/pacientes` },
-        { label: 'Análisis',  icon: Microscope,      path: `/clinica/${slug}/analisis`  },
-        { label: 'Agenda',    icon: CalendarDays,    path: `/clinica/${slug}/agenda`    },
-        { label: 'Chat',      icon: MessageCircle,   path: `/clinica/${slug}/conversaciones`, badge: unread },
+        { label: 'Dashboard', icon: 'dashboard',     path: `/clinica/${slug}/dashboard` },
+        { label: 'Pacientes', icon: 'pacientes',     path: `/clinica/${slug}/pacientes` },
+        { label: 'Análisis',  icon: 'analisis',      path: `/clinica/${slug}/analisis`  },
+        { label: 'Agenda',    icon: 'agenda',        path: `/clinica/${slug}/agenda`    },
+        { label: 'Chat',      icon: 'chat',          path: `/clinica/${slug}/conversaciones`, badge: unread },
       ]
 
-  const brand = clinica?.color_primario ?? '#C8A882'
-
   return (
-    <nav className="border-t border-gray-100 bg-white px-1 py-2 flex items-center justify-around flex-shrink-0">
-      {TABS.map(({ label, icon: Icon, path, hash: tabHash, badge }) => {
+    <nav style={{
+      background: '#FFFFFF',
+      borderTop: '1px solid rgba(22,19,19,0.06)',
+      padding: '6px 0 env(safe-area-inset-bottom, 10px)',
+      display: 'flex',
+    }}>
+      {TABS.map(({ label, icon, path, hash: tabHash, badge }) => {
         const active = tabHash
           ? (pathname === path && hash === tabHash)
-          : pathname.startsWith(path) && (!tabHash)
-        // Evitar que "Inicio" quede activo cuando está en sub-rutas de mi-perfil
+          : pathname.startsWith(path)
         const isInicio = path === `/clinica/${slug}/mi-perfil` && !tabHash
         const activeFixed = isInicio
           ? (pathname === path && !hash)
@@ -114,30 +121,77 @@ export default function ClinicNav() {
           <button
             key={`${path}${tabHash ?? ''}`}
             onClick={() => navigate(path + (tabHash ?? ''))}
-            className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-all relative"
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '3px',
+              minHeight: '56px',
+              cursor: 'pointer',
+              border: 'none',
+              background: 'transparent',
+              transition: 'all 0.18s',
+              padding: 0,
+              position: 'relative',
+            }}
           >
-            <div className="relative">
-              <Icon
-                size={20}
-                style={activeFixed ? { color: brand } : {}}
-                className={activeFixed ? '' : 'text-gray-300'}
-                strokeWidth={activeFixed ? 2.2 : 1.8}
+            {/* Icono con badge */}
+            <div style={{ position: 'relative' }}>
+              <i
+                className={`ti ${ICON_MAP[icon]}`}
+                style={{
+                  fontSize: '22px',
+                  color: activeFixed ? '#161313' : 'rgba(22,19,19,0.28)',
+                  display: 'block',
+                  lineHeight: 1,
+                }}
               />
               {badge > 0 && (
-                <span
-                  className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5"
-                  style={{ backgroundColor: brand }}
-                >
+                <span style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: '-4px',
+                  minWidth: '14px',
+                  height: '14px',
+                  borderRadius: '50%',
+                  background: '#161313',
+                  color: '#C9D3CA',
+                  fontSize: '8px',
+                  fontWeight: 400,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 2px',
+                  lineHeight: 1,
+                }}>
                   {badge > 9 ? '9+' : badge}
                 </span>
               )}
             </div>
-            <span
-              className="text-[10px] font-medium"
-              style={activeFixed ? { color: brand } : { color: '#9ca3af' }}
-            >
+
+            {/* Label */}
+            <span style={{
+              fontFamily: "'DM Sans', system-ui",
+              fontSize: '9px',
+              fontWeight: 400,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: activeFixed ? '#161313' : 'rgba(22,19,19,0.28)',
+            }}>
               {label}
             </span>
+
+            {/* Punto activo */}
+            {activeFixed && (
+              <div style={{
+                width: '3px',
+                height: '3px',
+                borderRadius: '50%',
+                background: '#929C92',
+              }} />
+            )}
           </button>
         )
       })}
