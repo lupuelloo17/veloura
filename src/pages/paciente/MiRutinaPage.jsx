@@ -97,7 +97,7 @@ export default function MiRutinaPage() {
   const pct     = total > 0 ? Math.round((done / total) * 100) : 0
 
   return (
-    <div style={{ fontFamily: 'var(--vl-font-body)', minHeight: '100vh', background: 'var(--vl-carbon)' }}>
+    <div style={{ fontFamily: 'var(--vl-font-body)', background: 'var(--vl-page)', paddingBottom: '80px' }}>
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
       <div style={{ background: 'var(--vl-carbon)', padding: '32px 24px 0', overflow: 'hidden', position: 'relative' }}>

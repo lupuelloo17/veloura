@@ -103,7 +103,13 @@ export default function ClinicNav() {
 
   return (
     <nav style={{
+      position: 'fixed',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 9999,
       background: '#FFFFFF',
+      backdropFilter: 'blur(8px)',
       borderTop: '1px solid rgba(22,19,19,0.06)',
       padding: '6px 0 env(safe-area-inset-bottom, 10px)',
       display: 'flex',
