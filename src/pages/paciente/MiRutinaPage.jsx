@@ -27,16 +27,11 @@ export default function MiRutinaPage() {
   // ── Loading ──────────────────────────────────────────────────
   if (loading) {
     return (
-      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {[1, 2, 3].map(i => (
-          <div key={i} style={{
-            height: '80px', borderRadius: '12px',
-            background: 'linear-gradient(90deg, #F0EDE8 25%, #FAF7F3 50%, #F0EDE8 75%)',
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 1.4s infinite',
-          }} />
-        ))}
-        <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
+      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '10px', background: 'var(--vl-cream)', minHeight: '100vh' }}>
+        <div className="vl-skeleton" style={{ height: '120px' }} />
+        <div className="vl-skeleton" style={{ height: '60px' }} />
+        <div className="vl-skeleton" style={{ height: '60px' }} />
+        <div className="vl-skeleton" style={{ height: '60px' }} />
       </div>
     )
   }
@@ -44,11 +39,11 @@ export default function MiRutinaPage() {
   // ── Error ────────────────────────────────────────────────────
   if (error) {
     return (
-      <div style={{
-        margin: '16px', padding: '12px 16px', background: '#FEE2E2',
-        border: '1px solid #FECACA', borderRadius: '10px', color: '#991B1B', fontSize: '14px',
-      }}>
-        {error}
+      <div style={{ padding: '16px', background: 'var(--vl-cream)', minHeight: '100vh' }}>
+        <div className="vl-warning-box">
+          <i className="ti ti-alert-triangle" style={{ color: 'var(--vl-brand)', fontSize: '16px', flexShrink: 0, marginTop: '1px' }} />
+          <p style={{ margin: 0, fontSize: '13px', color: 'var(--vl-carbon-mid)' }}>{error}</p>
+        </div>
       </div>
     )
   }
@@ -57,13 +52,18 @@ export default function MiRutinaPage() {
   if (rutinas.length === 0) {
     return (
       <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', padding: '48px 24px', gap: '12px',
+        display: 'flex', flexDirection: 'column', minHeight: '100vh',
+        background: 'var(--vl-cream)', alignItems: 'center', justifyContent: 'center',
+        padding: '48px 24px', gap: '12px',
       }}>
-        <span style={{ fontSize: '48px' }}>🧴</span>
-        <p style={{ color: '#6B7280', fontSize: '15px', textAlign: 'center', margin: 0 }}>
-          Sin rutina asignada aún
+        <i className="ti ti-clipboard-list" style={{ fontSize: '48px', color: 'var(--vl-brand-light)' }} />
+        <h3 className="vl-h3" style={{ margin: 0, color: 'var(--vl-carbon)', textAlign: 'center' }}>
+          Sin rutina asignada
+        </h3>
+        <p style={{ margin: 0, color: 'var(--vl-carbon-soft)', fontSize: '13px', textAlign: 'center' }}>
+          Tu especialista aún no ha recetado una rutina para ti
         </p>
+        <button className="vl-btn-primary">Contactar clínica</button>
       </div>
     )
   }
@@ -72,29 +72,32 @@ export default function MiRutinaPage() {
   const pasos  = tabActiva === 'manana' ? rutina.pasos_manana : rutina.pasos_noche
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', background: '#FAFAF9' }}>
-      <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--vl-cream)' }}>
 
-        {/* Header */}
-        <div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#2D2A26' }}>
-            Mi Rutina
-          </h1>
-          <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#C9A46A', fontWeight: '500' }}>
-            Recetada por Especialista
-          </p>
-        </div>
+      {/* ── HERO HEADER ─────────────────────────────────────────── */}
+      <div style={{ background: 'var(--vl-carbon)', padding: '28px 20px 0', position: 'relative' }}>
+
+        {/* Badge */}
+        <span className="vl-badge">
+          <i className="ti ti-clipboard-list" />
+          Rutina personalizada
+        </span>
+
+        {/* Título */}
+        <h1 className="vl-h1" style={{ color: 'var(--vl-white)', margin: '8px 0 4px' }}>
+          Mi Rutina Recetada
+        </h1>
+        <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>
+          Protocolo diseñado para tu piel
+        </p>
 
         {/* Select si hay más de una rutina */}
         {rutinas.length > 1 && (
           <select
             value={rutinaIdx}
             onChange={e => setRutinaIdx(Number(e.target.value))}
-            style={{
-              width: '100%', padding: '10px 12px', borderRadius: '10px',
-              border: '1px solid #E5E0D8', background: '#FFFFFF',
-              color: '#2D2A26', fontSize: '14px',
-            }}
+            className="vl-input"
+            style={{ marginBottom: '12px', background: 'rgba(255,255,255,0.08)', color: 'var(--vl-white)', borderColor: 'rgba(255,255,255,0.12)' }}
           >
             {rutinas.map((r, i) => (
               <option key={r.id} value={i}>{r.nombre}</option>
@@ -102,86 +105,122 @@ export default function MiRutinaPage() {
           </select>
         )}
 
-        {/* Tarjeta médico */}
+        {/* Doctor chip */}
         <div style={{
-          background: '#FFFFFF', border: '1px solid #F0EDE8',
-          borderRadius: '12px', padding: '14px 16px',
-          display: 'flex', alignItems: 'center', gap: '12px',
+          background: 'rgba(255,255,255,0.06)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '40px',
+          padding: '6px 14px 6px 6px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          marginTop: '16px',
+          marginBottom: '0',
+          width: 'fit-content',
         }}>
           {rutina.medico?.foto ? (
             <img
               src={rutina.medico.foto}
               alt={rutina.medico.nombre}
-              style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+              style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
             />
           ) : (
-            <div style={{
-              width: '44px', height: '44px', borderRadius: '50%',
-              background: '#FDF8F0', color: '#C9A46A',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: '700', fontSize: '15px', flexShrink: 0,
-            }}>
+            <div className="vl-avatar" style={{ width: '32px', height: '32px', fontSize: '12px' }}>
               {getInitials(rutina.medico?.nombre)}
             </div>
           )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ margin: 0, fontWeight: '600', color: '#2D2A26', fontSize: '14px' }}>
+          <div>
+            <p style={{ margin: 0, color: 'var(--vl-white)', fontSize: '13px', fontWeight: 500 }}>
               {rutina.medico?.nombre || 'Especialista'}
             </p>
             {rutina.medico?.especialidad && (
-              <p style={{ margin: '1px 0 0', color: '#6B7280', fontSize: '12px' }}>
+              <p style={{ margin: 0, color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
                 {rutina.medico.especialidad}
               </p>
             )}
           </div>
-          <p style={{ margin: 0, color: '#9CA3AF', fontSize: '11px', textAlign: 'right', flexShrink: 0 }}>
+          <p style={{ margin: '0 0 0 auto', color: 'rgba(255,255,255,0.3)', fontSize: '11px', flexShrink: 0 }}>
             {formatDate(rutina.asignado_en)}
           </p>
         </div>
+      </div>
+
+      {/* ── TABS ────────────────────────────────────────────────── */}
+      <div style={{ background: 'var(--vl-carbon)', padding: '12px 16px 16px' }}>
+        <div style={{
+          background: 'var(--vl-white)',
+          borderRadius: '12px',
+          padding: '4px',
+          display: 'flex',
+          gap: '0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        }}>
+          {[
+            { key: 'manana', icon: 'ti-sun',  label: 'Mañana', count: rutina.pasos_manana.length },
+            { key: 'noche',  icon: 'ti-moon', label: 'Noche',  count: rutina.pasos_noche.length  },
+          ].map(tab => {
+            const activa = tabActiva === tab.key
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setTabActiva(tab.key)}
+                style={{
+                  flex: 1,
+                  background: activa ? 'var(--vl-carbon)' : 'transparent',
+                  color: activa ? 'var(--vl-brand)' : 'rgba(45,42,38,0.4)',
+                  borderRadius: '9px',
+                  padding: '10px',
+                  border: 'none',
+                  fontSize: '13px',
+                  fontWeight: activa ? 500 : 400,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  transition: 'var(--vl-transition)',
+                }}
+              >
+                <i className={`ti ${tab.icon}`} />
+                {tab.label}
+                <span className="vl-badge" style={{
+                  fontSize: '10px',
+                  padding: '1px 7px',
+                  background: activa ? 'var(--vl-brand-alpha)' : 'rgba(45,42,38,0.06)',
+                  color: activa ? 'var(--vl-brand)' : 'var(--vl-carbon-soft)',
+                  borderColor: activa ? 'var(--vl-brand-alpha-border)' : 'transparent',
+                }}>
+                  {tab.count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── CONTENIDO ───────────────────────────────────────────── */}
+      <div style={{ background: 'var(--vl-cream)', padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
         {/* Descripción */}
         {rutina.descripcion && (
-          <div style={{
-            background: '#FFFFFF',
-            borderLeft: '3px solid #C9A46A',
-            borderRadius: '0 10px 10px 0',
-            padding: '10px 14px',
-          }}>
-            <p style={{ margin: 0, color: '#4B4540', fontSize: '13px', lineHeight: '1.5' }}>
+          <div className="vl-card" style={{ borderLeft: '2px solid var(--vl-brand)', borderRadius: '0 12px 12px 0' }}>
+            <p style={{ margin: 0, color: 'var(--vl-carbon-soft)', fontSize: '13px', lineHeight: 1.6 }}>
               {rutina.descripcion}
             </p>
           </div>
         )}
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {[
-            { key: 'manana', label: '🌅 Mañana', count: rutina.pasos_manana.length },
-            { key: 'noche',  label: '🌙 Noche',  count: rutina.pasos_noche.length  },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setTabActiva(tab.key)}
-              style={{
-                flex: 1, padding: '10px 12px', borderRadius: '10px', border: 'none',
-                cursor: 'pointer', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', gap: '6px', fontWeight: '600', fontSize: '13px',
-                background: tabActiva === tab.key ? '#2D2A26' : '#F7F3EE',
-                color:      tabActiva === tab.key ? '#C9A46A' : '#9CA3AF',
-                transition: 'all 0.15s',
-              }}
-            >
-              {tab.label}
-              <span style={{
-                background: tabActiva === tab.key ? '#C9A46A' : '#E5E0D8',
-                color:      tabActiva === tab.key ? '#2D2A26' : '#6B7280',
-                borderRadius: '20px', padding: '1px 7px', fontSize: '11px', fontWeight: '700',
-              }}>
-                {tab.count}
-              </span>
-            </button>
-          ))}
-        </div>
+        {/* Label sección */}
+        <p style={{
+          margin: 0,
+          textTransform: 'uppercase',
+          fontSize: '11px',
+          fontWeight: 500,
+          letterSpacing: '0.08em',
+          color: 'var(--vl-carbon-soft)',
+        }}>
+          Pasos de la rutina
+        </p>
 
         {/* Lista de pasos */}
         {pasos.length > 0 ? (
@@ -191,19 +230,15 @@ export default function MiRutinaPage() {
             ))}
           </div>
         ) : (
-          <p style={{ color: '#9CA3AF', fontSize: '14px', textAlign: 'center', padding: '20px 0' }}>
+          <p style={{ color: 'var(--vl-carbon-soft)', fontSize: '14px', textAlign: 'center', padding: '20px 0', margin: 0 }}>
             No hay pasos para la {tabActiva === 'manana' ? 'mañana' : 'noche'}
           </p>
         )}
 
         {/* Disclaimer */}
-        <div style={{
-          background: '#F7F3EE',
-          borderLeft: '3px solid #C9A46A',
-          borderRadius: '0 10px 10px 0',
-          padding: '10px 14px',
-        }}>
-          <p style={{ margin: 0, color: '#6B7280', fontSize: '12px', lineHeight: '1.5' }}>
+        <div className="vl-warning-box">
+          <i className="ti ti-info-circle" style={{ color: 'var(--vl-brand)', fontSize: '16px', flexShrink: 0, marginTop: '1px' }} />
+          <p style={{ margin: 0, color: 'var(--vl-carbon-soft)', fontSize: '12px', lineHeight: 1.6 }}>
             Consulta con tu doctora antes de modificar esta rutina o agregar nuevos productos.
             Cada piel es única y los cambios pueden afectar los resultados de tu tratamiento.
           </p>

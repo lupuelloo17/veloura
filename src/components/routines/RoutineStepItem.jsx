@@ -1,74 +1,62 @@
+import { useState } from 'react'
+
 export default function RoutineStepItem({ paso, index }) {
+  const [expanded, setExpanded] = useState(false)
+
   const frecuenciaLabel = paso.frecuencia_dias === 1
     ? 'Uso diario'
     : `Cada ${paso.frecuencia_dias} días`
 
   return (
-    <div style={{
-      background: '#FFFFFF',
-      border: '1px solid #F0EDE8',
-      borderRadius: '12px',
-      padding: '16px',
-      display: 'flex',
-      gap: '14px',
-      alignItems: 'flex-start',
-    }}>
+    <div
+      className="vl-card"
+      onClick={() => setExpanded(e => !e)}
+      style={{ cursor: 'pointer', transition: 'var(--vl-transition)', display: 'flex', gap: '14px', alignItems: 'flex-start' }}
+    >
       {/* Número de paso */}
       <div style={{
         minWidth: '32px',
         height: '32px',
-        borderRadius: '50%',
-        background: '#FDF8F0',
-        color: '#C9A46A',
+        borderRadius: '8px',
+        background: 'var(--vl-carbon)',
+        color: 'var(--vl-brand)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontWeight: '700',
-        fontSize: '14px',
+        fontSize: '13px',
+        fontWeight: 500,
         flexShrink: 0,
       }}>
         {index + 1}
       </div>
 
-      <div style={{ flex: 1 }}>
-        {/* Nombre del producto + badge frecuencia */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Nombre + badge frecuencia */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-          <span style={{ fontWeight: '700', color: '#2D2A26', fontSize: '15px' }}>
+          <span style={{
+            fontSize: '15px',
+            fontWeight: 500,
+            fontFamily: 'var(--vl-font-body)',
+            color: 'var(--vl-carbon)',
+            flex: 1,
+          }}>
             {paso.nombre_producto}
           </span>
-          <span style={{
-            fontSize: '11px',
-            color: '#C9A46A',
-            border: '1px solid #C9A46A',
-            borderRadius: '20px',
-            padding: '1px 8px',
-            fontWeight: '500',
-          }}>
-            {frecuenciaLabel}
-          </span>
+          <span className="vl-freq-tag">{frecuenciaLabel}</span>
         </div>
 
         {/* Instrucciones */}
         {paso.instrucciones && (
-          <p style={{ color: '#6B7280', fontSize: '13px', margin: '4px 0 0' }}>
+          <p style={{ color: 'var(--vl-carbon-soft)', fontSize: '13px', margin: '4px 0 0', lineHeight: 1.6 }}>
             {paso.instrucciones}
           </p>
         )}
 
         {/* Advertencias */}
         {paso.advertencias && (
-          <div style={{
-            marginTop: '8px',
-            background: '#FFFBEB',
-            border: '1px solid #FDE68A',
-            borderRadius: '8px',
-            padding: '8px 10px',
-            display: 'flex',
-            gap: '6px',
-            alignItems: 'flex-start',
-          }}>
-            <span style={{ fontSize: '14px' }}>⚠</span>
-            <p style={{ color: '#92400E', fontSize: '12px', margin: 0 }}>
+          <div className="vl-warning-box" style={{ marginTop: '8px' }}>
+            <i className="ti ti-alert-triangle" style={{ color: 'var(--vl-brand)', fontSize: '14px', flexShrink: 0, marginTop: '1px' }} />
+            <p style={{ margin: 0, color: 'var(--vl-carbon-mid)', fontSize: '12px' }}>
               {paso.advertencias}
             </p>
           </div>
