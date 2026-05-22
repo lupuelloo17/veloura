@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { User, Pencil, Save, Lock, AlertTriangle } from 'lucide-react'
 import { useAuth }   from '../../contexts/AuthContext'
 import { useClinic } from '../../contexts/ClinicContext'
 import { supabase }  from '../../lib/supabase'
@@ -9,13 +8,14 @@ const TIPOS_PIEL = ['Seca', 'Grasa', 'Mixta', 'Normal', 'Sensible']
 export default function MisDatosPage() {
   const { user }    = useAuth()
   const { clinica } = useClinic()
-  const brand = clinica?.color_primario ?? '#C9A46A'
 
-  const [paciente, setPaciente] = useState(null)
-  const [cargando, setCargando] = useState(true)
-  const [editando, setEditando] = useState(false)
+  const [paciente,  setPaciente]  = useState(null)
+  const [cargando,  setCargando]  = useState(true)
+  const [editando,  setEditando]  = useState(false)
   const [guardando, setGuardando] = useState(false)
-  const [draft, setDraft] = useState({})
+  const [draft,     setDraft]     = useState({})
+  const [msgOk,     setMsgOk]     = useState('')
+  const [msgErr,    setMsgErr]    = useState('')
 
   useEffect(() => {
     if (!user?.id) { setCargando(false); return }
@@ -39,12 +39,15 @@ export default function MisDatosPage() {
       medicamentos:    paciente?.medicamentos    ?? '',
       motivo_consulta: paciente?.motivo_consulta ?? '',
     })
+    setMsgOk('')
+    setMsgErr('')
     setEditando(true)
   }
 
   async function handleGuardar() {
     if (!supabase || !paciente?.id) return
     setGuardando(true)
+    setMsgErr('')
     try {
       const { error } = await supabase
         .from('pacientes')
@@ -53,8 +56,10 @@ export default function MisDatosPage() {
       if (error) throw error
       setPaciente(p => ({ ...p, ...draft }))
       setEditando(false)
+      setMsgOk('Datos actualizados correctamente')
+      setTimeout(() => setMsgOk(''), 4000)
     } catch (err) {
-      alert('Error guardando: ' + err.message)
+      setMsgErr('Error guardando: ' + err.message)
     } finally {
       setGuardando(false)
     }
@@ -78,16 +83,17 @@ export default function MisDatosPage() {
   // ── Loading ──────────────────────────────────────────────────
   if (cargando) {
     return (
-      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} style={{
-            height: '40px', borderRadius: '10px',
-            background: 'linear-gradient(90deg, #F0EDE8 25%, #FAF7F3 50%, #F0EDE8 75%)',
-            backgroundSize: '200% 100%',
-            animation: 'shimmer 1.4s infinite',
-          }} />
-        ))}
-        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+      <div style={{ background: 'var(--vl-page)', minHeight: '100vh', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="vl-skeleton" style={{ height: '14px', width: '100px', borderRadius: '2px' }} />
+        <div className="vl-skeleton" style={{ height: '40px', width: '160px', borderRadius: '2px' }} />
+        <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div className="vl-skeleton" style={{ height: '10px', width: '80px', borderRadius: '2px' }} />
+              <div className="vl-skeleton" style={{ height: '44px', borderRadius: '2px' }} />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -95,202 +101,339 @@ export default function MisDatosPage() {
   // ── Sin paciente ─────────────────────────────────────────────
   if (!paciente) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center', color: '#9CA3AF', fontSize: '14px' }}>
-        No se encontró tu perfil
+      <div style={{
+        background: 'var(--vl-page)', minHeight: '100vh',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+      }}>
+        <p style={{
+          margin: 0,
+          fontFamily: 'var(--vl-font-display)',
+          fontSize: '18px', fontStyle: 'italic', fontWeight: 300,
+          color: 'var(--vl-sage-mid)',
+        }}>
+          No se encontró tu perfil
+        </p>
       </div>
     )
   }
 
-  const cardStyle = {
-    background: '#FFFFFF',
-    border: '1px solid #F0EDE8',
-    borderRadius: '16px',
-    padding: '20px',
-  }
-
   return (
-    <div style={{ flex: 1, overflowY: 'auto', background: '#FAFAF9' }}>
-      <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{
+      background:    'var(--vl-page)',
+      minHeight:     '100vh',
+      paddingBottom: '80px',
+      fontFamily:    'var(--vl-font-body)',
+    }}>
 
-        {/* Header */}
-        <div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#2D2A26' }}>
-            Mis Datos
-          </h1>
-          <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#9CA3AF' }}>
-            Información personal y preferencias
+      {/* ── Encabezado ───────────────────────────────────────── */}
+      <div style={{ padding: '32px 24px 0' }}>
+        <p className="vl-eyebrow" style={{ margin: '0 0 12px' }}>
+          Mi cuenta
+        </p>
+        <h1 style={{
+          margin:        0,
+          fontFamily:    'var(--vl-font-display)',
+          fontSize:      '36px',
+          fontWeight:    400,
+          lineHeight:    1.05,
+          letterSpacing: '-0.02em',
+          color:         'var(--vl-carbon)',
+        }}>
+          Mis datos<br />
+          <em style={{ color: 'var(--vl-sage-mid)', fontStyle: 'italic' }}>personales</em>
+        </h1>
+      </div>
+
+      {/* ── Feedback ─────────────────────────────────────────── */}
+      {msgOk && (
+        <div style={{ margin: '16px 24px 0', borderLeft: '2px solid var(--vl-sage-mid)', paddingLeft: '12px' }}>
+          <p style={{ margin: 0, fontSize: '12px', fontWeight: 300, color: 'var(--vl-sage-mid)', letterSpacing: '0.04em' }}>
+            {msgOk}
           </p>
         </div>
+      )}
+      {msgErr && (
+        <div style={{ margin: '16px 24px 0', borderLeft: '2px solid var(--vl-taupe)', paddingLeft: '12px' }}>
+          <p style={{ margin: 0, fontSize: '12px', fontWeight: 300, color: 'var(--vl-taupe)', lineHeight: 1.6 }}>
+            {msgErr}
+          </p>
+        </div>
+      )}
 
-        {/* Tarjeta */}
+      {/* ── Contenido ────────────────────────────────────────── */}
+      <div style={{ padding: '28px 24px 0', display: 'flex', flexDirection: 'column', gap: '0' }}>
+
         {!editando ? (
-          <div style={cardStyle}>
-            {/* Header tarjeta */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <User size={14} style={{ color: brand }} />
-                <span style={{ fontWeight: '600', fontSize: '14px', color: '#2D2A26' }}>
-                  Datos personales
-                </span>
-              </div>
-              <button
-                onClick={startEdit}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '4px',
-                  fontSize: '12px', fontWeight: '600', color: brand,
-                  background: brand + '20', border: 'none', borderRadius: '8px',
-                  padding: '5px 10px', cursor: 'pointer',
-                }}
-              >
-                <Pencil size={11} /> Editar
+          /* ── Vista lectura ──── */
+          <>
+            {/* Email — solo lectura */}
+            <DatoFila label="Email" value={paciente.email} />
+            <DatoFila label="WhatsApp" value={paciente.telefono} />
+            <DatoFila label="Ciudad" value={paciente.ciudad} />
+            <DatoFila label="Fecha de nacimiento" value={paciente.fecha_nacimiento} />
+            <DatoFila label="Tipo de piel" value={paciente.tipo_piel} />
+            <DatoFila label="Alergias" value={paciente.alergias} multiline />
+            <DatoFila label="Medicamentos" value={paciente.medicamentos} multiline />
+            <DatoFila label="Motivo de consulta" value={paciente.motivo_consulta} multiline />
+
+            {/* Botón editar */}
+            <div style={{ marginTop: '28px' }}>
+              <button onClick={startEdit} className="vl-btn-primary" style={{ width: '100%' }}>
+                Editar datos
               </button>
             </div>
 
-            {/* Filas de datos */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <DataRow label="Email"              value={paciente.email} />
-              <DataRow label="WhatsApp"           value={paciente.telefono} />
-              <DataRow label="Ciudad"             value={paciente.ciudad} />
-              <DataRow label="Fecha nacimiento"   value={paciente.fecha_nacimiento} />
-              <DataRow label="Tipo de piel"       value={paciente.tipo_piel} />
-              <DataRow label="Alergias"           value={paciente.alergias} multiline />
-              <DataRow label="Medicamentos"       value={paciente.medicamentos} multiline />
-              <DataRow label="Motivo de consulta" value={paciente.motivo_consulta} multiline />
-            </div>
-
-            {/* Acciones cuenta */}
-            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #F0EDE8', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Acciones de cuenta */}
+            <div style={{
+              marginTop:  '32px',
+              paddingTop: '24px',
+              borderTop:  '1px solid var(--vl-page-border)',
+              display:    'flex',
+              flexDirection: 'column',
+              gap:        '12px',
+            }}>
+              <p className="vl-eyebrow" style={{ margin: '0 0 4px' }}>Seguridad</p>
               <button
                 onClick={handleCambiarPassword}
-                style={{
-                  width: '100%', padding: '10px', borderRadius: '12px',
-                  border: '1px solid #E5E7EB', background: '#FFFFFF',
-                  color: '#374151', fontSize: '12px', fontWeight: '600',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                }}
+                className="vl-btn-secondary"
+                style={{ width: '100%' }}
               >
-                <Lock size={12} /> Cambiar contraseña
+                Cambiar contraseña
               </button>
-              <button
-                onClick={handleEliminar}
-                style={{
-                  width: '100%', padding: '10px', borderRadius: '12px',
-                  border: '1px solid #FECACA', background: '#FFFFFF',
-                  color: '#DC2626', fontSize: '12px', fontWeight: '600',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                }}
-              >
-                <AlertTriangle size={12} /> Eliminar mi cuenta
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Modo edición */
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <User size={14} style={{ color: brand }} />
-              <span style={{ fontWeight: '600', fontSize: '14px', color: '#2D2A26' }}>
-                Editar mis datos
-              </span>
-            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <EditField label="WhatsApp"    value={draft.telefono}        onChange={v => setDraft({ ...draft, telefono: v })} />
-              <EditField label="Ciudad"      value={draft.ciudad}          onChange={v => setDraft({ ...draft, ciudad: v })} />
+              <div style={{
+                marginTop:  '8px',
+                paddingTop: '20px',
+                borderTop:  '1px solid var(--vl-page-border)',
+              }}>
+                <p className="vl-eyebrow" style={{ margin: '0 0 8px', color: 'var(--vl-taupe)' }}>
+                  Zona de riesgo
+                </p>
+                <button
+                  onClick={handleEliminar}
+                  style={{
+                    width:         '100%',
+                    padding:       '10px 0',
+                    background:    'transparent',
+                    border:        '1px solid var(--vl-taupe)',
+                    borderRadius:  '2px',
+                    cursor:        'pointer',
+                    fontFamily:    'var(--vl-font-body)',
+                    fontSize:      '11px',
+                    fontWeight:    300,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color:         'var(--vl-taupe)',
+                    transition:    'var(--vl-transition)',
+                  }}
+                >
+                  Eliminar mi cuenta
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          /* ── Modo edición ──── */
+          <>
+            <p className="vl-eyebrow" style={{ margin: '0 0 20px' }}>Editando datos</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+
+              <CampoEdit
+                label="WhatsApp"
+                value={draft.telefono}
+                onChange={v => setDraft({ ...draft, telefono: v })}
+                placeholder="ej: +34 612 345 678"
+              />
+
+              <CampoEdit
+                label="Ciudad"
+                value={draft.ciudad}
+                onChange={v => setDraft({ ...draft, ciudad: v })}
+                placeholder="ej: Madrid"
+              />
 
               {/* Tipo de piel */}
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', color: '#4B5563', marginBottom: '6px' }}>
+                <p style={{
+                  margin:        '0 0 8px',
+                  fontSize:      '10px',
+                  fontWeight:    300,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  color:         'var(--vl-sage-mid)',
+                }}>
                   Tipo de piel
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px' }}>
-                  {TIPOS_PIEL.map(tp => (
-                    <button
-                      key={tp}
-                      type="button"
-                      onClick={() => setDraft({ ...draft, tipo_piel: tp })}
-                      style={{
-                        padding: '8px 4px', borderRadius: '8px', fontSize: '10px',
-                        fontWeight: '600', border: '1px solid', cursor: 'pointer',
-                        transition: 'all 0.15s',
-                        ...(draft.tipo_piel === tp
-                          ? { background: brand, borderColor: brand, color: '#FFF' }
-                          : { background: '#FFF', borderColor: '#E5E7EB', color: '#6B7280' }),
-                      }}
-                    >
-                      {tp}
-                    </button>
-                  ))}
+                </p>
+                <div style={{
+                  display:      'flex',
+                  border:       '1px solid var(--vl-page-border)',
+                  borderRadius: '2px',
+                  overflow:     'hidden',
+                }}>
+                  {TIPOS_PIEL.map((tp, i) => {
+                    const activo = draft.tipo_piel === tp
+                    return (
+                      <button
+                        key={tp}
+                        type="button"
+                        onClick={() => setDraft({ ...draft, tipo_piel: tp })}
+                        style={{
+                          flex:          1,
+                          padding:       '10px 4px',
+                          border:        'none',
+                          borderLeft:    i > 0 ? '1px solid var(--vl-page-border)' : 'none',
+                          cursor:        'pointer',
+                          fontFamily:    'var(--vl-font-body)',
+                          fontSize:      '9px',
+                          fontWeight:    300,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          transition:    'var(--vl-transition)',
+                          background:    activo ? 'var(--vl-carbon)' : 'transparent',
+                          color:         activo ? 'var(--vl-sage)' : 'var(--vl-sage-mid)',
+                        }}
+                      >
+                        {tp}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
-              <EditField label="Alergias"           value={draft.alergias}        onChange={v => setDraft({ ...draft, alergias: v })}        multiline />
-              <EditField label="Medicamentos"       value={draft.medicamentos}    onChange={v => setDraft({ ...draft, medicamentos: v })}    multiline />
-              <EditField label="Motivo de consulta" value={draft.motivo_consulta} onChange={v => setDraft({ ...draft, motivo_consulta: v })} multiline />
+              <CampoEdit
+                label="Alergias"
+                value={draft.alergias}
+                onChange={v => setDraft({ ...draft, alergias: v })}
+                placeholder="Describe tus alergias conocidas..."
+                multiline
+              />
+
+              <CampoEdit
+                label="Medicamentos"
+                value={draft.medicamentos}
+                onChange={v => setDraft({ ...draft, medicamentos: v })}
+                placeholder="Medicamentos actuales..."
+                multiline
+              />
+
+              <CampoEdit
+                label="Motivo de consulta"
+                value={draft.motivo_consulta}
+                onChange={v => setDraft({ ...draft, motivo_consulta: v })}
+                placeholder="¿Por qué acudes a la clínica?"
+                multiline
+              />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '16px' }}>
+            {/* Botones */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '28px' }}>
               <button
-                onClick={() => setEditando(false)}
+                onClick={() => { setEditando(false); setMsgErr('') }}
                 disabled={guardando}
-                style={{
-                  padding: '10px', borderRadius: '12px', fontSize: '12px', fontWeight: '600',
-                  border: '1px solid #E5E7EB', background: '#FFF', color: '#4B5563', cursor: 'pointer',
-                }}
+                className="vl-btn-secondary"
+                style={{ opacity: guardando ? 0.45 : 1 }}
               >
                 Cancelar
               </button>
               <button
                 onClick={handleGuardar}
                 disabled={guardando}
+                className="vl-btn-primary"
                 style={{
-                  padding: '10px', borderRadius: '12px', fontSize: '12px', fontWeight: '600',
-                  border: 'none', background: brand, color: '#FFF', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  opacity: guardando ? 0.65 : 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 }}
               >
-                <Save size={12} /> {guardando ? 'Guardando…' : 'Guardar'}
+                {guardando && (
+                  <span style={{
+                    width: '11px', height: '11px',
+                    border: '1.5px solid currentColor',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    display: 'inline-block',
+                    animation: 'spin 0.7s linear infinite',
+                  }} />
+                )}
+                {guardando ? 'Guardando…' : 'Guardar'}
               </button>
             </div>
-          </div>
+          </>
         )}
       </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }
 
-function DataRow({ label, value, multiline }) {
-  if (!value) return null
+// ── Helpers ──────────────────────────────────────────────────────
+
+function DatoFila({ label, value, multiline }) {
   return (
     <div style={{
-      display: 'flex',
+      padding:       '14px 0',
+      borderBottom:  '1px solid var(--vl-page-border)',
+      display:       'flex',
       flexDirection: multiline ? 'column' : 'row',
+      alignItems:    multiline ? 'flex-start' : 'baseline',
       justifyContent: multiline ? undefined : 'space-between',
-      gap: '2px',
-      fontSize: '12px',
+      gap:           multiline ? '4px' : '12px',
     }}>
-      <span style={{ color: '#9CA3AF' }}>{label}</span>
-      <span style={{ color: '#374151', fontWeight: '500', textAlign: multiline ? 'left' : 'right' }}>{value}</span>
+      <span style={{
+        fontFamily:    'var(--vl-font-body)',
+        fontSize:      '10px',
+        fontWeight:    300,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        color:         'var(--vl-sage-mid)',
+        flexShrink:    0,
+      }}>
+        {label}
+      </span>
+      <span style={{
+        fontFamily:  'var(--vl-font-body)',
+        fontSize:    '13px',
+        fontWeight:  300,
+        color:       value ? 'var(--vl-carbon)' : 'rgba(22,19,19,0.25)',
+        letterSpacing: '0.01em',
+        lineHeight:  1.5,
+        textAlign:   multiline ? 'left' : 'right',
+      }}>
+        {value || '—'}
+      </span>
     </div>
   )
 }
 
-function EditField({ label, value, onChange, multiline }) {
-  const style = {
-    width: '100%', background: '#F9FAFB', border: '1px solid #E5E7EB',
-    borderRadius: '10px', padding: '10px 12px', fontSize: '13px',
-    color: '#1F2937', outline: 'none', boxSizing: 'border-box',
-  }
+function CampoEdit({ label, value, onChange, placeholder, multiline }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: '12px', fontWeight: '500', color: '#4B5563', marginBottom: '4px' }}>
+      <p style={{
+        margin:        '0 0 6px',
+        fontSize:      '10px',
+        fontWeight:    300,
+        letterSpacing: '0.15em',
+        textTransform: 'uppercase',
+        color:         'var(--vl-sage-mid)',
+      }}>
         {label}
-      </label>
+      </p>
       {multiline ? (
-        <textarea value={value || ''} onChange={e => onChange(e.target.value)} rows={2}
-                  style={{ ...style, resize: 'none' }} />
+        <textarea
+          className="vl-input"
+          value={value || ''}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+          rows={3}
+          style={{ resize: 'none' }}
+        />
       ) : (
-        <input value={value || ''} onChange={e => onChange(e.target.value)} style={style} />
+        <input
+          className="vl-input"
+          value={value || ''}
+          onChange={e => onChange(e.target.value)}
+          placeholder={placeholder}
+        />
       )}
     </div>
   )

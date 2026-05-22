@@ -70,29 +70,44 @@ export default function EvolutionUploader({ onUpload, sesion_numero = 1, disable
     }
   }
 
-  const faseCfg = FASE_CONFIG[fase]
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
       {/* Selector de fase */}
-      <div style={{ display: 'flex', gap: '8px' }}>
-        {Object.entries(FASE_CONFIG).map(([key, cfg]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setFase(key)}
-            style={{
-              flex: 1, padding: '8px 4px', borderRadius: '10px', fontSize: '12px',
-              fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s',
-              border: `1.5px solid ${fase === key ? cfg.color : '#E5E7EB'}`,
-              background: fase === key ? cfg.bg : '#FFFFFF',
-              color: fase === key ? cfg.color : '#9CA3AF',
-            }}
-          >
-            {cfg.label}
-          </button>
-        ))}
+      <div>
+        <p style={{
+          margin: '0 0 8px',
+          fontSize: '10px', fontWeight: 300,
+          letterSpacing: '0.15em', textTransform: 'uppercase',
+          color: 'var(--vl-sage-mid)',
+        }}>
+          Tipo de foto
+        </p>
+        <div style={{
+          display: 'flex', gap: '1px',
+          border: '1px solid var(--vl-page-border)',
+          borderRadius: '2px', overflow: 'hidden',
+        }}>
+          {Object.entries(FASE_CONFIG).map(([key, cfg]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFase(key)}
+              style={{
+                flex: 1, padding: '10px 4px',
+                border: 'none', cursor: 'pointer',
+                fontFamily: 'var(--vl-font-body)',
+                fontSize: '10px', fontWeight: 300,
+                letterSpacing: '0.1em', textTransform: 'uppercase',
+                transition: 'var(--vl-transition)',
+                background: fase === key ? 'var(--vl-carbon)' : 'transparent',
+                color: fase === key ? 'var(--vl-sage)' : 'var(--vl-sage-mid)',
+              }}
+            >
+              {cfg.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Zona de imagen */}
@@ -103,21 +118,20 @@ export default function EvolutionUploader({ onUpload, sesion_numero = 1, disable
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
           style={{
-            border: `2px dashed ${dragging ? '#C9A46A' : '#E5E7EB'}`,
-            borderRadius: '12px',
-            padding: '32px 16px',
+            border: `1px solid ${dragging ? 'var(--vl-sage-mid)' : 'var(--vl-page-border)'}`,
+            borderRadius: '2px',
+            padding: '40px 24px',
             textAlign: 'center',
             cursor: disabled ? 'not-allowed' : 'pointer',
-            background: dragging ? '#FDF8F0' : '#FAFAF9',
-            transition: 'all 0.15s',
+            background: dragging ? 'var(--vl-page-dark)' : 'var(--vl-white)',
+            transition: 'var(--vl-transition)',
           }}
         >
-          <div style={{ fontSize: '32px', marginBottom: '8px' }}>📷</div>
-          <p style={{ margin: '0 0 4px', fontWeight: '600', color: '#2D2A26', fontSize: '14px' }}>
+          <p style={{ margin: '0 0 6px', fontFamily: 'var(--vl-font-body)', fontSize: '13px', fontWeight: 300, color: 'var(--vl-carbon)', letterSpacing: '0.04em' }}>
             Arrastra una foto o haz clic
           </p>
-          <p style={{ margin: 0, color: '#9CA3AF', fontSize: '12px' }}>
-            JPG, PNG, WebP · Máx. 10MB
+          <p style={{ margin: 0, fontSize: '11px', fontWeight: 300, color: 'var(--vl-sage-mid)', letterSpacing: '0.06em' }}>
+            JPG, PNG, WebP · Máx. 10 MB
           </p>
           <input
             ref={inputRef}
@@ -129,7 +143,7 @@ export default function EvolutionUploader({ onUpload, sesion_numero = 1, disable
           />
         </div>
       ) : (
-        <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', aspectRatio: '4/3' }}>
+        <div style={{ position: 'relative', borderRadius: '2px', overflow: 'hidden', aspectRatio: '4/3' }}>
           <img
             src={preview}
             alt="Preview"
@@ -140,88 +154,99 @@ export default function EvolutionUploader({ onUpload, sesion_numero = 1, disable
             style={{
               position: 'absolute', top: '8px', right: '8px',
               width: '28px', height: '28px', borderRadius: '50%',
-              background: 'rgba(0,0,0,0.6)', color: '#FFF',
+              background: 'rgba(22,19,19,0.72)', color: 'var(--vl-page)',
               border: 'none', cursor: 'pointer', fontSize: '14px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >✕</button>
           <span style={{
             position: 'absolute', bottom: '8px', left: '8px',
-            background: faseCfg.bg, color: faseCfg.color,
-            fontSize: '11px', fontWeight: '700', padding: '3px 8px', borderRadius: '20px',
+            background: 'rgba(22,19,19,0.72)', color: 'var(--vl-sage)',
+            fontSize: '9px', fontWeight: 300, letterSpacing: '0.1em',
+            textTransform: 'uppercase', padding: '3px 8px',
           }}>
-            {faseCfg.label}
+            {FASE_CONFIG[fase].label}
           </span>
         </div>
       )}
 
       {/* Zona corporal */}
-      <input
-        value={zona}
-        onChange={e => setZona(e.target.value)}
-        placeholder="Zona corporal (ej: mejilla izquierda, frente...)"
-        style={{
-          width: '100%', padding: '10px 12px', borderRadius: '10px',
-          border: '1px solid #E5E7EB', background: '#F9FAFB',
-          fontSize: '13px', color: '#1F2937', outline: 'none', boxSizing: 'border-box',
-        }}
-      />
+      <div>
+        <p style={{
+          margin: '0 0 6px',
+          fontSize: '10px', fontWeight: 300,
+          letterSpacing: '0.15em', textTransform: 'uppercase',
+          color: 'var(--vl-sage-mid)',
+        }}>
+          Zona corporal
+        </p>
+        <input
+          className="vl-input"
+          value={zona}
+          onChange={e => setZona(e.target.value)}
+          placeholder="ej: mejilla izquierda, frente..."
+        />
+      </div>
 
       {/* Notas */}
-      <textarea
-        value={notas}
-        onChange={e => setNotas(e.target.value)}
-        rows={3}
-        placeholder="Notas opcionales sobre esta foto..."
-        style={{
-          width: '100%', padding: '10px 12px', borderRadius: '10px',
-          border: '1px solid #E5E7EB', background: '#F9FAFB',
-          fontSize: '13px', color: '#1F2937', outline: 'none',
-          resize: 'none', boxSizing: 'border-box',
-        }}
-      />
+      <div>
+        <p style={{
+          margin: '0 0 6px',
+          fontSize: '10px', fontWeight: 300,
+          letterSpacing: '0.15em', textTransform: 'uppercase',
+          color: 'var(--vl-sage-mid)',
+        }}>
+          Notas <span style={{ textTransform: 'none', letterSpacing: 0, opacity: 0.6 }}>(opcional)</span>
+        </p>
+        <textarea
+          className="vl-input"
+          value={notas}
+          onChange={e => setNotas(e.target.value)}
+          rows={3}
+          placeholder="Observaciones sobre esta foto..."
+          style={{ resize: 'none' }}
+        />
+      </div>
 
       {/* Error */}
       {errorMsg && (
-        <p style={{
-          margin: 0, padding: '10px 12px', borderRadius: '10px',
-          background: '#FEF2F2', color: '#DC2626', fontSize: '13px',
-        }}>
-          {errorMsg}
-        </p>
+        <div style={{ borderLeft: '2px solid var(--vl-taupe)', paddingLeft: '12px' }}>
+          <p style={{ margin: 0, fontSize: '12px', fontWeight: 300, color: 'var(--vl-taupe)', lineHeight: 1.6 }}>
+            {errorMsg}
+          </p>
+        </div>
       )}
 
       {/* Éxito */}
       {success && (
-        <p style={{
-          margin: 0, padding: '10px 12px', borderRadius: '10px',
-          background: '#ECFDF5', color: '#059669', fontSize: '13px', fontWeight: '600',
-        }}>
-          ✓ Foto subida correctamente
-        </p>
+        <div style={{ borderLeft: '2px solid var(--vl-sage-mid)', paddingLeft: '12px' }}>
+          <p style={{ margin: 0, fontSize: '12px', fontWeight: 300, color: 'var(--vl-sage-mid)', letterSpacing: '0.04em' }}>
+            Foto subida correctamente
+          </p>
+        </div>
       )}
 
       {/* Botón guardar */}
       <button
         onClick={handleSubmit}
         disabled={!archivo || uploading || disabled}
+        className={!archivo || uploading || disabled ? 'vl-btn-secondary' : 'vl-btn-primary'}
         style={{
-          width: '100%', padding: '12px', borderRadius: '12px', border: 'none',
-          background: !archivo || uploading || disabled ? '#E5E7EB' : '#C9A46A',
-          color: !archivo || uploading || disabled ? '#9CA3AF' : '#2D2A26',
-          fontSize: '14px', fontWeight: '700', cursor: !archivo || uploading || disabled ? 'not-allowed' : 'pointer',
+          width: '100%',
+          opacity: !archivo || uploading || disabled ? 0.45 : 1,
+          cursor: !archivo || uploading || disabled ? 'not-allowed' : 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          transition: 'all 0.15s',
         }}
       >
         {uploading && (
           <span style={{
-            width: '14px', height: '14px', border: '2px solid #2D2A26',
+            width: '12px', height: '12px',
+            border: '1.5px solid currentColor',
             borderTopColor: 'transparent', borderRadius: '50%',
             animation: 'spin 0.7s linear infinite', display: 'inline-block',
           }} />
         )}
-        {uploading ? 'Subiendo…' : 'Guardar foto de evolución'}
+        {uploading ? 'Subiendo…' : 'Guardar foto'}
       </button>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>

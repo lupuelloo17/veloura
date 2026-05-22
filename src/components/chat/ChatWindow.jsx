@@ -59,61 +59,62 @@ export default function ChatWindow({
       {/* ── Cabecera ── */}
       <div
         style={{
-          display:     'flex',
-          alignItems:  'center',
-          gap:         12,
-          padding:     '14px 16px',
-          borderBottom:'1px solid #F0EDE8',
-          background:  '#fff',
-          flexShrink:  0,
+          display:    'flex',
+          alignItems: 'center',
+          gap:        14,
+          padding:    '20px 20px 18px',
+          background: 'var(--vl-carbon)',
+          flexShrink: 0,
         }}
       >
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          {medico?.foto ? (
-            <img
-              src={medico.foto}
-              alt={medico.nombre}
-              style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }}
-            />
-          ) : (
-            <div
-              style={{
-                width:          44,
-                height:         44,
-                borderRadius:   '50%',
-                background:     '#FDF8F0',
-                display:        'flex',
-                alignItems:     'center',
-                justifyContent: 'center',
-                fontSize:       16,
-                fontWeight:     600,
-                color:          '#C9A46A',
-              }}
-            >
-              {iniciales(medico?.nombre)}
-            </div>
-          )}
-          <span
+        {medico?.foto ? (
+          <img
+            src={medico.foto}
+            alt={medico.nombre}
             style={{
-              position:     'absolute',
-              bottom:       1,
-              right:        1,
-              width:        10,
-              height:       10,
+              width: 40, height: 40,
               borderRadius: '50%',
-              background:   '#22C55E',
-              border:       '2px solid #fff',
+              objectFit: 'cover',
+              border: '1px solid rgba(201,211,202,0.15)',
+              flexShrink: 0,
             }}
           />
-        </div>
+        ) : (
+          <div
+            className="vl-avatar-dark"
+            style={{ width: 40, height: 40, fontSize: 14, flexShrink: 0 }}
+          >
+            {iniciales(medico?.nombre)}
+          </div>
+        )}
 
-        <div>
-          <div style={{ fontWeight: 600, fontSize: 15, color: '#2D2A26' }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{
+            margin: 0,
+            fontFamily: 'var(--vl-font-body)',
+            fontSize: '13px',
+            fontWeight: 400,
+            color: 'var(--vl-page)',
+            letterSpacing: '0.01em',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
             {medico?.nombre ?? '—'}
-          </div>
-          <div style={{ fontSize: 12, color: '#9CA3AF' }}>
-            {medico?.especialidad ?? ''}
-          </div>
+          </p>
+          {medico?.especialidad && (
+            <p style={{
+              margin: '2px 0 0',
+              fontFamily: 'var(--vl-font-body)',
+              fontSize: '10px',
+              fontWeight: 300,
+              color: 'rgba(255,255,255,0.3)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}>
+              {medico.especialidad}
+            </p>
+          )}
         </div>
       </div>
 
@@ -121,43 +122,51 @@ export default function ChatWindow({
       <div
         ref={listRef}
         style={{
-          flex:      1,
-          overflowY: 'auto',
-          padding:   16,
-          display:   'flex',
+          flex:          1,
+          overflowY:     'auto',
+          padding:       '16px 16px 8px',
+          display:       'flex',
           flexDirection: 'column',
+          background:    'var(--vl-page)',
         }}
       >
         {error && (
-          <div
-            style={{
-              background:   '#FEF2F2',
-              border:       '1px solid #FECACA',
-              borderRadius: 8,
-              padding:      '10px 14px',
-              color:        '#DC2626',
-              fontSize:     13,
-              marginBottom: 12,
-            }}
-          >
-            {error}
+          <div style={{
+            borderLeft: '2px solid var(--vl-taupe)',
+            paddingLeft: '12px',
+            marginBottom: '12px',
+          }}>
+            <p style={{
+              margin: 0,
+              fontSize: '12px',
+              fontWeight: 300,
+              color: 'var(--vl-taupe)',
+              lineHeight: 1.6,
+            }}>
+              {error}
+            </p>
           </div>
         )}
 
         {mensajes.length === 0 && !error ? (
-          <div
-            style={{
-              flex:           1,
-              display:        'flex',
-              flexDirection:  'column',
-              alignItems:     'center',
-              justifyContent: 'center',
-              gap:            8,
-              color:          '#9CA3AF',
-            }}
-          >
-            <span style={{ fontSize: 36 }}>💬</span>
-            <span style={{ fontSize: 14 }}>Inicia la conversación</span>
+          <div style={{
+            flex:           1,
+            display:        'flex',
+            flexDirection:  'column',
+            alignItems:     'center',
+            justifyContent: 'center',
+            gap:            8,
+          }}>
+            <p style={{
+              margin: 0,
+              fontFamily: 'var(--vl-font-display)',
+              fontSize: '18px',
+              fontStyle: 'italic',
+              color: 'var(--vl-sage-mid)',
+              fontWeight: 300,
+            }}>
+              Inicia la conversación
+            </p>
           </div>
         ) : (
           items.map((item, i) => {
@@ -166,21 +175,33 @@ export default function ChatWindow({
                 <div
                   key={`sep-${i}`}
                   style={{
-                    textAlign:  'center',
-                    fontSize:   11,
-                    color:      '#9CA3AF',
-                    margin:     '12px 0 8px',
+                    display:    'flex',
+                    alignItems: 'center',
+                    gap:        '10px',
+                    margin:     '16px 0 10px',
                   }}
                 >
-                  {item.etiqueta}
+                  <div style={{ flex: 1, height: '1px', background: 'var(--vl-page-border)' }} />
+                  <span style={{
+                    fontFamily:    'var(--vl-font-body)',
+                    fontSize:      '10px',
+                    fontWeight:    300,
+                    color:         'var(--vl-sage-mid)',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    whiteSpace:    'nowrap',
+                  }}>
+                    {item.etiqueta}
+                  </span>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--vl-page-border)' }} />
                 </div>
               )
             }
 
-            const { msg }       = item
-            const esMio         = msg.remitente_id === pacienteId
-            const siguiente     = items[i + 1]
-            const esUltimo      =
+            const { msg }   = item
+            const esMio     = msg.remitente_id === pacienteId
+            const siguiente = items[i + 1]
+            const esUltimo  =
               !siguiente ||
               siguiente.tipo === 'separador' ||
               siguiente.msg?.remitente_id !== msg.remitente_id

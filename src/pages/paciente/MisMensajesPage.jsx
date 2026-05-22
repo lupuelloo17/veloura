@@ -3,52 +3,6 @@ import { useClinic } from '../../contexts/ClinicContext'
 import { useChat }   from '../../hooks/useChat'
 import ChatWindow    from '../../components/chat/ChatWindow'
 
-function SkeletonBurbuja({ esMio }) {
-  return (
-    <div
-      style={{
-        alignSelf:    esMio ? 'flex-end' : 'flex-start',
-        width:        `${esMio ? 55 : 65}%`,
-        height:       44,
-        borderRadius: 12,
-        background:   '#F0EDE8',
-        marginBottom: 8,
-        animation:    'pulse 1.5s ease-in-out infinite',
-      }}
-    />
-  )
-}
-
-function Skeleton() {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* cabecera gris */}
-      <div
-        style={{
-          height:       68,
-          background:   '#F0EDE8',
-          borderBottom: '1px solid #E5E0D8',
-          flexShrink:   0,
-          animation:    'pulse 1.5s ease-in-out infinite',
-        }}
-      />
-      {/* burbujas */}
-      <div
-        style={{
-          flex:          1,
-          padding:       16,
-          display:       'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {[false, true, false, true, false].map((esMio, i) => (
-          <SkeletonBurbuja key={i} esMio={esMio} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export default function MisMensajesPage() {
   const { user }    = useAuth()
   const { clinica } = useClinic()
@@ -63,69 +17,60 @@ export default function MisMensajesPage() {
     enviarMensaje,
   } = useChat(user?.email, clinica?.id)
 
+  // ── Loading ──────────────────────────────────────────────────
   if (loading) {
     return (
-      <div style={{ padding: '24px 16px', maxWidth: 720, margin: '0 auto' }}>
-        <div style={{ height: 560, borderRadius: 16, overflow: 'hidden', border: '1px solid #F0EDE8' }}>
-          <Skeleton />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minHeight: '100vh', background: 'var(--vl-page-dark)' }}>
+        <div className="vl-skeleton" style={{ height: '80px' }} />
+        <div style={{ background: 'var(--vl-page)', flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="vl-skeleton" style={{ height: '44px', borderRadius: '2px', width: '60%', alignSelf: 'flex-start' }} />
+          <div className="vl-skeleton" style={{ height: '44px', borderRadius: '2px', width: '55%', alignSelf: 'flex-end' }} />
+          <div className="vl-skeleton" style={{ height: '44px', borderRadius: '2px', width: '65%', alignSelf: 'flex-start' }} />
+          <div className="vl-skeleton" style={{ height: '44px', borderRadius: '2px', width: '50%', alignSelf: 'flex-end' }} />
+        </div>
+        <div className="vl-skeleton" style={{ height: '68px' }} />
+      </div>
+    )
+  }
+
+  // ── Sin médico ───────────────────────────────────────────────
+  if (!medico && !error) {
+    return (
+      <div style={{
+        background: 'var(--vl-carbon)', minHeight: '100vh',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{
+            margin: '0 0 8px',
+            fontFamily: 'var(--vl-font-display)',
+            fontSize: '20px', fontStyle: 'italic', color: 'var(--vl-sage-mid)',
+          }}>
+            Sin especialista asignado
+          </p>
+          <p style={{ margin: 0, fontSize: '12px', fontWeight: 300, color: 'rgba(247,245,242,0.35)', letterSpacing: '0.04em' }}>
+            Aún no tienes un médico asignado en esta clínica.
+          </p>
         </div>
       </div>
     )
   }
 
-  if (!medico && !error) {
-    return (
-      <div
-        style={{
-          padding:        '48px 16px',
-          display:        'flex',
-          flexDirection:  'column',
-          alignItems:     'center',
-          gap:            12,
-          color:          '#9CA3AF',
-        }}
-      >
-        <span style={{ fontSize: 48 }}>👩‍⚕️</span>
-        <p style={{ fontSize: 16, fontWeight: 600, color: '#2D2A26', margin: 0 }}>
-          Sin especialista asignado
-        </p>
-        <p style={{ fontSize: 14, margin: 0 }}>
-          Aún no tienes un médico asignado en esta clínica.
-        </p>
-      </div>
-    )
-  }
-
   return (
-    <div style={{ padding: '24px 16px', maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 22, fontWeight: 700, color: '#2D2A26', margin: '0 0 4px' }}>
-        Mis Mensajes
-      </h1>
-      <p style={{ fontSize: 14, color: '#9CA3AF', margin: '0 0 20px' }}>
-        Consulta directa con tu especialista
-      </p>
-
-      <div
-        style={{
-          border:       '1px solid #F0EDE8',
-          borderRadius: 16,
-          height:       560,
-          overflow:     'hidden',
-        }}
-      >
-        <ChatWindow
-          mensajes={mensajes}
-          medico={medico}
-          pacienteId={pacienteId}
-          sending={sending}
-          error={error}
-          onSend={enviarMensaje}
-        />
-      </div>
-
-      <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 10, textAlign: 'center' }}>
-        Tus mensajes son privados y solo visibles para ti y tu especialista.
-      </p>
+    <div style={{
+      fontFamily: 'var(--vl-font-body)',
+      display: 'flex', flexDirection: 'column',
+      height: '100vh', paddingBottom: '72px',
+      overflow: 'hidden',
+    }}>
+      <ChatWindow
+        mensajes={mensajes}
+        medico={medico}
+        pacienteId={pacienteId}
+        sending={sending}
+        error={error}
+        onSend={enviarMensaje}
+      />
     </div>
   )
 }

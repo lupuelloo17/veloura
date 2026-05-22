@@ -5,10 +5,10 @@ import { useEvolution }    from '../../hooks/useEvolution'
 import EvolutionUploader   from '../../components/evolution/EvolutionUploader'
 import BeforeAfterSlider   from '../../components/evolution/BeforeAfterSlider'
 
-const FASE_BADGE = {
-  antes:    { color: '#6B7280', bg: '#F3F4F6', label: 'Antes' },
-  despues:  { color: '#059669', bg: '#ECFDF5', label: 'Después' },
-  progreso: { color: '#C9A46A', bg: '#FDF8F0', label: 'Progreso' },
+const FASE_LABEL = {
+  antes:    'Antes',
+  despues:  'Después',
+  progreso: 'Progreso',
 }
 
 function formatFecha(isoStr) {
@@ -31,8 +31,8 @@ export default function MiEvolucionPage() {
   const fotosActivas = sesionSeleccionada !== null ? (fotosPorSesion[sesionSeleccionada] ?? []) : []
   const totalFotos = Object.values(fotosPorSesion).reduce((acc, arr) => acc + arr.length, 0)
 
-  const fotoAntes   = fotosActivas.find(f => f.fase === 'antes')
-  const fotoDespues = fotosActivas.find(f => f.fase === 'despues')
+  const fotoAntes     = fotosActivas.find(f => f.fase === 'antes')
+  const fotoDespues   = fotosActivas.find(f => f.fase === 'despues')
   const fotosProgreso = fotosActivas.filter(f => f.fase === 'progreso')
 
   const tabs = ['Comparador', 'Galería', 'Subir foto']
@@ -40,15 +40,13 @@ export default function MiEvolucionPage() {
   // ── Loading ──────────────────────────────────────────────────
   if (loading) {
     return (
-      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {[1, 2, 3].map(i => (
-          <div key={i} style={{
-            height: i === 1 ? '200px' : '60px', borderRadius: '12px',
-            background: 'linear-gradient(90deg, #F0EDE8 25%, #FAF7F3 50%, #F0EDE8 75%)',
-            backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite',
-          }} />
-        ))}
-        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', minHeight: '100vh', background: 'var(--vl-page-dark)' }}>
+        <div className="vl-skeleton" style={{ height: '160px' }} />
+        <div className="vl-skeleton" style={{ height: '52px' }} />
+        <div style={{ background: 'var(--vl-page)', padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="vl-skeleton" style={{ height: '220px', borderRadius: '4px' }} />
+          <div className="vl-skeleton" style={{ height: '60px', borderRadius: '4px' }} />
+        </div>
       </div>
     )
   }
@@ -56,98 +54,147 @@ export default function MiEvolucionPage() {
   // ── Error ────────────────────────────────────────────────────
   if (error) {
     return (
-      <div style={{
-        margin: '16px', padding: '12px 16px', background: '#FEE2E2',
-        border: '1px solid #FECACA', borderRadius: '10px', color: '#991B1B', fontSize: '14px',
-      }}>
-        {error}
+      <div style={{ background: 'var(--vl-carbon)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ borderLeft: '2px solid var(--vl-taupe)', paddingLeft: '14px' }}>
+          <p style={{ margin: 0, fontSize: '12px', fontWeight: 300, color: 'var(--vl-taupe)', lineHeight: 1.7 }}>{error}</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div style={{ flex: 1, overflowY: 'auto', background: '#FAFAF9' }}>
-      <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ fontFamily: 'var(--vl-font-body)', background: 'var(--vl-page)', paddingBottom: '80px' }}>
 
-        {/* Header */}
+      {/* ── HERO ─────────────────────────────────────────────────── */}
+      <div style={{ background: 'var(--vl-carbon)', padding: '32px 24px 0', overflow: 'hidden', position: 'relative' }}>
+        {/* Decorative circles */}
+        <div style={{
+          position: 'absolute', top: '-60px', right: '-60px',
+          width: '200px', height: '200px', borderRadius: '50%',
+          border: '1px solid rgba(201,211,202,0.06)', pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', top: '20px', right: '20px',
+          width: '120px', height: '120px', borderRadius: '50%',
+          border: '1px solid rgba(201,211,202,0.06)', pointerEvents: 'none',
+        }} />
+
+        {/* Eyebrow */}
+        <p className="vl-eyebrow" style={{ margin: '0 0 16px' }}>Registro fotográfico</p>
+
+        {/* Title + badge */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#2D2A26' }}>
-              Mi Evolución
-            </h1>
-            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#9CA3AF' }}>
-              Registro fotográfico de tu progreso con la Dra. García
-            </p>
-          </div>
+          <h1 style={{
+            fontFamily: 'var(--vl-font-display)',
+            fontSize: '40px', fontWeight: 400, lineHeight: 1.0,
+            letterSpacing: '-0.02em', margin: '0 0 8px', color: 'var(--vl-page)',
+          }}>
+            Mi Evolución<br />
+            <em style={{ color: 'var(--vl-sage)', fontStyle: 'italic' }}>Fotográfica</em>
+          </h1>
           {totalFotos > 0 && (
-            <span style={{
-              background: '#FDF8F0', color: '#C9A46A', fontSize: '12px',
-              fontWeight: '700', padding: '4px 10px', borderRadius: '20px', flexShrink: 0,
-            }}>
+            <span className="vl-badge-dark" style={{ marginTop: '6px', flexShrink: 0 }}>
               {totalFotos} {totalFotos === 1 ? 'foto' : 'fotos'}
             </span>
           )}
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '4px', background: '#F0EDE8', borderRadius: '12px', padding: '4px' }}>
-          {tabs.map(tab => (
-            <button
-              key={tab}
-              onClick={() => setTabActiva(tab)}
-              style={{
-                flex: 1, padding: '8px 4px', borderRadius: '9px', border: 'none',
-                fontSize: '12px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s',
-                background: tabActiva === tab ? '#2D2A26' : 'transparent',
-                color:      tabActiva === tab ? '#C9A46A' : '#9CA3AF',
-              }}
-            >
-              {tab}
-            </button>
-          ))}
+        <p style={{ margin: '0 0 28px', fontSize: '12px', fontWeight: 300, color: 'rgba(247,245,242,0.35)', letterSpacing: '0.06em' }}>
+          Progreso visual de tu tratamiento
+        </p>
+      </div>
+
+      {/* ── TAB SELECTOR ─────────────────────────────────────────── */}
+      <div style={{ background: 'var(--vl-carbon)', padding: '0 24px 20px' }}>
+        <div style={{
+          border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: '2px', overflow: 'hidden', display: 'flex',
+        }}>
+          {tabs.map((tab, i) => {
+            const activa = tabActiva === tab
+            return (
+              <button
+                key={tab}
+                onClick={() => setTabActiva(tab)}
+                style={{
+                  flex: 1, padding: '14px 4px', border: 'none',
+                  borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.07)' : 'none',
+                  background: activa ? 'rgba(201,211,202,0.08)' : 'transparent',
+                  color: activa ? 'var(--vl-sage)' : 'rgba(255,255,255,0.2)',
+                  fontSize: '11px', fontWeight: 300,
+                  letterSpacing: '0.12em', textTransform: 'uppercase',
+                  cursor: 'pointer', transition: 'var(--vl-transition)',
+                  fontFamily: 'var(--vl-font-body)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                }}
+              >
+                {tab}
+                {activa && (
+                  <span style={{
+                    width: '4px', height: '4px', borderRadius: '50%',
+                    background: 'var(--vl-sage)', opacity: 0.6, flexShrink: 0,
+                  }} />
+                )}
+              </button>
+            )
+          })}
         </div>
+      </div>
+
+      {/* ── CONTENT ──────────────────────────────────────────────── */}
+      <div style={{ background: 'var(--vl-page)' }}>
 
         {/* ── TAB: COMPARADOR ── */}
         {tabActiva === 'Comparador' && (
-          <>
+          <div style={{ padding: '24px' }}>
             {sesiones.length === 0 ? (
               <div style={{
-                flex: 1, display: 'flex', flexDirection: 'column',
+                display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                padding: '48px 16px', gap: '12px', textAlign: 'center',
+                padding: '56px 0', gap: '16px', textAlign: 'center',
               }}>
-                <span style={{ fontSize: '48px' }}>🌿</span>
-                <p style={{ margin: 0, fontWeight: '700', color: '#2D2A26', fontSize: '16px' }}>
+                <p style={{
+                  margin: 0, fontFamily: 'var(--vl-font-display)',
+                  fontSize: '20px', fontStyle: 'italic', color: 'var(--vl-sage-mid)',
+                }}>
                   Sin fotos de evolución aún
                 </p>
-                <p style={{ margin: 0, color: '#9CA3AF', fontSize: '13px' }}>
+                <p style={{
+                  margin: 0, fontSize: '12px', fontWeight: 300,
+                  color: 'var(--vl-carbon-soft)', letterSpacing: '0.04em',
+                }}>
                   Sube tu primera foto para comenzar a registrar tu progreso
                 </p>
                 <button
+                  className="vl-btn-primary"
                   onClick={() => setTabActiva('Subir foto')}
-                  style={{
-                    marginTop: '8px', padding: '12px 24px', borderRadius: '12px',
-                    background: '#C9A46A', color: '#2D2A26', border: 'none',
-                    fontSize: '14px', fontWeight: '700', cursor: 'pointer',
-                  }}
+                  style={{ marginTop: '8px' }}
                 >
                   Subir primera foto
                 </button>
               </div>
             ) : (
-              <>
-                {/* Selector de sesión */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+                {/* Session selector */}
                 {sesiones.length > 1 && (
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <div style={{
+                    display: 'flex', gap: '1px',
+                    border: '1px solid var(--vl-page-border)',
+                    borderRadius: '2px', overflow: 'hidden',
+                  }}>
                     {sesiones.map(num => (
                       <button
                         key={num}
                         onClick={() => setSesionActiva(num)}
                         style={{
-                          padding: '6px 14px', borderRadius: '20px', border: 'none',
-                          fontSize: '12px', fontWeight: '600', cursor: 'pointer',
-                          background: sesionSeleccionada === num ? '#2D2A26' : '#F0EDE8',
-                          color:      sesionSeleccionada === num ? '#C9A46A' : '#6B7280',
+                          flex: 1, padding: '10px 8px', border: 'none',
+                          background: sesionSeleccionada === num ? 'var(--vl-carbon)' : 'transparent',
+                          color: sesionSeleccionada === num ? 'var(--vl-sage)' : 'var(--vl-sage-mid)',
+                          fontSize: '10px', fontWeight: 300,
+                          letterSpacing: '0.1em', textTransform: 'uppercase',
+                          cursor: 'pointer', fontFamily: 'var(--vl-font-body)',
+                          transition: 'var(--vl-transition)',
                         }}
                       >
                         Sesión {num}
@@ -168,17 +215,18 @@ export default function MiEvolucionPage() {
                   />
                 ) : (
                   <div style={{
-                    background: '#FFFFFF', border: '1px solid #F0EDE8',
-                    borderRadius: '16px', padding: '20px', textAlign: 'center',
+                    background: 'var(--vl-white)',
+                    border: '1px solid var(--vl-page-border)',
+                    borderRadius: '2px', padding: '20px', textAlign: 'center',
                   }}>
                     {(fotoAntes || fotoDespues) && (
                       <img
                         src={(fotoAntes || fotoDespues).foto_url}
                         alt="Evolución"
-                        style={{ width: '100%', borderRadius: '12px', objectFit: 'cover', maxHeight: '260px' }}
+                        style={{ width: '100%', borderRadius: '2px', objectFit: 'cover', maxHeight: '260px' }}
                       />
                     )}
-                    <p style={{ margin: '12px 0 0', color: '#9CA3AF', fontSize: '13px' }}>
+                    <p style={{ margin: '16px 0 0', fontSize: '12px', fontWeight: 300, color: 'var(--vl-sage-mid)', letterSpacing: '0.04em' }}>
                       {fotoAntes
                         ? 'Foto "antes" registrada. Sube una foto "después" para activar el comparador.'
                         : 'Foto "después" registrada. Sube una foto "antes" para activar el comparador.'}
@@ -186,86 +234,99 @@ export default function MiEvolucionPage() {
                   </div>
                 )}
 
-                {/* Fotos de progreso */}
+                {/* Progress photos */}
                 {fotosProgreso.length > 0 && (
                   <div>
-                    <p style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: '600', color: '#2D2A26' }}>
+                    <p className="vl-section-label" style={{ margin: '0 0 12px' }}>
                       Fotos de progreso
                     </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
                       {fotosProgreso.map(f => (
-                        <div key={f.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '1' }}>
-                          <img src={f.foto_url} alt="Progreso" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div key={f.id} style={{ position: 'relative', borderRadius: '2px', overflow: 'hidden', aspectRatio: '1' }}>
+                          <img src={f.foto_url} alt="Progreso" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                           <span style={{
                             position: 'absolute', bottom: '4px', left: '4px',
-                            background: 'rgba(0,0,0,0.5)', color: '#FFF',
-                            fontSize: '9px', padding: '2px 6px', borderRadius: '6px',
+                            background: 'rgba(22,19,19,0.72)', color: 'var(--vl-sage)',
+                            fontSize: '9px', fontWeight: 300, letterSpacing: '0.04em',
+                            padding: '2px 6px',
                           }}>
                             {formatFecha(f.creado_en)}
                           </span>
                           {f.notas && (
                             <span style={{
                               position: 'absolute', top: '4px', right: '4px',
-                              background: 'rgba(0,0,0,0.4)', color: '#FFF',
-                              fontSize: '9px', padding: '2px 5px', borderRadius: '6px',
-                            }} title={f.notas}>📝</span>
+                              background: 'rgba(22,19,19,0.6)', color: 'var(--vl-sage)',
+                              fontSize: '10px', padding: '1px 5px',
+                            }} title={f.notas}>·</span>
                           )}
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
-          </>
+          </div>
         )}
 
         {/* ── TAB: GALERÍA ── */}
         {tabActiva === 'Galería' && (
-          <>
+          <div style={{ padding: '24px' }}>
             {totalFotos === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 16px', color: '#9CA3AF', fontSize: '14px' }}>
-                No hay fotos aún
+              <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                <p style={{
+                  margin: 0, fontFamily: 'var(--vl-font-display)',
+                  fontSize: '18px', fontStyle: 'italic', color: 'var(--vl-sage-mid)',
+                }}>
+                  No hay fotos aún
+                </p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(148px, 1fr))', gap: '10px' }}>
                 {Object.entries(fotosPorSesion)
                   .sort(([a], [b]) => Number(b) - Number(a))
                   .flatMap(([sesNum, fotos]) =>
                     fotos.map(f => ({ ...f, sesNum: Number(sesNum) }))
                   )
                   .map(f => {
-                    const badge = FASE_BADGE[f.fase] ?? FASE_BADGE.progreso
+                    const faseLabel = FASE_LABEL[f.fase] ?? 'Progreso'
                     return (
                       <div key={f.id} style={{
-                        background: '#FFFFFF', border: '1px solid #F0EDE8',
-                        borderRadius: '12px', overflow: 'hidden',
+                        background: 'var(--vl-white)',
+                        border: '1px solid var(--vl-page-border)',
+                        borderRadius: '2px', overflow: 'hidden',
                       }}>
                         <div style={{ aspectRatio: '1', overflow: 'hidden' }}>
-                          <img src={f.foto_url} alt={f.fase} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={f.foto_url} alt={f.fase} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                         </div>
                         <div style={{ padding: '8px 10px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                             <span style={{
-                              background: badge.bg, color: badge.color,
-                              fontSize: '10px', fontWeight: '700',
-                              padding: '2px 7px', borderRadius: '20px',
+                              fontSize: '9px', fontWeight: 300,
+                              letterSpacing: '0.1em', textTransform: 'uppercase',
+                              color: 'var(--vl-carbon)',
                             }}>
-                              {badge.label}
+                              {faseLabel}
                             </span>
-                            <span style={{ color: '#9CA3AF', fontSize: '10px' }}>S{f.sesNum}</span>
+                            <span style={{ color: 'var(--vl-sage-mid)', fontSize: '9px', fontWeight: 300 }}>
+                              S{f.sesNum}
+                            </span>
                           </div>
-                          <p style={{ margin: '0 0 2px', color: '#6B7280', fontSize: '11px' }}>
+                          <p style={{ margin: '0 0 2px', color: 'var(--vl-carbon-soft)', fontSize: '10px', fontWeight: 300 }}>
                             {formatFecha(f.creado_en)}
                           </p>
                           {f.zona_corporal && (
-                            <p style={{ margin: 0, color: '#9CA3AF', fontSize: '10px' }}>{f.zona_corporal}</p>
+                            <p style={{ margin: 0, color: 'var(--vl-sage-mid)', fontSize: '10px', fontWeight: 300 }}>
+                              {f.zona_corporal}
+                            </p>
                           )}
                           {f.notas && (
                             <p style={{
-                              margin: '4px 0 0', color: '#6B7280', fontSize: '10px',
+                              margin: '4px 0 0', color: 'var(--vl-carbon-soft)', fontSize: '10px', fontWeight: 300,
                               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                            }}>{f.notas}</p>
+                            }}>
+                              {f.notas}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -273,17 +334,14 @@ export default function MiEvolucionPage() {
                   })}
               </div>
             )}
-          </>
+          </div>
         )}
 
         {/* ── TAB: SUBIR FOTO ── */}
         {tabActiva === 'Subir foto' && (
-          <div style={{ maxWidth: '480px', margin: '0 auto', width: '100%' }}>
-            <div style={{
-              background: '#FDF8F0', borderLeft: '3px solid #C9A46A',
-              borderRadius: '0 10px 10px 0', padding: '10px 14px', marginBottom: '16px',
-            }}>
-              <p style={{ margin: 0, color: '#4B4540', fontSize: '13px', lineHeight: '1.5' }}>
+          <div style={{ padding: '24px', maxWidth: '480px', margin: '0 auto' }}>
+            <div style={{ borderLeft: '2px solid var(--vl-page-border)', paddingLeft: '14px', marginBottom: '24px' }}>
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: 300, color: 'var(--vl-carbon-soft)', lineHeight: 1.7, letterSpacing: '0.02em' }}>
                 Sube fotos de tu evolución para llevar un registro visual de tu tratamiento.
                 Tu médico también puede añadir fotos desde su panel.
               </p>

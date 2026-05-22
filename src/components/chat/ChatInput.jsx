@@ -24,11 +24,16 @@ export default function ChatInput({ onSend, sending, disabled }) {
 
   const restantes    = 1000 - texto.length
   const mostrarCount = restantes < 100
-  const colorCount   = restantes < 20 ? '#EF4444' : '#9CA3AF'
+  const colorCount   = restantes < 20 ? 'var(--vl-taupe)' : 'var(--vl-sage-mid)'
   const puedeEnviar  = texto.trim().length > 0 && !sending && !disabled
 
   return (
-    <div style={{ borderTop: '1px solid #F0EDE8', padding: '12px 16px', background: '#fff' }}>
+    <div style={{
+      borderTop:  '1px solid var(--vl-page-border)',
+      padding:    '12px 16px',
+      background: 'var(--vl-page)',
+      flexShrink: 0,
+    }}>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10 }}>
         <textarea
           ref={textareaRef}
@@ -39,18 +44,24 @@ export default function ChatInput({ onSend, sending, disabled }) {
           placeholder="Escribe un mensaje…"
           rows={1}
           style={{
-            flex:       1,
-            resize:     'none',
-            border:     '1px solid #E5E0D8',
-            borderRadius: 12,
-            padding:    '10px 14px',
-            fontSize:   15,
-            lineHeight: '1.45',
-            outline:    'none',
-            background: disabled ? '#F9F7F4' : '#fff',
-            color:      '#2D2A26',
-            overflow:   'hidden',
+            flex:         1,
+            resize:       'none',
+            border:       '1px solid var(--vl-page-border)',
+            borderRadius: '2px',
+            padding:      '10px 14px',
+            fontFamily:   'var(--vl-font-body)',
+            fontSize:     '14px',
+            fontWeight:   300,
+            lineHeight:   '1.5',
+            letterSpacing:'0.01em',
+            outline:      'none',
+            background:   disabled ? 'var(--vl-page-dark)' : '#FFFFFF',
+            color:        'var(--vl-carbon)',
+            overflow:     'hidden',
+            transition:   'border-color 0.15s',
           }}
+          onFocus={e => e.target.style.borderColor = 'var(--vl-sage-mid)'}
+          onBlur={e  => e.target.style.borderColor = 'var(--vl-page-border)'}
         />
 
         <button
@@ -63,33 +74,35 @@ export default function ChatInput({ onSend, sending, disabled }) {
           }}
           disabled={!puedeEnviar}
           style={{
-            width:        40,
-            height:       40,
-            borderRadius: '50%',
-            border:       'none',
-            cursor:       puedeEnviar ? 'pointer' : 'default',
-            background:   puedeEnviar ? '#C9A46A' : '#F0EDE8',
-            display:      'flex',
-            alignItems:   'center',
+            width:          36,
+            height:         36,
+            borderRadius:   '2px',
+            border:         `1px solid ${puedeEnviar ? 'var(--vl-carbon)' : 'var(--vl-page-border)'}`,
+            cursor:         puedeEnviar ? 'pointer' : 'default',
+            background:     puedeEnviar ? 'var(--vl-carbon)' : 'transparent',
+            display:        'flex',
+            alignItems:     'center',
             justifyContent: 'center',
-            flexShrink:   0,
-            transition:   'background 0.2s',
+            flexShrink:     0,
+            transition:     'var(--vl-transition)',
           }}
         >
           {sending ? (
-            <svg
-              width="18" height="18" viewBox="0 0 24 24"
-              fill="none" stroke={puedeEnviar ? '#fff' : '#9CA3AF'}
-              strokeWidth="2.5" strokeLinecap="round"
-              style={{ animation: 'spin 1s linear infinite' }}
-            >
-              <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="10" />
-            </svg>
+            <span style={{
+              width:         '12px',
+              height:        '12px',
+              border:        `1.5px solid ${puedeEnviar ? 'var(--vl-sage)' : 'var(--vl-sage-mid)'}`,
+              borderTopColor:'transparent',
+              borderRadius:  '50%',
+              display:       'inline-block',
+              animation:     'spin 0.7s linear infinite',
+            }} />
           ) : (
             <svg
-              width="18" height="18" viewBox="0 0 24 24"
-              fill="none" stroke={puedeEnviar ? '#fff' : '#9CA3AF'}
-              strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              width="15" height="15" viewBox="0 0 24 24"
+              fill="none"
+              stroke={puedeEnviar ? 'var(--vl-sage)' : 'var(--vl-sage-mid)'}
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
             >
               <line x1="22" y1="2" x2="11" y2="13" />
               <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -99,13 +112,27 @@ export default function ChatInput({ onSend, sending, disabled }) {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-        <span style={{ fontSize: 11, color: '#9CA3AF' }}>
+        <span style={{
+          fontFamily:    'var(--vl-font-body)',
+          fontSize:      '10px',
+          fontWeight:    300,
+          color:         'var(--vl-sage-mid)',
+          letterSpacing: '0.04em',
+        }}>
           Enter para enviar · Shift+Enter para nueva línea
         </span>
         {mostrarCount && (
-          <span style={{ fontSize: 11, color: colorCount }}>{restantes}</span>
+          <span style={{
+            fontFamily: 'var(--vl-font-body)',
+            fontSize:   '10px',
+            fontWeight: 300,
+            color:      colorCount,
+          }}>
+            {restantes}
+          </span>
         )}
       </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }

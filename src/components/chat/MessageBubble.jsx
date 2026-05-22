@@ -7,25 +7,26 @@ export default function MessageBubble({ mensaje, esMio, esUltimo }) {
   const burbuja = esMio
     ? {
         alignSelf:    'flex-end',
-        background:   '#2D2A26',
-        color:        '#F7F3EE',
-        borderRadius: '18px 18px 4px 18px',
+        background:   'var(--vl-carbon)',
+        color:        'var(--vl-sage)',
+        borderRadius: '14px 14px 2px 14px',
       }
     : {
         alignSelf:    'flex-start',
-        background:   '#F7F3EE',
-        color:        '#2D2A26',
-        borderRadius: '18px 18px 18px 4px',
+        background:   '#FFFFFF',
+        color:        'var(--vl-carbon)',
+        border:       '1px solid var(--vl-page-border)',
+        borderRadius: '14px 14px 14px 2px',
       }
 
   let estadoIcono = null
   if (esMio) {
     if (mensaje._optimista) {
-      estadoIcono = <span style={{ color: 'inherit' }}>○</span>
+      estadoIcono = <span style={{ color: 'rgba(201,211,202,0.4)', fontSize: '11px' }}>○</span>
     } else if (mensaje.leido) {
-      estadoIcono = <span style={{ color: '#C9A46A' }}>✓✓</span>
+      estadoIcono = <span style={{ color: 'var(--vl-sage)', fontSize: '11px' }}>✓✓</span>
     } else {
-      estadoIcono = <span style={{ color: 'rgba(247,243,238,0.5)' }}>✓</span>
+      estadoIcono = <span style={{ color: 'rgba(201,211,202,0.45)', fontSize: '11px' }}>✓</span>
     }
   }
 
@@ -34,27 +35,41 @@ export default function MessageBubble({ mensaje, esMio, esUltimo }) {
       style={{
         display:       'flex',
         flexDirection: 'column',
-        maxWidth:      '78%',
-        marginBottom:  esUltimo ? 12 : 3,
-        opacity:       mensaje._optimista ? 0.7 : 1,
+        maxWidth:      '75%',
+        marginBottom:  esUltimo ? 14 : 3,
+        opacity:       mensaje._optimista ? 0.65 : 1,
         ...burbuja,
-        padding:       '10px 14px',
+        padding: '10px 14px',
       }}
     >
-      <span style={{ fontSize: 15, lineHeight: '1.45', wordBreak: 'break-word' }}>
+      <span style={{
+        fontFamily:  'var(--vl-font-body)',
+        fontSize:    '14px',
+        fontWeight:  300,
+        lineHeight:  '1.55',
+        wordBreak:   'break-word',
+        letterSpacing: '0.01em',
+      }}>
         {mensaje.contenido}
       </span>
-      <div
-        style={{
-          display:        'flex',
-          alignItems:     'center',
-          justifyContent: 'flex-end',
-          gap:            4,
-          marginTop:      4,
-        }}
-      >
-        <span style={{ fontSize: 11, opacity: 0.6 }}>{hora}</span>
-        {estadoIcono && <span style={{ fontSize: 12 }}>{estadoIcono}</span>}
+
+      <div style={{
+        display:        'flex',
+        alignItems:     'center',
+        justifyContent: 'flex-end',
+        gap:            4,
+        marginTop:      5,
+      }}>
+        <span style={{
+          fontFamily:    'var(--vl-font-body)',
+          fontSize:      '10px',
+          fontWeight:    300,
+          color:         'var(--vl-sage-mid)',
+          letterSpacing: '0.04em',
+        }}>
+          {hora}
+        </span>
+        {estadoIcono}
       </div>
     </div>
   )
