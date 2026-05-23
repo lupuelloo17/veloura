@@ -76,7 +76,7 @@ export default function StaffLayout({ children }) {
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}>
           <p style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontFamily: "'Fraunces', Georgia, serif",
             fontSize: '18px', fontWeight: 300,
             color: '#F7F5F2', letterSpacing: '-0.02em',
             margin: 0,
@@ -98,8 +98,10 @@ export default function StaffLayout({ children }) {
         {/* Nav */}
         <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
           {navItems.map(item => {
-            const href   = `/clinica/${slug}/${item.path}`
-            const active = location.pathname.includes(`/${item.path}`)
+            const href     = `/clinica/${slug}/${item.path}`
+            const segments = location.pathname.split('/')
+            const isActive = segments[segments.length - 1] === item.path
+              || segments[segments.length - 2] === item.path
             return (
               <Link
                 key={item.path}
@@ -110,9 +112,9 @@ export default function StaffLayout({ children }) {
                   fontSize: '13px', fontWeight: 300,
                   letterSpacing: '0.02em',
                   transition: 'all 0.15s',
-                  borderLeft: `2px solid ${active ? '#929C92' : 'transparent'}`,
-                  background: active ? 'rgba(255,255,255,0.04)' : 'transparent',
-                  color: active ? '#C9D3CA' : 'rgba(247,245,242,0.35)',
+                  borderLeft: `2px solid ${isActive ? '#929C92' : 'transparent'}`,
+                  background: isActive ? 'rgba(255,255,255,0.04)' : 'transparent',
+                  color: isActive ? '#C9D3CA' : 'rgba(247,245,242,0.35)',
                 }}
               >
                 <i className={`ti ${item.icon}`} style={{ fontSize: '16px' }} />
