@@ -121,7 +121,7 @@ export default function MisDatosPage() {
     <div style={{
       background:    'var(--vl-page)',
       minHeight:     '100vh',
-      paddingBottom: '80px',
+      paddingBottom: '88px',
       fontFamily:    'var(--vl-font-body)',
     }}>
 

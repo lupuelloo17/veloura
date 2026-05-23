@@ -63,7 +63,7 @@ export default function MiEvolucionPage() {
   }
 
   return (
-    <div style={{ fontFamily: 'var(--vl-font-body)', background: 'var(--vl-page)', paddingBottom: '80px' }}>
+    <div style={{ fontFamily: 'var(--vl-font-body)', background: 'var(--vl-page)', paddingBottom: '88px' }}>
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
       <div style={{ background: 'var(--vl-carbon)', padding: '32px 24px 0', overflow: 'hidden', position: 'relative' }}>
