@@ -5,7 +5,7 @@ import { useClinic } from '../../contexts/ClinicContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCitas, ESTADO_STYLE } from '../../contexts/CitasContext'
 import FeatureGate from '../../components/FeatureGate'
-import ClinicLayout from './ClinicLayout'
+import StaffLayout from './StaffLayout'
 import { fTime } from '../../services/recordatorios'
 import { supabase } from '../../lib/supabase'
 import { formatFecha } from '../../utils/fecha'
@@ -71,7 +71,7 @@ export default function MedicoDashboardPage() {
   }
 
   return (
-    <ClinicLayout>
+    <StaffLayout>
       <div className="animate-fade-in">
         {/* ── Header ── */}
         <div className="bg-white px-5 pt-7 pb-5 border-b border-gray-100">
@@ -258,6 +258,6 @@ export default function MedicoDashboardPage() {
           </FeatureGate>
         </div>
       </div>
-    </ClinicLayout>
+    </StaffLayout>
   )
 }

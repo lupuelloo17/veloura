@@ -10,7 +10,7 @@ import { useClinic } from '../../contexts/ClinicContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCitas } from '../../contexts/CitasContext'
 import FeatureGate from '../../components/FeatureGate'
-import ClinicLayout from './ClinicLayout'
+import StaffLayout from './StaffLayout'
 import { formatEUR } from '../../config/planes'
 
 const STATS = [
@@ -107,7 +107,7 @@ export default function AdminDashboardPage() {
   })
 
   return (
-    <ClinicLayout>
+    <StaffLayout>
       <div className="animate-fade-in">
         {/* ── Header ── */}
         <div className="bg-white px-5 pt-7 pb-4 border-b border-gray-100">
@@ -371,6 +371,6 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
-    </ClinicLayout>
+    </StaffLayout>
   )
 }

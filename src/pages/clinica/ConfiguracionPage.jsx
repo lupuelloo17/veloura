@@ -6,7 +6,7 @@ import {
   ExternalLink, AlertTriangle, Phone, ToggleLeft, ToggleRight,
   ShieldCheck,
 } from 'lucide-react'
-import ClinicLayout from './ClinicLayout'
+import StaffLayout from './StaffLayout'
 import { useClinic } from '../../contexts/ClinicContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -739,7 +739,7 @@ export default function ConfiguracionPage() {
   }
 
   return (
-    <ClinicLayout>
+    <StaffLayout>
       <div className="flex flex-col h-full">
 
         {/* Tabs */}
@@ -772,6 +772,6 @@ export default function ConfiguracionPage() {
       </div>
 
       <Toast toast={toast} />
-    </ClinicLayout>
+    </StaffLayout>
   )
 }

@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Plus, Clock } from 'lucide-react'
 import { useClinic } from '../../contexts/ClinicContext'
 import { useCitas, ESTADO_STYLE } from '../../contexts/CitasContext'
-import ClinicLayout from './ClinicLayout'
+import StaffLayout from './StaffLayout'
 import NuevaCitaDrawer from '../../components/NuevaCitaDrawer'
 import CitaDetallePanel from '../../components/CitaDetallePanel'
 
@@ -89,7 +89,7 @@ export default function AgendaPage() {
   const monthLabel = selectedDay.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
 
   return (
-    <ClinicLayout>
+    <StaffLayout>
       <div className="flex flex-col h-full animate-fade-in">
 
         {/* ── Header ── */}
@@ -299,6 +299,6 @@ export default function AgendaPage() {
           slug={slug}
         />
       )}
-    </ClinicLayout>
+    </StaffLayout>
   )
 }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Search, Plus, ChevronRight, CheckCircle2 } from 'lucide-react'
 import { useClinic } from '../../contexts/ClinicContext'
-import ClinicLayout from './ClinicLayout'
+import StaffLayout from './StaffLayout'
 import NuevoPacienteDrawer from '../../components/NuevoPacienteDrawer'
 import PACIENTES from '../../data/pacientes'
 import { supabase } from '../../lib/supabase'
@@ -61,7 +61,7 @@ export default function PacientesPage() {
   })
 
   return (
-    <ClinicLayout>
+    <StaffLayout>
       <div className="animate-fade-in">
 
         {/* Toast */}
@@ -175,6 +175,6 @@ export default function PacientesPage() {
           onGuardado={handleGuardado}
         />
       )}
-    </ClinicLayout>
+    </StaffLayout>
   )
 }

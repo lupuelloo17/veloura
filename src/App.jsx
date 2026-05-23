@@ -182,6 +182,15 @@ function PatientShell({ children }) {
   )
 }
 
+function StaffShell({ children }) {
+  return (
+    <div style={{ minHeight: '100vh', background: '#F7F5F2', display: 'flex', flexDirection: 'column' }}>
+      <DemoBanner />
+      {children}
+    </div>
+  )
+}
+
 function ClinicShell({ children }) {
   return (
     <div style={{
@@ -208,6 +217,15 @@ function ClinicShell({ children }) {
       </div>
     </div>
   )
+}
+
+// ── Shell router: staff → full-screen sidebar, paciente → rounded phone shell ──
+function ClinicShellRouter() {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  const isStaff = ['admin', 'medico', 'recepcion'].includes(user?.rol)
+  if (isStaff) return <StaffShell><ClinicRoutes /></StaffShell>
+  return <ClinicShell><ClinicRoutes /></ClinicShell>
 }
 
 // ── Root ──────────────────────────────────────────────────────
@@ -250,9 +268,7 @@ export default function App() {
             path="/clinica/:slug/*"
             element={
               <RequireAuth>
-                <ClinicShell>
-                  <ClinicRoutes />
-                </ClinicShell>
+                <ClinicShellRouter />
               </RequireAuth>
             }
           />
