@@ -224,7 +224,7 @@ export default function MiPerfilPage() {
       {/* ── Secciones (fondo crema) ─────────────────────────── */}
       <div style={{
         background:    'var(--vl-page)',
-        padding:       '20px 16px 80px',
+        padding:       '20px 16px 88px',
         display:       'flex',
         flexDirection: 'column',
         gap:           '12px',

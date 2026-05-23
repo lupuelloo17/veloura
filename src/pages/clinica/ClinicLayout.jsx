@@ -26,11 +26,9 @@ export default function ClinicLayout({ children }) {
   }
 
   return (
-    <div className="flex flex-col flex-1">
-      <header className="flex items-center px-4 py-3 border-b border-gray-100 bg-white">
-      </header>
+    <div className="flex flex-col flex-1" style={{ minHeight: 0 }}>
       <RecordatoriosBanner />
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         {children}
       </div>
       <ClinicNav />
