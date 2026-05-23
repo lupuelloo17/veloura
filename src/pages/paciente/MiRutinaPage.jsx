@@ -97,7 +97,7 @@ export default function MiRutinaPage() {
   const pct     = total > 0 ? Math.round((done / total) * 100) : 0
 
   return (
-    <div style={{ fontFamily: 'var(--vl-font-body)', background: 'var(--vl-page)', paddingBottom: '88px' }}>
+    <div style={{ fontFamily: 'var(--vl-font-body)', background: 'var(--vl-page)', paddingBottom: '104px' }}>
 
       {/* ── BLOQUE OSCURO (hero + selector + progreso) — un solo contenedor evita gaps sub-pixel ── */}
       <div style={{ background: 'var(--vl-carbon)' }}>
