@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Eye, EyeOff, LogIn, AlertCircle, Share, ArrowUp } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 function useInstallBanner() {
@@ -31,19 +30,22 @@ const DEMO_ACCOUNTS = [
     email: 'admin@lumiere.com',
     label: 'Administrador',
     desc: 'Panel completo · gestión de clínica',
-    color: '#2D2D2D',
+    color: '#161313',
+    border: '1px solid rgba(255,255,255,0.15)',
   },
   {
     email: 'dra.garcia@lumiere.com',
     label: 'Dra. García',
     desc: 'Medicina Estética · vista de médico',
-    color: '#C8A882',
+    color: '#929C92',
+    border: 'none',
   },
   {
     email: 'paciente@lumiere.com',
     label: 'Sofía Restrepo',
     desc: 'Paciente · su perfil, citas, análisis',
-    color: '#D4A5B4',
+    color: '#A39384',
+    border: 'none',
   },
 ]
 
@@ -52,11 +54,11 @@ export default function LoginPage() {
   const { login } = useAuth()
   const { show: showBanner, dismiss: dismissBanner } = useInstallBanner()
 
-  const [email, setEmail]         = useState('')
-  const [password, setPassword]   = useState('')
-  const [showPass, setShowPass]   = useState(false)
-  const [loading, setLoading]     = useState(false)
-  const [error, setError]         = useState(null)
+  const [email,    setEmail]    = useState('')
+  const [password, setPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
+  const [loading,  setLoading]  = useState(false)
+  const [error,    setError]    = useState(null)
 
   function fillDemo(acc) {
     setEmail(acc.email)
@@ -71,7 +73,6 @@ export default function LoginPage() {
     setError(null)
     try {
       const user = await login(email.trim(), password)
-      // Redirige según rol: paciente → su perfil; staff → dashboard
       const slug = user.clinica_slug || 'clinica-lumiere'
       const dest = user.rol === 'paciente' ? 'mi-perfil' : 'dashboard'
       navigate(`/clinica/${slug}/${dest}`, { replace: true })
@@ -82,151 +83,302 @@ export default function LoginPage() {
     }
   }
 
+  const inputStyle = {
+    width: '100%',
+    padding: '13px 16px',
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '2px',
+    fontSize: '14px',
+    fontWeight: 300,
+    color: '#F7F5F2',
+    outline: 'none',
+    fontFamily: "'DM Sans', system-ui",
+    letterSpacing: '0.02em',
+    boxSizing: 'border-box',
+    marginBottom: '16px',
+  }
+
+  const labelStyle = {
+    fontSize: '10px',
+    fontWeight: 300,
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+    color: 'rgba(247,245,242,0.4)',
+    marginBottom: '8px',
+    display: 'block',
+  }
+
+  const active = !!(email && password)
+
   return (
-    <div className="flex flex-col flex-1 min-h-[780px] animate-fade-in">
-      {/* Top section */}
-      <div className="flex-1 flex flex-col items-center justify-center px-7 pt-14 pb-6">
-        <p className="text-gray-400 text-xs tracking-widest uppercase font-semibold mb-1">
-          Clínica Lumière
+    <div style={{
+      display: 'flex', flexDirection: 'column', flex: 1,
+      minHeight: '780px',
+      background: '#161313',
+      fontFamily: "'DM Sans', system-ui",
+    }}>
+
+      {/* ── SECCIÓN SUPERIOR ─────────────────────────────────── */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '48px 28px 24px',
+      }}>
+
+        {/* Wordmark */}
+        <p style={{
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontSize: '28px', fontWeight: 300,
+          color: '#F7F5F2', letterSpacing: '-0.02em',
+          marginBottom: '4px', textAlign: 'center', margin: '0 0 4px',
+        }}>
+          Veloura
         </p>
-        <h1 className="text-ink text-2xl font-semibold mb-1">Bienvenida</h1>
-        <p className="text-gray-400 text-sm mb-8">Accede a tu panel clínico</p>
+
+        {/* Eyebrow */}
+        <p style={{
+          fontFamily: "'DM Sans', system-ui",
+          fontSize: '10px', fontWeight: 300,
+          letterSpacing: '0.18em', textTransform: 'uppercase',
+          color: 'rgba(201,211,202,0.45)',
+          textAlign: 'center', margin: '0 0 40px',
+        }}>
+          Acceso al portal
+        </p>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="w-full space-y-3">
+        <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+
           {/* Email */}
-          <div>
-            <label className="text-gray-600 text-xs font-medium block mb-1">
-              Correo electrónico
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="correo@lumiere.com"
-              autoComplete="email"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-ink placeholder-gray-400 outline-none focus:border-[#C8A882] focus:ring-1 focus:ring-[#C8A882] transition-colors"
-            />
-          </div>
+          <label style={labelStyle}>Correo electrónico</label>
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="correo@lumiere.com"
+            autoComplete="email"
+            style={inputStyle}
+            onFocus={e => {
+              e.target.style.borderColor = 'rgba(201,211,202,0.4)'
+              e.target.style.background  = 'rgba(255,255,255,0.06)'
+            }}
+            onBlur={e => {
+              e.target.style.borderColor = 'rgba(255,255,255,0.08)'
+              e.target.style.background  = 'rgba(255,255,255,0.04)'
+            }}
+          />
 
           {/* Password */}
-          <div>
-            <label className="text-gray-600 text-xs font-medium block mb-1">
-              Contraseña
-            </label>
-            <div className="relative">
-              <input
-                type={showPass ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 pr-11 text-sm text-ink placeholder-gray-400 outline-none focus:border-[#C8A882] focus:ring-1 focus:ring-[#C8A882] transition-colors"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPass(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
+          <label style={labelStyle}>Contraseña</label>
+          <div style={{ position: 'relative', marginBottom: '8px' }}>
+            <input
+              type={showPass ? 'text' : 'password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              style={{ ...inputStyle, paddingRight: '44px', marginBottom: 0 }}
+              onFocus={e => {
+                e.target.style.borderColor = 'rgba(201,211,202,0.4)'
+                e.target.style.background  = 'rgba(255,255,255,0.06)'
+              }}
+              onBlur={e => {
+                e.target.style.borderColor = 'rgba(255,255,255,0.08)'
+                e.target.style.background  = 'rgba(255,255,255,0.04)'
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPass(v => !v)}
+              style={{
+                position: 'absolute', right: '14px', top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'rgba(247,245,242,0.3)', fontSize: '14px',
+                lineHeight: 1, padding: 0,
+              }}
+            >
+              {showPass ? '●' : '○'}
+            </button>
           </div>
 
           {/* Forgot password */}
-          <div className="text-right -mt-1">
-            <Link
-              to="/reset-password"
-              className="text-xs font-medium"
-              style={{ color: '#C8A882' }}
-            >
-              ¿Olvidaste tu contraseña?
-            </Link>
-          </div>
+          <Link
+            to="/reset-password"
+            style={{
+              textAlign: 'right', fontSize: '11px', fontWeight: 300,
+              letterSpacing: '0.04em', color: 'rgba(201,211,202,0.5)',
+              textDecoration: 'none', display: 'block',
+              marginTop: '-8px', marginBottom: '20px',
+            }}
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
 
           {/* Error */}
           {error && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 animate-slide-up">
-              <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
-              <p className="text-red-700 text-xs">{error}</p>
+            <div style={{
+              display: 'flex', gap: '8px', alignItems: 'flex-start',
+              background: 'rgba(220,38,38,0.08)',
+              border: '1px solid rgba(220,38,38,0.2)',
+              borderRadius: '2px', padding: '10px 14px', marginBottom: '12px',
+            }}>
+              <span style={{ fontSize: '12px', color: 'rgba(255,160,160,0.8)', flexShrink: 0 }}>⚠</span>
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: 300, color: 'rgba(255,160,160,0.8)', lineHeight: 1.5 }}>
+                {error}
+              </p>
             </div>
           )}
 
           {/* Submit */}
           <button
             type="submit"
-            disabled={loading || !email || !password}
-            className="w-full font-semibold text-sm py-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 mt-1"
+            disabled={loading || !active}
             style={{
-              backgroundColor: email && password ? '#2D2D2D' : '#e5e7eb',
-              color: email && password ? '#fff' : '#9ca3af',
-              cursor: email && password ? 'pointer' : 'not-allowed',
+              width: '100%', padding: '14px',
+              background: active ? '#F7F5F2' : 'rgba(255,255,255,0.08)',
+              color: active ? '#161313' : 'rgba(247,245,242,0.2)',
+              border: 'none', borderRadius: '2px',
+              fontSize: '12px', fontWeight: 400,
+              letterSpacing: '0.1em', textTransform: 'uppercase',
+              cursor: active ? 'pointer' : 'not-allowed',
+              fontFamily: "'DM Sans', system-ui",
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              transition: 'all 0.18s',
             }}
           >
-            {loading
-              ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              : <><LogIn size={16} /> Acceder</>
-            }
+            {loading && (
+              <span style={{
+                width: '14px', height: '14px',
+                border: '2px solid rgba(22,19,19,0.2)',
+                borderTopColor: '#161313',
+                borderRadius: '50%',
+                display: 'inline-block',
+                animation: 'spin 0.7s linear infinite',
+              }} />
+            )}
+            {loading ? 'Accediendo…' : 'Acceder'}
           </button>
         </form>
       </div>
 
-      {/* PWA install banner */}
+      {/* ── BANNER PWA ────────────────────────────────────────── */}
       {showBanner && (
-        <div
-          className="mx-5 mb-4 rounded-2xl px-4 py-3 flex items-center gap-3"
-          style={{ backgroundColor: '#FDF0F4', border: '1px solid #F5C6D5' }}
-        >
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: '#D4537E' }}
-          >
-            <ArrowUp size={16} className="text-white" />
-          </div>
-          <p className="text-xs text-gray-600 flex-1 leading-snug">
-            Instala Veloura en tu movil — toca{' '}
-            <Share size={11} className="inline-block mx-0.5 text-gray-500" />{' '}
-            compartir y luego <strong className="text-gray-800">Anadir a inicio</strong>
+        <div style={{
+          margin: '0 20px 16px',
+          padding: '12px 14px',
+          background: 'rgba(201,211,202,0.06)',
+          border: '1px solid rgba(201,211,202,0.12)',
+          borderRadius: '2px',
+          display: 'flex', gap: '10px', alignItems: 'flex-start',
+        }}>
+          <p style={{
+            margin: 0, flex: 1,
+            fontSize: '11px', fontWeight: 300,
+            color: 'rgba(247,245,242,0.4)', lineHeight: 1.6,
+          }}>
+            Instala Veloura: toca Compartir → Añadir a inicio
           </p>
           <button
             onClick={dismissBanner}
-            className="text-gray-300 hover:text-gray-400 text-lg leading-none flex-shrink-0 px-1"
-            aria-label="Cerrar"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              color: 'rgba(247,245,242,0.2)', fontSize: '16px',
+              lineHeight: 1, padding: 0, flexShrink: 0,
+            }}
           >
-            x
+            ×
           </button>
         </div>
       )}
 
-      {/* Demo accounts section */}
-      <div className="px-7 pb-8">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex-1 h-px bg-gray-100" />
-          <p className="text-gray-400 text-xs font-medium">Cuentas de demo</p>
-          <div className="flex-1 h-px bg-gray-100" />
+      {/* ── SECCIÓN DEMO ─────────────────────────────────────── */}
+      <div style={{ padding: '0 28px 32px' }}>
+
+        {/* Separador */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
+          <span style={{
+            fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase',
+            color: 'rgba(247,245,242,0.2)', fontWeight: 300, whiteSpace: 'nowrap',
+          }}>
+            Demo
+          </span>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
         </div>
-        <div className="space-y-2">
-          {DEMO_ACCOUNTS.map(acc => (
-            <button
-              key={acc.email}
-              onClick={() => fillDemo(acc)}
-              className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:border-gray-200 active:scale-95 transition-all"
-            >
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                style={{ backgroundColor: acc.color }}
-              >
-                {acc.label[0]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-ink text-sm font-semibold">{acc.label}</p>
-                <p className="text-gray-400 text-xs">{acc.desc}</p>
-              </div>
-              <span className="text-gray-300 text-xs font-mono">demo1234</span>
-            </button>
-          ))}
-        </div>
+
+        {/* Botones demo */}
+        {DEMO_ACCOUNTS.map(acc => (
+          <button
+            key={acc.email}
+            onClick={() => fillDemo(acc)}
+            style={{
+              width: '100%', marginBottom: '8px',
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: '2px', padding: '12px 14px',
+              display: 'flex', alignItems: 'center', gap: '12px',
+              cursor: 'pointer', textAlign: 'left',
+              transition: 'all 0.18s',
+              fontFamily: "'DM Sans', system-ui",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background    = 'rgba(255,255,255,0.05)'
+              e.currentTarget.style.borderColor   = 'rgba(255,255,255,0.1)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background    = 'rgba(255,255,255,0.03)'
+              e.currentTarget.style.borderColor   = 'rgba(255,255,255,0.06)'
+            }}
+          >
+            {/* Avatar */}
+            <div style={{
+              width: '32px', height: '32px', borderRadius: '50%',
+              background: acc.color,
+              border: acc.border,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '12px', fontWeight: 400, color: '#F7F5F2',
+              flexShrink: 0,
+            }}>
+              {acc.label[0]}
+            </div>
+
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                margin: '0 0 2px',
+                fontSize: '13px', fontWeight: 400,
+                color: 'rgba(247,245,242,0.75)',
+                fontFamily: "'DM Sans', system-ui",
+              }}>
+                {acc.label}
+              </p>
+              <p style={{
+                margin: 0,
+                fontSize: '11px', fontWeight: 300,
+                color: 'rgba(247,245,242,0.3)', letterSpacing: '0.02em',
+              }}>
+                {acc.desc}
+              </p>
+            </div>
+
+            {/* Badge */}
+            <span style={{
+              marginLeft: 'auto', flexShrink: 0,
+              fontSize: '10px', fontFamily: "'DM Mono', monospace",
+              color: 'rgba(247,245,242,0.2)',
+            }}>
+              demo1234
+            </span>
+          </button>
+        ))}
       </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        input::placeholder { color: rgba(247,245,242,0.2) !important; }
+      `}</style>
     </div>
   )
 }
