@@ -184,8 +184,25 @@ function PatientShell({ children }) {
 
 function ClinicShell({ children }) {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-start justify-center py-6 px-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden min-h-[780px] flex flex-col">
+    <div style={{
+      minHeight: '100vh',
+      background: '#F3F4F6',
+      display: 'flex',
+      alignItems: 'flex-start',
+      justifyContent: 'center',
+      padding: '24px 16px',
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: '448px',
+        background: '#FFFFFF',
+        borderRadius: '24px',
+        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+        overflow: 'hidden',
+        height: 'calc(100vh - 48px)',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
         <DemoBanner />
         {children}
       </div>
