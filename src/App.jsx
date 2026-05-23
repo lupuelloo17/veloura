@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { lazy, Suspense } from 'react'
 
 // Auth
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -28,8 +27,8 @@ import RegistroClinicaPage    from './pages/RegistroClinicaPage'
 import { ClinicProvider, useClinic } from './contexts/ClinicContext'
 import { CitasProvider }        from './contexts/CitasContext'
 import DashboardPage            from './pages/clinica/DashboardPage'
-const AdminDashboardPage   = lazy(() => import('./pages/clinica/AdminDashboardPage'))
-const MedicoDashboardPage  = lazy(() => import('./pages/clinica/MedicoDashboardPage'))
+import AdminDashboardPage       from './pages/clinica/AdminDashboardPage'
+import MedicoDashboardPage      from './pages/clinica/MedicoDashboardPage'
 import PacientesPage            from './pages/clinica/PacientesPage'
 import PacienteDetallePage      from './pages/clinica/PacienteDetallePage'
 import AnalisisClinicaPage      from './pages/clinica/AnalisisClinicaPage'
@@ -40,11 +39,11 @@ import MiPerfilPage             from './pages/clinica/MiPerfilPage'
 import MisAnalisisPage          from './pages/clinica/MisAnalisisPage'
 import ClinicLayout             from './pages/clinica/ClinicLayout'
 import { EvolucionPageStandalone } from './pages/clinica/EvolucionPage'
-const MiEvolucionPage    = lazy(() => import('./pages/paciente/MiEvolucionPage'))
-const MiRutinaPage       = lazy(() => import('./pages/paciente/MiRutinaPage'))
-const MisDatosPage       = lazy(() => import('./pages/paciente/MisDatosPage'))
-const MisMensajesPage    = lazy(() => import('./pages/paciente/MisMensajesPage'))
+import MiEvolucionPage from './pages/paciente/MiEvolucionPage'
+import MiRutinaPage from './pages/paciente/MiRutinaPage'
+import MisDatosPage from './pages/paciente/MisDatosPage'
 import ChatPacientePage         from './pages/clinica/ChatPacientePage'
+import MisMensajesPage from './pages/paciente/MisMensajesPage'
 import ConversacionesPage       from './pages/clinica/ConversacionesPage'
 
 // Wrapper que renderiza DermoscopiaPage dentro del ClinicLayout del paciente.
@@ -136,18 +135,10 @@ function DashboardPorRol() {
 }
 
 // ── Clinic routes wrapped in ClinicProvider ───────────────────
-const LazyFallback = (
-  <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', padding: '40px 0' }}>
-    <div style={{ width: '28px', height: '28px', border: '2px solid rgba(22,19,19,0.1)', borderTopColor: '#161313', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-    <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-  </div>
-)
-
 function ClinicRoutes() {
   return (
     <ClinicProvider>
       <CitasProvider>
-        <Suspense fallback={LazyFallback}>
         <Routes>
           {/* ── Staff (admin/medico/recepcion) ── */}
           <Route path="dashboard"     element={<RequireRole roles={STAFF_ROLES}><DashboardPorRol /></RequireRole>} />
@@ -174,7 +165,6 @@ function ClinicRoutes() {
           {/* ── Catch-all: redirige al home del rol ── */}
           <Route path="*"             element={<RoleHomeRedirect />} />
         </Routes>
-        </Suspense>
       </CitasProvider>
     </ClinicProvider>
   )
