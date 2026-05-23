@@ -99,8 +99,11 @@ export default function MiRutinaPage() {
   return (
     <div style={{ fontFamily: 'var(--vl-font-body)', background: 'var(--vl-page)', paddingBottom: '80px' }}>
 
+      {/* ── BLOQUE OSCURO (hero + selector + progreso) — un solo contenedor evita gaps sub-pixel ── */}
+      <div style={{ background: 'var(--vl-carbon)' }}>
+
       {/* ── HERO ─────────────────────────────────────────────────── */}
-      <div style={{ background: 'var(--vl-carbon)', padding: '32px 24px 0', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ padding: '32px 24px 0', overflow: 'hidden', position: 'relative' }}>
         {/* Círculos decorativos */}
         <div style={{
           position: 'absolute', top: '-60px', right: '-60px',
@@ -181,7 +184,7 @@ export default function MiRutinaPage() {
       </div>
 
       {/* ── SELECTOR DE MOMENTO ──────────────────────────────────── */}
-      <div style={{ background: 'var(--vl-carbon)', padding: '0 24px 20px' }}>
+      <div style={{ padding: '0 24px 20px' }}>
         <div style={{
           border: '1px solid rgba(255,255,255,0.07)',
           borderRadius: '2px', overflow: 'hidden', display: 'flex',
@@ -221,7 +224,7 @@ export default function MiRutinaPage() {
       </div>
 
       {/* ── BARRA DE PROGRESO ────────────────────────────────────── */}
-      <div style={{ background: 'var(--vl-carbon)', padding: '0 24px 24px' }}>
+      <div style={{ padding: '0 24px 24px' }}>
         <div style={{
           background: 'rgba(255,255,255,0.03)',
           border: '1px solid rgba(255,255,255,0.06)',
@@ -240,6 +243,8 @@ export default function MiRutinaPage() {
           </div>
         </div>
       </div>
+
+      </div>{/* /bloque oscuro */}
 
       {/* ── CONTENIDO ────────────────────────────────────────────── */}
       <div style={{ background: 'var(--vl-page)', flex: 1 }}>
