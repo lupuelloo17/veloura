@@ -1,154 +1,163 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Microscope, TrendingUp, Filter } from 'lucide-react'
 import { useClinic } from '../../contexts/ClinicContext'
 import FeatureGate from '../../components/FeatureGate'
-import ClinicLayout from './ClinicLayout'
+import StaffLayout from './StaffLayout'
+
+const FRAUNCES = "'Fraunces', Georgia, serif"
+const DM_SANS  = "'DM Sans', system-ui, sans-serif"
+const DM_MONO  = "'DM Mono', monospace"
 
 const MOCK_ANALISIS = [
-  { id: 'a1', paciente: 'Valentina Morales',    fecha: '15 oct 2025', puntuacion: 3, nivel: 'moderado', criterios_pos: 2, medico: 'Dra. López' },
-  { id: 'a2', paciente: 'María Camila Torres',  fecha: '1 dic 2025',  puntuacion: 7, nivel: 'alto',     criterios_pos: 5, medico: 'Dr. Ruiz'   },
-  { id: 'a3', paciente: 'Sofía Restrepo',       fecha: '5 nov 2025',  puntuacion: 2, nivel: 'moderado', criterios_pos: 2, medico: 'Dra. López' },
-  { id: 'a4', paciente: 'Alejandra Gómez',      fecha: '10 ene 2026', puntuacion: 0, nivel: 'bajo',     criterios_pos: 0, medico: 'Dra. López' },
-  { id: 'a5', paciente: 'Natalia Herrera',      fecha: '22 feb 2026', puntuacion: 1, nivel: 'bajo',     criterios_pos: 1, medico: 'Dr. Ruiz'   },
-  { id: 'a6', paciente: 'Isabella Martínez',    fecha: '3 mar 2026',  puntuacion: 5, nivel: 'alto',     criterios_pos: 4, medico: 'Dra. López' },
+  { id: 'a1', paciente: 'Valentina Morales',   fecha: '15 oct 2025', puntuacion: 3, nivel: 'moderado', criterios_pos: 2, medico: 'Dra. López' },
+  { id: 'a2', paciente: 'María Camila Torres', fecha: '1 dic 2025',  puntuacion: 7, nivel: 'alto',     criterios_pos: 5, medico: 'Dr. Ruiz'   },
+  { id: 'a3', paciente: 'Sofía Restrepo',      fecha: '5 nov 2025',  puntuacion: 2, nivel: 'moderado', criterios_pos: 2, medico: 'Dra. López' },
+  { id: 'a4', paciente: 'Alejandra Gómez',     fecha: '10 ene 2026', puntuacion: 0, nivel: 'bajo',     criterios_pos: 0, medico: 'Dra. López' },
+  { id: 'a5', paciente: 'Natalia Herrera',     fecha: '22 feb 2026', puntuacion: 1, nivel: 'bajo',     criterios_pos: 1, medico: 'Dr. Ruiz'   },
+  { id: 'a6', paciente: 'Isabella Martínez',   fecha: '3 mar 2026',  puntuacion: 5, nivel: 'alto',     criterios_pos: 4, medico: 'Dra. López' },
 ]
 
 const RIESGO_STYLE = {
-  bajo:     { bg: '#dcfce7', text: '#15803d', bar: '#22c55e' },
-  moderado: { bg: '#fef9c3', text: '#a16207', bar: '#eab308' },
-  alto:     { bg: '#fee2e2', text: '#b91c1c', bar: '#ef4444' },
+  alto:     { color: '#8B3A3A', bg: 'rgba(139,58,58,0.08)',   border: 'rgba(139,58,58,0.2)',   label: 'ALTO'     },
+  moderado: { color: '#A39384', bg: 'rgba(163,147,132,0.10)', border: 'rgba(163,147,132,0.2)', label: 'MODERADO' },
+  bajo:     { color: '#929C92', bg: 'rgba(146,156,146,0.10)', border: 'rgba(146,156,146,0.2)', label: 'BAJO'     },
 }
 
 const SUMMARY = [
-  { nivel: 'alto',     label: 'Alto riesgo',    count: 2 },
-  { nivel: 'moderado', label: 'Moderado',        count: 2 },
-  { nivel: 'bajo',     label: 'Bajo riesgo',     count: 2 },
+  { nivel: 'alto',     count: 2 },
+  { nivel: 'moderado', count: 2 },
+  { nivel: 'bajo',     count: 2 },
+]
+
+const FILTERS = [
+  { key: 'todos',    label: 'Todos'    },
+  { key: 'bajo',     label: 'Bajo'     },
+  { key: 'moderado', label: 'Moderado' },
+  { key: 'alto',     label: 'Alto'     },
 ]
 
 export default function AnalisisClinicaPage() {
   const { slug }    = useParams()
   const { clinica } = useClinic()
   const navigate    = useNavigate()
-  const brand       = clinica?.color_primario ?? '#E8A0B0'
   const [filter, setFilter] = useState('todos')
 
-  const filtered = MOCK_ANALISIS.filter(a =>
-    filter === 'todos' || a.nivel === filter
-  )
+  const filtered = MOCK_ANALISIS.filter(a => filter === 'todos' || a.nivel === filter)
 
   return (
-    <ClinicLayout>
-      <div className="animate-fade-in">
-        {/* Header */}
-        <div className="bg-white px-5 pt-7 pb-4 border-b border-gray-100">
-          <h1 className="text-gray-900 font-bold text-lg">Análisis dermoscópicos</h1>
-          <p className="text-gray-400 text-xs mt-0.5">{MOCK_ANALISIS.length} análisis · {clinica?.nombre}</p>
-        </div>
-
-        <div className="bg-gray-50 px-5 py-4 space-y-4">
-          <FeatureGate feature="dermoscopia_ia">
-            <>
-              {/* Summary cards */}
-              <div className="grid grid-cols-3 gap-2">
-                {SUMMARY.map(s => {
-                  const rs = RIESGO_STYLE[s.nivel]
-                  return (
-                    <button
-                      key={s.nivel}
-                      onClick={() => setFilter(filter === s.nivel ? 'todos' : s.nivel)}
-                      className="bg-white rounded-2xl p-3 text-center shadow-sm border-2 transition-all"
-                      style={{ borderColor: filter === s.nivel ? rs.text : 'transparent' }}
-                    >
-                      <p className="text-2xl font-bold" style={{ color: rs.text }}>{s.count}</p>
-                      <p className="text-gray-500 text-[10px] leading-tight mt-0.5">{s.label}</p>
-                    </button>
-                  )
-                })}
+    <StaffLayout>
+      <div style={{ padding: '32px 40px', minHeight: '100%' }}>
+        <FeatureGate feature="dermoscopia_ia">
+          <>
+            {/* ── HEADER ──────────────────────────────────────── */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+              <div>
+                <p style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.14em', color: 'rgba(22,19,19,0.3)', margin: '0 0 6px' }}>
+                  Dermoscopia · IA
+                </p>
+                <h1 style={{ fontFamily: FRAUNCES, fontSize: '32px', fontWeight: 300, color: '#161313', letterSpacing: '-0.02em', margin: 0 }}>
+                  Análisis dermoscópicos
+                </h1>
+                <p style={{ fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: 'rgba(22,19,19,0.4)', marginTop: '4px', marginBottom: 0 }}>
+                  {clinica?.nombre}
+                </p>
               </div>
-
-              {/* Filter pills */}
-              <div className="flex gap-2 overflow-x-auto pb-0.5">
-                {['todos', 'alto', 'moderado', 'bajo'].map(f => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className="flex-shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border capitalize transition-all"
-                    style={filter === f
-                      ? { backgroundColor: brand, borderColor: brand, color: '#fff' }
-                      : { backgroundColor: '#fff', borderColor: '#e5e7eb', color: '#6b7280' }
-                    }
-                  >
-                    {f === 'todos' ? 'Todos' : `Riesgo ${f}`}
-                  </button>
-                ))}
-              </div>
-
-              {/* Analysis list */}
-              <div className="space-y-2">
-                {filtered.map(a => {
-                  const rs = RIESGO_STYLE[a.nivel]
-                  return (
-                    <div key={a.id} className="bg-white rounded-2xl p-4 shadow-sm">
-                      {/* Top row */}
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                          <p className="text-gray-900 text-sm font-semibold">{a.paciente}</p>
-                          <p className="text-gray-400 text-xs">{a.medico} · {a.fecha}</p>
-                        </div>
-                        <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize flex-shrink-0"
-                          style={{ backgroundColor: rs.bg, color: rs.text }}
-                        >
-                          {a.nivel}
-                        </span>
-                      </div>
-
-                      {/* Score bar */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 text-center flex-shrink-0">
-                          <p className="text-gray-900 text-xl font-bold leading-none">{a.puntuacion}</p>
-                          <p className="text-gray-400 text-[9px]">/ 9</p>
-                        </div>
-                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{ width: `${(a.puntuacion / 9) * 100}%`, backgroundColor: rs.bar }}
-                          />
-                        </div>
-                        <div className="w-14 text-right flex-shrink-0">
-                          <p className="text-gray-600 text-xs font-semibold">{a.criterios_pos} criterios</p>
-                          <p className="text-gray-400 text-[10px]">positivos</p>
-                        </div>
-                      </div>
-
-                      {/* Derivation alert for high risk */}
-                      {a.nivel === 'alto' && (
-                        <div className="mt-2 bg-red-50 rounded-xl px-3 py-2 flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse flex-shrink-0" />
-                          <p className="text-red-700 text-[10px] font-semibold">
-                            Derivación urgente a Dermatología recomendada
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* New analysis CTA */}
               <button
-                onClick={() => navigate('/dermoscopia')}
-                className="w-full py-4 rounded-2xl border-2 border-dashed flex items-center justify-center gap-2 text-sm font-semibold transition-colors"
-                style={{ borderColor: brand, color: brand }}
+                onClick={() => navigate(`/clinica/${slug}/dermoscopia`)}
+                style={{ background: '#161313', color: '#F7F5F2', border: 'none', borderRadius: '2px', padding: '10px 18px', fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
               >
-                <Microscope size={16} />
-                Iniciar nuevo análisis
+                <i className="ti ti-microscope" style={{ fontSize: '14px' }} />
+                Nuevo análisis
               </button>
-            </>
-          </FeatureGate>
-        </div>
+            </div>
+
+            {/* ── SUMMARY CARDS ───────────────────────────────── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px', marginBottom: '32px' }}>
+              {SUMMARY.map(s => {
+                const rs = RIESGO_STYLE[s.nivel]
+                return (
+                  <div
+                    key={s.nivel}
+                    onClick={() => setFilter(filter === s.nivel ? 'todos' : s.nivel)}
+                    style={{ background: '#FFFFFF', border: `1px solid ${filter === s.nivel ? rs.border : 'rgba(22,19,19,0.07)'}`, borderRadius: '2px', padding: '20px 24px', cursor: 'pointer', transition: 'border-color 0.15s' }}
+                  >
+                    <p style={{ fontFamily: FRAUNCES, fontSize: '36px', fontWeight: 300, color: rs.color, margin: 0 }}>
+                      {s.count}
+                    </p>
+                    <p style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(22,19,19,0.3)', margin: '6px 0 0' }}>
+                      {s.nivel} riesgo
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* ── FILTROS ─────────────────────────────────────── */}
+            <div style={{ display: 'flex', gap: '6px', marginBottom: '24px', alignItems: 'center' }}>
+              <i className="ti ti-filter" style={{ fontSize: '13px', color: 'rgba(22,19,19,0.3)', marginRight: '4px' }} />
+              {FILTERS.map(f => {
+                const active = filter === f.key
+                return (
+                  <button
+                    key={f.key}
+                    onClick={() => setFilter(f.key)}
+                    style={{ borderRadius: '2px', padding: '8px 14px', fontFamily: DM_MONO, fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.15s', ...(active ? { background: '#161313', color: '#F7F5F2', border: '1px solid #161313' } : { background: 'transparent', color: 'rgba(22,19,19,0.4)', border: '1px solid rgba(22,19,19,0.1)' }) }}
+                  >
+                    {f.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* ── LISTA DE ANÁLISIS ───────────────────────────── */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {filtered.map(a => {
+                const rs      = RIESGO_STYLE[a.nivel] ?? RIESGO_STYLE.bajo
+                const inicial = a.paciente.split(' ').map(s => s[0]).slice(0, 2).join('')
+                return (
+                  <div
+                    key={a.id}
+                    onClick={() => navigate(`/clinica/${slug}/analisis/${a.id}`)}
+                    style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '20px 24px', cursor: 'pointer' }}
+                  >
+                    {/* Fila principal */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(22,19,19,0.05)', border: '1px solid rgba(22,19,19,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span style={{ fontFamily: DM_SANS, fontSize: '13px', color: 'rgba(22,19,19,0.4)' }}>{inicial}</span>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 400, color: '#161313', margin: 0 }}>{a.paciente}</p>
+                        <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', margin: '2px 0 0' }}>{a.medico} · {a.fecha}</p>
+                      </div>
+                      <span style={{ fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.1em', padding: '3px 10px', borderRadius: '2px', border: `1px solid ${rs.border}`, background: rs.bg, color: rs.color, flexShrink: 0 }}>
+                        {rs.label}
+                      </span>
+                      <span style={{ fontFamily: FRAUNCES, fontSize: '20px', fontWeight: 300, color: 'rgba(22,19,19,0.6)', minWidth: '40px', textAlign: 'right' }}>
+                        {a.puntuacion}/7
+                      </span>
+                      <span style={{ fontFamily: DM_MONO, fontSize: '14px', color: 'rgba(22,19,19,0.2)', marginLeft: '8px' }}>→</span>
+                    </div>
+
+                    {/* Barra de puntuación */}
+                    <div style={{ marginTop: '10px', height: '2px', background: 'rgba(22,19,19,0.06)', borderRadius: '1px' }}>
+                      <div style={{ width: `${(a.puntuacion / 7) * 100}%`, height: '100%', background: rs.color, borderRadius: '1px', transition: 'width 0.3s' }} />
+                    </div>
+
+                    {/* Alerta alto riesgo */}
+                    {a.nivel === 'alto' && (
+                      <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(139,58,58,0.1)' }}>
+                        <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: '#8B3A3A', margin: 0 }}>
+                          ⚠ Requiere revisión urgente por especialista
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        </FeatureGate>
       </div>
-    </ClinicLayout>
+    </StaffLayout>
   )
 }
