@@ -156,7 +156,7 @@ function ClinicRoutes() {
           <Route path="mi-perfil/rutina"       element={<RequireRole roles={['paciente']}><MiRutinaPage /></RequireRole>} />
           <Route path="mi-perfil/datos"        element={<RequireRole roles={['paciente']}><MisDatosPage /></RequireRole>} />
           <Route path="mi-perfil/chat"         element={<RequireRole roles={['paciente']}><MisMensajesPage /></RequireRole>} />
-          <Route path="dermoscopia"            element={<RequireRole roles={['paciente']}><DermoscopiaWrapper /></RequireRole>} />
+          <Route path="dermoscopia"            element={<RequireAuth><DermoscopiaWrapper /></RequireAuth>} />
 
           {/* ── Conversaciones staff ── */}
           <Route path="conversaciones"         element={<RequireRole roles={['admin','medico','recepcion']}><ConversacionesPage /></RequireRole>} />
