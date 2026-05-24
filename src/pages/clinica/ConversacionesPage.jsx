@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-
-const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 import { useClinic } from '../../contexts/ClinicContext'
 import { supabase } from '../../lib/supabase'
 import StaffLayout from './StaffLayout'
+
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 
 const FRAUNCES = "'Fraunces', Georgia, serif"
 const DM_SANS  = "'DM Sans', system-ui, sans-serif"
@@ -17,31 +17,35 @@ const MOCK_CONVERSACIONES = [
   {
     paciente_id: 'p1', nombre: 'Sofía', apellido: 'Restrepo',
     foto_perfil: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=80&h=80&fit=crop&crop=face',
-    ultimo_msg: '¡Muchas gracias Dra! Los resultados son increíbles 😊',
+    ultimo_msg: 'Cita confirmada para el martes',
     ultimo_msg_at: new Date(NOW - 1800000).toISOString(),
-    no_leidos: 2, remitente_es_paciente: true,
+    no_leidos: 2, remitente_es_paciente: true, canal: 'admin',
   },
   {
     paciente_id: 'p2', nombre: 'Lucía', apellido: 'Fernández',
     foto_perfil: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=80&h=80&fit=crop&crop=face',
     ultimo_msg: 'Cita confirmada para el martes',
     ultimo_msg_at: new Date(NOW - 3 * 86400000).toISOString(),
-    no_leidos: 0, remitente_es_paciente: false,
+    no_leidos: 0, remitente_es_paciente: false, canal: 'admin',
   },
   {
     paciente_id: 'p3', nombre: 'Carmen', apellido: 'López',
     foto_perfil: null,
     ultimo_msg: '¿Cuándo puedo hacer el análisis de nuevo?',
     ultimo_msg_at: new Date(NOW - 7 * 86400000).toISOString(),
-    no_leidos: 1, remitente_es_paciente: true,
+    no_leidos: 1, remitente_es_paciente: true, canal: 'medico',
   },
 ]
 const MOCK_MENSAJES_P1 = [
-  { id: '1', remitente_id: 'medico', destinatario_id: 'p1', contenido: 'Hola Sofía, ¿cómo te encuentras después del tratamiento?', tipo: 'texto', leido: true, creado_en: new Date(NOW - 2 * 86400000).toISOString() },
-  { id: '2', remitente_id: 'p1',    destinatario_id: 'p1', contenido: 'Muy bien! Me encanta el resultado', tipo: 'texto', leido: true, creado_en: new Date(NOW - 2 * 86400000 + 600000).toISOString() },
-  { id: '3', remitente_id: 'medico', destinatario_id: 'p1', contenido: null, tipo: 'recordatorio', leido: true, creado_en: new Date(NOW - 86400000).toISOString(),
+  { id: '1', remitente_id: 'medico', destinatario_id: 'p1', contenido: 'Hola Sofía, tu cita de revisión está confirmada para el jueves a las 11:00.', tipo: 'texto', leido: true, canal: 'admin', creado_en: new Date(NOW - 2 * 86400000).toISOString() },
+  { id: '2', remitente_id: 'p1',    destinatario_id: 'p1', contenido: 'Perfecto, estaré allí. ¡Muchas gracias!', tipo: 'texto', leido: true, canal: 'admin', creado_en: new Date(NOW - 2 * 86400000 + 600000).toISOString() },
+  { id: '3', remitente_id: 'medico', destinatario_id: 'p1', contenido: null, tipo: 'recordatorio', leido: true, canal: 'admin', creado_en: new Date(NOW - 86400000).toISOString(),
     metadata: { tipo_cita: 'Revisión Botox', fecha: 'jue 15 jun · 11:00', medico: 'Dra. García' } },
-  { id: '4', remitente_id: 'p1',    destinatario_id: 'p1', contenido: '¡Muchas gracias Dra! Los resultados son increíbles 😊', tipo: 'texto', leido: false, creado_en: new Date(NOW - 1800000).toISOString() },
+  { id: '4', remitente_id: 'p1',    destinatario_id: 'p1', contenido: 'Cita confirmada para el martes', tipo: 'texto', leido: false, canal: 'admin', creado_en: new Date(NOW - 1800000).toISOString() },
+]
+const MOCK_MENSAJES_P3 = [
+  { id: '10', remitente_id: 'medico', destinatario_id: 'p3', contenido: 'Carmen, los resultados del análisis dermoscópico están listos. Puntuación 3/9, riesgo moderado.', tipo: 'texto', leido: true, canal: 'medico', creado_en: new Date(NOW - 3 * 86400000).toISOString() },
+  { id: '11', remitente_id: 'p3',    destinatario_id: 'p3', contenido: '¿Cuándo puedo hacer el análisis de nuevo?', tipo: 'texto', leido: false, canal: 'medico', creado_en: new Date(NOW - 7 * 86400000).toISOString() },
 ]
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -89,13 +93,22 @@ export default function ConversacionesPage() {
   const [cargandoLista,   setCargandoLista]   = useState(true)
   const [cargandoChat,    setCargandoChat]    = useState(false)
   const [escribiendo,     setEscribiendo]     = useState(false)
+  const [canalActivo,     setCanalActivo]     = useState(() =>
+    user?.rol === 'medico' ? 'medico' : 'admin'
+  )
+
+  const tabsVisibles = user?.rol === 'admin'
+    ? ['admin', 'medico']
+    : user?.rol === 'medico'
+    ? ['medico']
+    : ['admin']
 
   const bottomRef   = useRef(null)
   const channelRef  = useRef(null)
   const typingTimer = useRef(null)
   const textareaRef = useRef(null)
 
-  useEffect(() => { cargarLista() }, [user?.clinica_id])
+  useEffect(() => { cargarLista() }, [user?.clinica_id, canalActivo])
 
   useEffect(() => {
     if (seleccionado) cargarChat(seleccionado.paciente_id)
@@ -120,6 +133,7 @@ export default function ConversacionesPage() {
     let query = supabase
       .from('mensajes')
       .select('destinatario_id, contenido, creado_en, remitente_id, leido, pacientes(nombre,apellido,foto_perfil)')
+      .eq('canal', canalActivo)
       .order('creado_en', { ascending: false })
     if (isMedico) {
       query = query.or(`remitente_id.eq.${user.id},destinatario_usuario_id.eq.${user.id}`)
@@ -155,7 +169,7 @@ export default function ConversacionesPage() {
     setCargandoChat(true)
     setMensajes([])
     if (!supabase) {
-      setMensajes(pacienteId === 'p1' ? MOCK_MENSAJES_P1 : [])
+      setMensajes(pacienteId === 'p1' ? MOCK_MENSAJES_P1 : pacienteId === 'p3' ? MOCK_MENSAJES_P3 : [])
       setCargandoChat(false)
       return
     }
@@ -164,6 +178,7 @@ export default function ConversacionesPage() {
       .select('*')
       .eq('clinica_id', user.clinica_id)
       .eq('destinatario_id', pacienteId)
+      .eq('canal', canalActivo)
       .order('creado_en', { ascending: true })
     setMensajes(data ?? [])
     setCargandoChat(false)
@@ -214,7 +229,7 @@ export default function ConversacionesPage() {
         const nuevo = {
           id: `local-${Date.now()}`,
           remitente_id: user.id, destinatario_id: seleccionado.paciente_id,
-          contenido: msg, tipo: 'texto', leido: false,
+          contenido: msg, tipo: 'texto', leido: false, canal: canalActivo,
           creado_en: new Date().toISOString(),
         }
         setMensajes(prev => [...prev, nuevo])
@@ -235,6 +250,7 @@ export default function ConversacionesPage() {
           destinatario_id: seleccionado.paciente_id,
           contenido:       msg,
           tipo:            'texto',
+          canal:           canalActivo,
         })
         .select()
         .single()
@@ -268,12 +284,10 @@ export default function ConversacionesPage() {
   }
 
   const conversacionesFiltradas = useMemo(() => {
-    if (!busqueda.trim()) return conversaciones
-    const q = busqueda.toLowerCase()
-    return conversaciones.filter(c =>
-      `${c.nombre} ${c.apellido}`.toLowerCase().includes(q)
-    )
-  }, [conversaciones, busqueda])
+    return conversaciones
+      .filter(c => c.canal === canalActivo)
+      .filter(c => !busqueda.trim() || `${c.nombre} ${c.apellido}`.toLowerCase().includes(busqueda.toLowerCase()))
+  }, [conversaciones, busqueda, canalActivo])
 
   const mensajesConDia = useMemo(() => groupByDay(mensajes), [mensajes])
 
@@ -290,6 +304,26 @@ export default function ConversacionesPage() {
             <h1 style={{ fontFamily: FRAUNCES, fontSize: '18px', fontWeight: 400, color: '#161313', margin: '0 0 12px' }}>
               Mensajes
             </h1>
+            {/* Tabs canal */}
+            {tabsVisibles.length > 1 && (
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(22,19,19,0.08)', marginBottom: '12px' }}>
+                {tabsVisibles.map(canal => (
+                  <button
+                    key={canal}
+                    onClick={() => { setCanalActivo(canal); setSeleccionado(null) }}
+                    style={{
+                      flex: 1, padding: '10px 0', background: 'none', border: 'none', cursor: 'pointer',
+                      fontFamily: DM_SANS, fontSize: '12px', fontWeight: '400', letterSpacing: '0.04em',
+                      borderBottom: canalActivo === canal ? '2px solid #161313' : '2px solid transparent',
+                      color: canalActivo === canal ? '#161313' : 'rgba(22,19,19,0.35)',
+                      transition: 'color 0.15s',
+                    }}
+                  >
+                    {canal === 'admin' ? 'Administrativo' : 'Clínico'}
+                  </button>
+                ))}
+              </div>
+            )}
             {/* Búsqueda */}
             <div style={{ position: 'relative' }}>
               <i className="ti ti-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: 'rgba(22,19,19,0.25)' }} />
@@ -472,7 +506,7 @@ export default function ConversacionesPage() {
                 value={texto}
                 onChange={handleTextareaChange}
                 onKeyDown={handleKeyDown}
-                placeholder="Escribe un mensaje…"
+                placeholder={canalActivo === 'admin' ? 'Mensaje administrativo…' : 'Nota clínica…'}
                 rows={1}
                 style={{ flex: 1, padding: '10px 14px', background: 'rgba(22,19,19,0.03)', border: '1px solid rgba(22,19,19,0.08)', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: '#161313', resize: 'none', outline: 'none', maxHeight: '120px', lineHeight: 1.5 }}
               />
