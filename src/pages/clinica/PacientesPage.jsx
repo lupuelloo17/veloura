@@ -246,7 +246,7 @@ export default function PacientesPage() {
                       {/* Última visita */}
                       <td style={{ padding: '14px 20px' }}>
                         <span style={{ fontFamily: DM_MONO, fontSize: '12px', color: 'rgba(22,19,19,0.45)' }}>
-                          {p.ultima_visita ? formatFecha(p.ultima_visita) : '—'}
+                          {!p.ultima_visita || isNaN(new Date(p.ultima_visita)) ? '—' : formatFecha(p.ultima_visita)}
                         </span>
                       </td>
 
