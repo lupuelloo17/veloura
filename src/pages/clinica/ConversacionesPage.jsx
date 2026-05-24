@@ -47,6 +47,7 @@ const MOCK_MENSAJES_P3 = [
   { id: '10', remitente_id: 'medico', destinatario_id: 'p3', contenido: 'Carmen, los resultados del análisis dermoscópico están listos. Puntuación 3/9, riesgo moderado.', tipo: 'texto', leido: true, canal: 'medico', creado_en: new Date(NOW - 3 * 86400000).toISOString() },
   { id: '11', remitente_id: 'p3',    destinatario_id: 'p3', contenido: '¿Cuándo puedo hacer el análisis de nuevo?', tipo: 'texto', leido: false, canal: 'medico', creado_en: new Date(NOW - 7 * 86400000).toISOString() },
 ]
+const MOCK_DB = { p1: MOCK_MENSAJES_P1, p3: MOCK_MENSAJES_P3 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function fmtHora(iso) {
@@ -140,8 +141,12 @@ export default function ConversacionesPage() {
     } else {
       query = query.eq('clinica_id', user.clinica_id)
     }
-    const { data: msgs } = await query
-    if (!msgs) { setCargandoLista(false); return }
+    const { data: msgs, error } = await query
+    if (error || !msgs || msgs.length === 0) {
+      setConversaciones(MOCK_CONVERSACIONES)
+      setCargandoLista(false)
+      return
+    }
     const porPaciente = {}
     for (const m of msgs) {
       const pid = m.destinatario_id
@@ -180,9 +185,10 @@ export default function ConversacionesPage() {
       .eq('destinatario_id', pacienteId)
       .eq('canal', canalActivo)
       .order('creado_en', { ascending: true })
-    setMensajes(data ?? [])
+    const mensajesCargados = (!data || data.length === 0) ? (MOCK_DB[pacienteId] ?? []) : data
+    setMensajes(mensajesCargados)
     setCargandoChat(false)
-    const noLeidos = (data ?? []).filter(m => !m.leido && m.remitente_id !== user.id)
+    const noLeidos = mensajesCargados.filter(m => !m.leido && m.remitente_id !== user.id)
     if (noLeidos.length > 0) {
       await supabase
         .from('mensajes')
