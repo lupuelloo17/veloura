@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Zap, ArrowLeft } from 'lucide-react'
 import { PLANES, FEATURE_LABELS, formatEUR } from '../config/planes'
 
-const BRAND = '#C9A46A'  // Veloura gold
+const FRAUNCES = "'Fraunces', Georgia, serif"
+const DM_SANS  = "'DM Sans', system-ui, sans-serif"
+const DM_MONO  = "'DM Mono', monospace"
 
 const PLAN_ORDER = ['esencial', 'premium', 'elite']
 
-// Map plan key → Stripe price ID from env
 const PRICE_IDS = {
   esencial: import.meta.env.VITE_STRIPE_PRICE_ESENCIAL,
   premium:  import.meta.env.VITE_STRIPE_PRICE_PREMIUM,
@@ -62,106 +62,191 @@ export default function PreciosPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-white">
+  const navLinkStyle = {
+    fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300,
+    letterSpacing: '0.04em', color: 'rgba(247,245,242,0.4)',
+    textDecoration: 'none',
+  }
 
-      {/* Nav */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur border-b border-gray-100 z-30">
-        <div className="max-w-5xl mx-auto px-5 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-gray-500 text-sm hover:text-gray-800 transition-colors">
-            <ArrowLeft size={16} /> Volver
+  return (
+    <div style={{ minHeight: '100vh', background: '#161313', fontFamily: DM_SANS }}>
+
+      {/* ── NAV ─────────────────────────────────────────────── */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 30,
+        background: 'rgba(22,19,19,0.92)', backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        <div style={{
+          maxWidth: '1200px', margin: '0 auto', width: '100%',
+          padding: '0 48px', height: '60px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <Link to="/" style={navLinkStyle}>← Volver</Link>
+          <Link to="/" style={{
+            fontFamily: FRAUNCES, fontSize: '20px', fontWeight: 300,
+            color: '#F7F5F2', letterSpacing: '-0.02em', textDecoration: 'none',
+          }}>
+            Veloura
           </Link>
-          <div className="flex items-center gap-2">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-              style={{ backgroundColor: BRAND }}
-            >
-              V
-            </div>
-            <span className="font-bold text-gray-900 text-base">Veloura</span>
-          </div>
-          <Link to="/login" className="text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors">
-            Acceder
-          </Link>
+          <Link to="/login" style={navLinkStyle}>Iniciar sesión</Link>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-5 py-12">
+      {/* ── CONTENIDO ───────────────────────────────────────── */}
+      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '80px 48px' }}>
 
         {/* Header */}
-        <div className="text-center mb-10">
-          <div
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold mb-4"
-            style={{ backgroundColor: BRAND + '18', color: BRAND }}
-          >
-            <Zap size={11} fill="currentColor" /> Sin permanencia · Cancela cuando quieras
+        <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <div style={{ width: '20px', height: '1px', background: 'rgba(201,211,202,0.4)' }} />
+            <span style={{ fontFamily: DM_MONO, fontSize: '10px', color: 'rgba(201,211,202,0.5)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+              PRECIOS
+            </span>
+            <div style={{ width: '20px', height: '1px', background: 'rgba(201,211,202,0.4)' }} />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
-            Planes sin sorpresas
+
+          <h1 style={{
+            fontFamily: FRAUNCES, fontWeight: 300,
+            fontSize: 'clamp(38px,4vw,58px)',
+            color: '#F7F5F2', letterSpacing: '-0.02em', lineHeight: 1.05,
+            margin: '0 0 16px',
+          }}>
+            <span style={{ display: 'block' }}>Transparente.</span>
+            <span style={{ display: 'block' }}>Sin sorpresas.</span>
           </h1>
-          <p className="text-gray-400 text-base max-w-md mx-auto">
+
+          <p style={{
+            fontFamily: DM_SANS, fontSize: '16px', fontWeight: 300,
+            color: 'rgba(247,245,242,0.4)', lineHeight: 1.7, margin: 0,
+          }}>
             Todos los precios incluyen IVA. Pago mensual con tarjeta. Sin comisiones ocultas.
           </p>
         </div>
 
         {/* Error banner */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-red-600 text-sm text-center">
+          <div style={{
+            background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)',
+            borderRadius: '2px', padding: '12px 20px', marginBottom: '32px',
+            textAlign: 'center', fontSize: '13px', fontWeight: 300,
+            color: 'rgba(255,160,160,0.8)',
+          }}>
             {error}
           </div>
         )}
 
-        {/* Plan cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-          {PLAN_ORDER.map(key => {
-            const plan     = PLANES[key]
+        {/* Grid de planes */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3,1fr)',
+          border: '1px solid rgba(255,255,255,0.07)', borderRadius: '4px',
+          overflow: 'hidden', marginBottom: '48px',
+        }}>
+          {PLAN_ORDER.map((key, i) => {
+            const plan      = PLANES[key]
             const isPopular = key === 'premium'
             const isLoading = loadingPlan === key
+            const isLast    = i === PLAN_ORDER.length - 1
 
             return (
               <div
                 key={key}
-                className="rounded-2xl border p-6 flex flex-col relative"
-                style={isPopular
-                  ? { borderColor: BRAND, boxShadow: `0 0 0 2px ${BRAND}` }
-                  : { borderColor: '#e5e7eb' }
-                }
+                style={{
+                  padding: '40px 36px',
+                  display: 'flex', flexDirection: 'column',
+                  position: 'relative',
+                  borderRight: isLast ? 'none' : '1px solid rgba(255,255,255,0.07)',
+                  background: isPopular ? 'rgba(247,245,242,0.03)' : 'transparent',
+                }}
               >
+                {/* Badge popular */}
                 {isPopular && (
-                  <div
-                    className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-white text-xs font-bold whitespace-nowrap"
-                    style={{ backgroundColor: BRAND }}
-                  >
-                    Más popular
+                  <span style={{
+                    position: 'absolute', top: '20px', right: '20px',
+                    fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.12em',
+                    border: '1px solid rgba(201,211,202,0.2)',
+                    color: 'rgba(201,211,202,0.45)', padding: '3px 10px',
+                    textTransform: 'uppercase',
+                  }}>
+                    MÁS POPULAR
+                  </span>
+                )}
+
+                {/* Label */}
+                <p style={{
+                  fontFamily: DM_MONO, fontSize: '10px', letterSpacing: '0.14em',
+                  color: 'rgba(201,211,202,0.4)', textTransform: 'uppercase',
+                  margin: '0 0 20px',
+                }}>
+                  {plan.nombre.toUpperCase()}
+                </p>
+
+                {/* Precio */}
+                {plan.precio && plan.precio !== Infinity ? (
+                  <div style={{ marginBottom: '16px' }}>
+                    <span style={{
+                      fontFamily: FRAUNCES, fontSize: '48px', fontWeight: 300,
+                      color: '#F7F5F2', letterSpacing: '-0.02em',
+                    }}>
+                      {formatEUR(plan.precio)}
+                    </span>
+                    <span style={{
+                      fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300,
+                      color: 'rgba(247,245,242,0.3)', marginLeft: '6px',
+                    }}>
+                      /mes + IVA
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: '16px' }}>
+                    <span style={{
+                      fontFamily: FRAUNCES, fontSize: '38px', fontWeight: 300,
+                      color: '#F7F5F2', letterSpacing: '-0.02em',
+                    }}>
+                      Consultar
+                    </span>
                   </div>
                 )}
 
-                <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">
-                  {plan.nombre}
-                </p>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-4xl font-extrabold text-gray-900">
-                    {formatEUR(plan.precio)}
-                  </span>
-                  <span className="text-gray-400 text-sm">/mes + IVA</span>
-                </div>
-                <p className="text-gray-500 text-xs mb-1">{plan.descripcion}</p>
-                <p className="text-gray-400 text-[11px] mb-5">
-                  Hasta {plan.max_pacientes === Infinity ? '∞' : plan.max_pacientes} pacientes
-                  · {plan.max_medicos === Infinity ? '∞' : plan.max_medicos} médico{plan.max_medicos !== 1 ? 's' : ''}
+                {/* Descripción */}
+                <p style={{
+                  fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300,
+                  color: 'rgba(247,245,242,0.35)', lineHeight: 1.6,
+                  margin: '0 0 8px',
+                }}>
+                  {plan.descripcion}
                 </p>
 
-                <ul className="space-y-2 flex-1 mb-6">
+                {/* Capacidad */}
+                <p style={{
+                  fontFamily: DM_MONO, fontSize: '10px', letterSpacing: '0.06em',
+                  color: 'rgba(201,211,202,0.25)', margin: '0 0 28px',
+                }}>
+                  Hasta {plan.max_pacientes === Infinity ? '∞' : plan.max_pacientes} pacientes
+                  {' · '}
+                  {plan.max_medicos === Infinity ? '∞' : plan.max_medicos} médico{plan.max_medicos !== 1 ? 's' : ''}
+                </p>
+
+                {/* Features */}
+                <ul style={{
+                  flex: 1, paddingLeft: 0, listStyle: 'none',
+                  display: 'flex', flexDirection: 'column', gap: '8px',
+                  margin: '0 0 36px',
+                }}>
                   {FEATURE_LIST.map(({ key: fk, label }) => {
                     const incluido = plan.features[fk]
                     return (
-                      <li key={fk} className="flex items-center gap-2">
-                        <Check
-                          size={14}
-                          className="flex-shrink-0"
-                          style={{ color: incluido ? BRAND : '#d1d5db' }}
-                        />
-                        <span className="text-xs" style={{ color: incluido ? '#374151' : '#9ca3af' }}>
+                      <li key={fk} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <span style={{
+                          fontFamily: DM_MONO, fontSize: '12px', flexShrink: 0, marginTop: '1px',
+                          color: incluido ? '#929C92' : 'rgba(255,255,255,0.1)',
+                        }}>
+                          {incluido ? '✓' : '–'}
+                        </span>
+                        <span style={{
+                          fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300,
+                          color: incluido ? 'rgba(247,245,242,0.55)' : 'rgba(247,245,242,0.18)',
+                        }}>
                           {label}
                         </span>
                       </li>
@@ -169,14 +254,23 @@ export default function PreciosPage() {
                   })}
                 </ul>
 
+                {/* CTA */}
                 <button
                   onClick={() => handleEmpezar(key)}
                   disabled={!!loadingPlan}
-                  className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95"
-                  style={isPopular
-                    ? { backgroundColor: loadingPlan ? '#d1d5db' : BRAND, color: '#fff' }
-                    : { backgroundColor: '#f3f4f6', color: '#374151' }
-                  }
+                  style={{
+                    width: '100%', padding: '13px',
+                    borderRadius: '2px',
+                    fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400,
+                    letterSpacing: '0.12em', textTransform: 'uppercase',
+                    cursor: loadingPlan ? 'not-allowed' : 'pointer',
+                    opacity: isLoading ? 0.5 : 1,
+                    transition: 'opacity 0.15s',
+                    ...(isPopular
+                      ? { background: '#F7F5F2', color: '#161313', border: 'none' }
+                      : { background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(247,245,242,0.5)' }
+                    ),
+                  }}
                 >
                   {isLoading ? 'Redirigiendo…' : 'Empezar ahora'}
                 </button>
@@ -185,23 +279,59 @@ export default function PreciosPage() {
           })}
         </div>
 
-        {/* Test card note */}
-        <div className="bg-gray-50 rounded-2xl px-5 py-4 text-center text-xs text-gray-400 max-w-md mx-auto">
-          <p className="font-semibold text-gray-600 mb-1">Modo de prueba activo</p>
-          <p>Usa la tarjeta <strong className="text-gray-700 font-mono">4242 4242 4242 4242</strong>, cualquier fecha futura y CVC de 3 dígitos.</p>
+        {/* Nota test */}
+        <div style={{
+          maxWidth: '480px', margin: '0 auto 64px',
+          padding: '20px 24px',
+          border: '1px solid rgba(255,255,255,0.06)', borderRadius: '2px',
+          textAlign: 'center',
+        }}>
+          <p style={{
+            fontFamily: DM_SANS, fontSize: '12px', fontWeight: 400,
+            color: 'rgba(247,245,242,0.4)', margin: '0 0 6px',
+          }}>
+            Modo de prueba activo
+          </p>
+          <p style={{
+            fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300,
+            color: 'rgba(247,245,242,0.25)', margin: 0, lineHeight: 1.6,
+          }}>
+            Usa la tarjeta{' '}
+            <span style={{ fontFamily: DM_MONO, color: 'rgba(201,211,202,0.6)' }}>
+              4242 4242 4242 4242
+            </span>
+            , cualquier fecha futura y CVC de 3 dígitos.
+          </p>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 py-6">
-        <div className="max-w-5xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400">
-          <p>Veloura · Valencia, España · contacto@veloura.app</p>
-          <div className="flex items-center gap-4">
-            <Link to="/politica-privacidad" className="hover:text-gray-600 transition-colors">Política de Privacidad</Link>
-            <Link to="/" className="hover:text-gray-600 transition-colors">Inicio</Link>
+      {/* ── FOOTER ──────────────────────────────────────────── */}
+      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '32px 48px' }}>
+        <div style={{
+          maxWidth: '1000px', margin: '0 auto',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          flexWrap: 'wrap', gap: '12px',
+        }}>
+          <span style={{ fontFamily: DM_MONO, fontSize: '11px', color: 'rgba(247,245,242,0.2)' }}>
+            Veloura · contacto@veloura.app
+          </span>
+          <div style={{ display: 'flex', gap: '24px' }}>
+            <Link to="/politica-privacidad" style={{
+              fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300,
+              color: 'rgba(247,245,242,0.25)', textDecoration: 'none',
+            }}>
+              Política de Privacidad
+            </Link>
+            <Link to="/" style={{
+              fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300,
+              color: 'rgba(247,245,242,0.25)', textDecoration: 'none',
+            }}>
+              Inicio
+            </Link>
           </div>
         </div>
       </footer>
+
     </div>
   )
 }
