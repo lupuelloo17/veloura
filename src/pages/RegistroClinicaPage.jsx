@@ -1,34 +1,45 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import {
-  ChevronLeft, ChevronRight, Building2, User, Shield,
-  Check, Eye, EyeOff, AlertCircle,
-} from 'lucide-react'
 import { supabase } from '../lib/supabase'
+
+const FRAUNCES = "'Fraunces', Georgia, serif"
+const DM_SANS  = "'DM Sans', system-ui, sans-serif"
+const DM_MONO  = "'DM Mono', monospace"
 
 const BRAND = '#C8A882'
 const PASOS = ['Tu clínica', 'Cuenta admin', 'Privacidad']
-
-const inputCls = 'w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-[#C8A882] focus:ring-1 focus:ring-[#C8A882] transition-colors'
 
 function toSlug(str) {
   return str
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9\s-]/g, '')
     .trim()
     .replace(/\s+/g, '-')
     .slice(0, 40)
 }
 
+const inputStyle = {
+  width: '100%', padding: '13px 16px', boxSizing: 'border-box',
+  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '2px', fontSize: '14px', fontWeight: 300,
+  color: '#F7F5F2', outline: 'none', fontFamily: DM_SANS,
+  letterSpacing: '0.02em', marginBottom: '16px',
+}
+
+const labelStyle = {
+  fontSize: '10px', fontWeight: 300, letterSpacing: '0.12em', textTransform: 'uppercase',
+  color: 'rgba(247,245,242,0.35)', marginBottom: '8px', display: 'block',
+}
+
 export default function RegistroClinicaPage() {
   const navigate = useNavigate()
-  const [paso, setPaso]       = useState(1)
+  const [paso, setPaso]         = useState(1)
   const [enviando, setEnviando] = useState(false)
-  const [error, setError]     = useState(null)
+  const [error, setError]       = useState(null)
 
-  // ── Paso 1: Clínica ──────────────────────────────────────────
+  // ── Paso 1: Clínica
   const [nombre, setNombre]         = useState('')
   const [slug, setSlug]             = useState('')
   const [ciudad, setCiudad]         = useState('')
@@ -39,18 +50,18 @@ export default function RegistroClinicaPage() {
     if (!slugManual) setSlug(toSlug(v))
   }
 
-  // ── Paso 2: Admin ────────────────────────────────────────────
+  // ── Paso 2: Admin
   const [adminNombre, setAdminNombre] = useState('')
   const [email, setEmail]             = useState('')
   const [password, setPassword]       = useState('')
   const [confirm, setConfirm]         = useState('')
   const [showPass, setShowPass]       = useState(false)
 
-  // ── Paso 3: RGPD ─────────────────────────────────────────────
+  // ── Paso 3: RGPD
   const [rgpd1, setRgpd1] = useState(false)
   const [rgpd2, setRgpd2] = useState(false)
 
-  // ── Validaciones ─────────────────────────────────────────────
+  // ── Validaciones
   const slugOk  = /^[a-z0-9-]{3,40}$/.test(slug)
   const paso1Ok = nombre.trim().length >= 2 && slugOk
   const paso2Ok = (
@@ -61,37 +72,27 @@ export default function RegistroClinicaPage() {
   )
   const paso3Ok = rgpd1 && rgpd2
 
-  // ── Submit ───────────────────────────────────────────────────
+  // ── Submit
   async function handleSubmit() {
     if (!paso3Ok) return
     setEnviando(true)
     setError(null)
     try {
-      // ── Mock (sin Supabase) ───────────────────────────────────
       if (!supabase) {
         await new Promise(r => setTimeout(r, 1000))
         const mockUser = {
-          id: 'mock-new-admin',
-          email,
-          nombre: adminNombre,
-          rol: 'admin',
-          clinica_slug: slug,
-          clinica_id:   'mock-' + slug,
+          id: 'mock-new-admin', email, nombre: adminNombre,
+          rol: 'admin', clinica_slug: slug, clinica_id: 'mock-' + slug,
         }
         localStorage.setItem('glowai_session', JSON.stringify(mockUser))
         navigate(`/clinica/${slug}/dashboard`, { replace: true })
         return
       }
 
-      // 1. Verificar slug disponible
       const { data: existing } = await supabase
-        .from('clinicas')
-        .select('id')
-        .eq('slug', slug)
-        .maybeSingle()
+        .from('clinicas').select('id').eq('slug', slug).maybeSingle()
       if (existing) throw new Error('El identificador ya está en uso. Elige otro.')
 
-      // 2. Crear cuenta en Supabase Auth
       const { data: authData, error: authErr } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
@@ -104,37 +105,25 @@ export default function RegistroClinicaPage() {
       const userId = authData.user?.id
       if (!userId) throw new Error('No se pudo crear la cuenta')
 
-      // 3. Crear la clínica
       const { data: clinicaData, error: clinErr } = await supabase
         .from('clinicas')
         .insert({
-          slug,
-          nombre:          nombre.trim(),
-          ciudad:          ciudad.trim() || null,
-          plan:            'trial',
-          color_primario:  BRAND,
-          activo:          true,
+          slug, nombre: nombre.trim(), ciudad: ciudad.trim() || null,
+          plan: 'trial', color_primario: BRAND, activo: true,
         })
-        .select('id')
-        .single()
+        .select('id').single()
       if (clinErr) throw new Error('Error creando la clínica: ' + clinErr.message)
 
-      // 4. Crear usuario admin
       const { error: uErr } = await supabase
         .from('usuarios')
         .insert({
-          id:         userId,
-          clinica_id: clinicaData.id,
-          nombre:     adminNombre.trim(),
-          email:      email.trim().toLowerCase(),
-          rol:        'admin',
-          activo:     true,
+          id: userId, clinica_id: clinicaData.id,
+          nombre: adminNombre.trim(), email: email.trim().toLowerCase(),
+          rol: 'admin', activo: true,
         })
       if (uErr) throw new Error('Error creando perfil de administrador: ' + uErr.message)
 
-      // 5. Refrescar sesión para que la JWT incluya los nuevos claims
       await supabase.auth.refreshSession()
-
       navigate(`/clinica/${slug}/dashboard`, { replace: true })
     } catch (err) {
       setError(err.message || 'Error inesperado. Inténtalo de nuevo.')
@@ -143,304 +132,382 @@ export default function RegistroClinicaPage() {
     }
   }
 
-  return (
-    <div className="flex flex-col flex-1 min-h-[780px] animate-fade-in">
+  const canContinue = (paso === 1 && paso1Ok) || (paso === 2 && paso2Ok) || (paso === 3 && paso3Ok)
 
-      {/* Header stepper */}
-      <div className="bg-white px-5 pt-6 pb-4 border-b border-gray-100 flex-shrink-0">
-        <div className="flex items-center gap-3 mb-3">
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', flex: 1, minHeight: '780px',
+      background: '#161313', fontFamily: DM_SANS,
+    }}>
+
+      {/* ── HEADER ──────────────────────────────────────────── */}
+      <div style={{
+        flexShrink: 0, padding: '20px 24px 16px',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
           <button
             onClick={() => paso > 1 ? setPaso(p => p - 1) : navigate('/login')}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+            style={{
+              width: '32px', height: '32px', borderRadius: '50%',
+              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+              color: 'rgba(247,245,242,0.5)', fontSize: '16px',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}
           >
-            <ChevronLeft size={16} className="text-gray-500" />
+            ←
           </button>
           <div>
-            <h1 className="text-gray-900 font-bold text-base">Registra tu clínica</h1>
-            <p className="text-gray-400 text-xs">Paso {paso} de 3 — {PASOS[paso - 1]}</p>
+            <h1 style={{
+              fontFamily: FRAUNCES, fontSize: '18px', fontWeight: 300,
+              color: '#F7F5F2', letterSpacing: '-0.01em', margin: 0,
+            }}>
+              Registra tu clínica
+            </h1>
+            <p style={{
+              fontFamily: DM_MONO, fontSize: '10px',
+              color: 'rgba(247,245,242,0.3)', letterSpacing: '0.08em',
+              margin: '4px 0 0',
+            }}>
+              PASO {paso} DE 3 — {PASOS[paso - 1].toUpperCase()}
+            </p>
           </div>
         </div>
-        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{ width: `${(paso / 3) * 100}%`, backgroundColor: BRAND }}
-          />
+
+        {/* Barra de progreso */}
+        <div style={{ height: '1px', background: 'rgba(255,255,255,0.07)', borderRadius: 0 }}>
+          <div style={{
+            height: '1px', background: '#929C92',
+            width: `${(paso / 3) * 100}%`,
+            transition: 'width 0.3s ease',
+          }} />
         </div>
       </div>
 
-      {/* Contenido */}
-      <div className="flex-1 overflow-y-auto px-5 py-5">
+      {/* ── CONTENIDO ───────────────────────────────────────── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '28px 24px' }}>
 
-        {/* Paso 1 — Clínica */}
+        {/* ── Paso 1: Clínica ── */}
         {paso === 1 && (
-          <div className="space-y-4">
-            <SectionTitle icon={Building2} label="Datos de tu clínica" />
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+              <span style={{ fontSize: '12px', color: '#929C92' }}>⬡</span>
+              <span style={{ fontFamily: FRAUNCES, fontSize: '16px', fontWeight: 400, color: '#F7F5F2' }}>
+                Datos de tu clínica
+              </span>
+            </div>
 
-            <Field label="Nombre de la clínica *">
-              <input
-                value={nombre}
-                onChange={e => handleNombreChange(e.target.value)}
-                placeholder="Clínica Lumière"
-                className={inputCls}
-              />
-            </Field>
-
-            <Field label="Identificador único (URL) *">
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none select-none">
-                  veloura.app/
-                </span>
-                <input
-                  value={slug}
-                  onChange={e => {
-                    setSlug(toSlug(e.target.value))
-                    setSlugManual(true)
-                  }}
-                  placeholder="clinica-lumiere"
-                  className={`${inputCls} pl-[98px]`}
-                />
-              </div>
-              {slug && !slugOk && (
-                <p className="text-red-500 text-[10px] mt-1">
-                  Solo letras minúsculas, números y guiones (mín. 3 caracteres)
-                </p>
-              )}
-              {slug && slugOk && (
-                <p className="text-gray-400 text-[10px] mt-1">
-                  Tus pacientes se registrarán en veloura.app/registro/{slug}
-                </p>
-              )}
-            </Field>
-
-            <Field label="Ciudad">
-              <input
-                value={ciudad}
-                onChange={e => setCiudad(e.target.value)}
-                placeholder="Madrid, Barcelona…"
-                className={inputCls}
-              />
-            </Field>
-          </div>
-        )}
-
-        {/* Paso 2 — Admin */}
-        {paso === 2 && (
-          <div className="space-y-4">
-            <SectionTitle
-              icon={User}
-              label="Cuenta de administrador"
-              subtitle="Serás el administrador principal de la clínica"
+            <label style={labelStyle}>Nombre de la clínica *</label>
+            <input
+              value={nombre}
+              onChange={e => handleNombreChange(e.target.value)}
+              placeholder="Clínica Lumière"
+              style={inputStyle}
+              onFocus={e => { e.target.style.borderColor = 'rgba(201,211,202,0.35)'; e.target.style.background = 'rgba(255,255,255,0.05)' }}
+              onBlur={e =>  { e.target.style.borderColor = 'rgba(255,255,255,0.08)';  e.target.style.background = 'rgba(255,255,255,0.03)' }}
             />
 
-            <Field label="Tu nombre completo *">
+            <label style={labelStyle}>Identificador único (URL) *</label>
+            <div style={{ position: 'relative', marginBottom: '4px' }}>
+              <span style={{
+                position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)',
+                fontFamily: DM_MONO, fontSize: '11px', color: 'rgba(247,245,242,0.2)',
+                pointerEvents: 'none', userSelect: 'none',
+              }}>
+                veloura.app/
+              </span>
               <input
-                value={adminNombre}
-                onChange={e => setAdminNombre(e.target.value)}
-                placeholder="Ana García"
-                autoComplete="name"
-                className={inputCls}
+                value={slug}
+                onChange={e => { setSlug(toSlug(e.target.value)); setSlugManual(true) }}
+                placeholder="clinica-lumiere"
+                style={{ ...inputStyle, paddingLeft: '100px', marginBottom: 0 }}
+                onFocus={e => { e.target.style.borderColor = 'rgba(201,211,202,0.35)'; e.target.style.background = 'rgba(255,255,255,0.05)' }}
+                onBlur={e =>  { e.target.style.borderColor = 'rgba(255,255,255,0.08)';  e.target.style.background = 'rgba(255,255,255,0.03)' }}
               />
-            </Field>
+            </div>
+            {slug && !slugOk && (
+              <p style={{ fontSize: '10px', fontWeight: 300, letterSpacing: '0.04em', color: 'rgba(255,140,140,0.7)', marginBottom: '12px' }}>
+                Solo letras minúsculas, números y guiones (mín. 3 caracteres)
+              </p>
+            )}
+            {slug && slugOk && (
+              <p style={{ fontSize: '10px', fontWeight: 300, letterSpacing: '0.04em', color: 'rgba(201,211,202,0.5)', marginBottom: '12px' }}>
+                Tus pacientes se registrarán en veloura.app/registro/{slug}
+              </p>
+            )}
+            {!(slug && (slugOk || !slugOk)) && <div style={{ marginBottom: '16px' }} />}
 
-            <Field label="Email *">
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="admin@tuclinica.com"
-                autoComplete="email"
-                className={inputCls}
-              />
-            </Field>
-
-            <Field label="Contraseña *">
-              <div className="relative">
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Mínimo 8 caracteres"
-                  autoComplete="new-password"
-                  className={`${inputCls} pr-11`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              {password && password.length < 8 && (
-                <p className="text-amber-600 text-[10px] mt-1">Mínimo 8 caracteres</p>
-              )}
-            </Field>
-
-            <Field label="Confirmar contraseña *">
-              <input
-                type="password"
-                value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                placeholder="Repite tu contraseña"
-                autoComplete="new-password"
-                className={inputCls}
-              />
-              {confirm && confirm !== password && (
-                <p className="text-red-500 text-[10px] mt-1">No coincide</p>
-              )}
-            </Field>
+            <label style={labelStyle}>Ciudad</label>
+            <input
+              value={ciudad}
+              onChange={e => setCiudad(e.target.value)}
+              placeholder="Madrid, Barcelona…"
+              style={inputStyle}
+              onFocus={e => { e.target.style.borderColor = 'rgba(201,211,202,0.35)'; e.target.style.background = 'rgba(255,255,255,0.05)' }}
+              onBlur={e =>  { e.target.style.borderColor = 'rgba(255,255,255,0.08)';  e.target.style.background = 'rgba(255,255,255,0.03)' }}
+            />
           </div>
         )}
 
-        {/* Paso 3 — RGPD */}
-        {paso === 3 && (
-          <div className="space-y-4">
-            <SectionTitle icon={Shield} label="Privacidad y condiciones" />
+        {/* ── Paso 2: Admin ── */}
+        {paso === 2 && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <span style={{ fontSize: '12px', color: '#929C92' }}>○</span>
+              <span style={{ fontFamily: FRAUNCES, fontSize: '16px', fontWeight: 400, color: '#F7F5F2' }}>
+                Cuenta de administrador
+              </span>
+            </div>
+            <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(247,245,242,0.3)', marginBottom: '24px' }}>
+              Serás el administrador principal de la clínica
+            </p>
 
-            <p className="text-gray-500 text-sm leading-relaxed">
+            <label style={labelStyle}>Tu nombre completo *</label>
+            <input
+              value={adminNombre}
+              onChange={e => setAdminNombre(e.target.value)}
+              placeholder="Ana García"
+              autoComplete="name"
+              style={inputStyle}
+              onFocus={e => { e.target.style.borderColor = 'rgba(201,211,202,0.35)'; e.target.style.background = 'rgba(255,255,255,0.05)' }}
+              onBlur={e =>  { e.target.style.borderColor = 'rgba(255,255,255,0.08)';  e.target.style.background = 'rgba(255,255,255,0.03)' }}
+            />
+
+            <label style={labelStyle}>Email *</label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="admin@tuclinica.com"
+              autoComplete="email"
+              style={inputStyle}
+              onFocus={e => { e.target.style.borderColor = 'rgba(201,211,202,0.35)'; e.target.style.background = 'rgba(255,255,255,0.05)' }}
+              onBlur={e =>  { e.target.style.borderColor = 'rgba(255,255,255,0.08)';  e.target.style.background = 'rgba(255,255,255,0.03)' }}
+            />
+
+            <label style={labelStyle}>Contraseña *</label>
+            <div style={{ position: 'relative', marginBottom: '4px' }}>
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Mínimo 8 caracteres"
+                autoComplete="new-password"
+                style={{ ...inputStyle, paddingRight: '44px', marginBottom: 0 }}
+                onFocus={e => { e.target.style.borderColor = 'rgba(201,211,202,0.35)'; e.target.style.background = 'rgba(255,255,255,0.05)' }}
+                onBlur={e =>  { e.target.style.borderColor = 'rgba(255,255,255,0.08)';  e.target.style.background = 'rgba(255,255,255,0.03)' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(v => !v)}
+                style={{
+                  position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'rgba(247,245,242,0.2)', fontSize: '12px', fontWeight: 300, lineHeight: 1, padding: 0,
+                }}
+              >
+                {showPass ? '○' : '●'}
+              </button>
+            </div>
+            {password && password.length < 8 && (
+              <p style={{ fontSize: '10px', fontWeight: 300, letterSpacing: '0.04em', color: 'rgba(255,200,100,0.6)', marginBottom: '12px' }}>
+                Mínimo 8 caracteres
+              </p>
+            )}
+            {!(password && password.length < 8) && <div style={{ marginBottom: '16px' }} />}
+
+            <label style={labelStyle}>Confirmar contraseña *</label>
+            <input
+              type="password"
+              value={confirm}
+              onChange={e => setConfirm(e.target.value)}
+              placeholder="Repite tu contraseña"
+              autoComplete="new-password"
+              style={{ ...inputStyle, marginBottom: '4px' }}
+              onFocus={e => { e.target.style.borderColor = 'rgba(201,211,202,0.35)'; e.target.style.background = 'rgba(255,255,255,0.05)' }}
+              onBlur={e =>  { e.target.style.borderColor = 'rgba(255,255,255,0.08)';  e.target.style.background = 'rgba(255,255,255,0.03)' }}
+            />
+            {confirm && confirm !== password && (
+              <p style={{ fontSize: '10px', fontWeight: 300, letterSpacing: '0.04em', color: 'rgba(255,140,140,0.7)', marginBottom: '8px' }}>
+                No coincide
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ── Paso 3: RGPD ── */}
+        {paso === 3 && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <span style={{ fontSize: '12px', color: '#929C92' }}>◈</span>
+              <span style={{ fontFamily: FRAUNCES, fontSize: '16px', fontWeight: 400, color: '#F7F5F2' }}>
+                Privacidad y condiciones
+              </span>
+            </div>
+
+            <p style={{
+              fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300,
+              color: 'rgba(247,245,242,0.35)', lineHeight: 1.7, marginBottom: '20px',
+            }}>
               Al registrar tu clínica en Veloura aceptas nuestros términos y el tratamiento
               de los datos conforme al RGPD.
             </p>
 
-            <div className="space-y-3 pt-1">
-              <CheckItem
-                checked={rgpd1}
-                onChange={setRgpd1}
-                required
-                label={
-                  <>
-                    He leído y acepto la{' '}
-                    <Link
-                      to="/politica-privacidad"
-                      className="underline font-semibold"
-                      style={{ color: BRAND }}
-                      target="_blank"
-                    >
-                      Política de Privacidad
-                    </Link>{' '}
-                    y los Términos de servicio de Veloura
-                  </>
-                }
-              />
-              <CheckItem
-                checked={rgpd2}
-                onChange={setRgpd2}
-                required
-                label="Acepto el tratamiento de datos clínicos de mis pacientes bajo mi responsabilidad como responsable del tratamiento (RGPD UE 2016/679)"
-              />
+            {/* Checkbox 1 */}
+            <div
+              onClick={() => setRgpd1(v => !v)}
+              role="checkbox"
+              aria-checked={rgpd1}
+              tabIndex={0}
+              onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setRgpd1(v => !v) } }}
+              style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', cursor: 'pointer', marginBottom: '16px', userSelect: 'none' }}
+            >
+              <div style={{
+                width: '18px', height: '18px', borderRadius: '2px', flexShrink: 0, marginTop: '2px',
+                border: rgpd1 ? '1px solid #929C92' : '1px solid rgba(255,255,255,0.15)',
+                background: rgpd1 ? 'rgba(146,156,146,0.15)' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
+              }}>
+                {rgpd1 && <span style={{ fontSize: '11px', color: '#929C92', lineHeight: 1 }}>✓</span>}
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(247,245,242,0.4)', lineHeight: 1.6, margin: 0 }}>
+                  He leído y acepto la{' '}
+                  <Link
+                    to="/politica-privacidad"
+                    target="_blank"
+                    onClick={e => e.stopPropagation()}
+                    style={{ color: '#929C92', textDecoration: 'none' }}
+                  >
+                    Política de Privacidad
+                  </Link>
+                  {' '}y los Términos de servicio de Veloura
+                </p>
+                <span style={{ fontFamily: DM_MONO, fontSize: '9px', color: 'rgba(146,156,146,0.5)', letterSpacing: '0.08em', marginTop: '4px', display: 'block' }}>
+                  OBLIGATORIO
+                </span>
+              </div>
             </div>
 
+            {/* Checkbox 2 */}
             <div
-              className="mt-2 p-4 rounded-2xl"
-              style={{ backgroundColor: BRAND + '15', border: `1px solid ${BRAND}30` }}
+              onClick={() => setRgpd2(v => !v)}
+              role="checkbox"
+              aria-checked={rgpd2}
+              tabIndex={0}
+              onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setRgpd2(v => !v) } }}
+              style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', cursor: 'pointer', marginBottom: '16px', userSelect: 'none' }}
             >
-              <p className="text-gray-600 text-xs leading-relaxed">
-                Empezarás con un <strong>periodo de prueba gratuito</strong>. Podrás gestionar
-                tu plan desde la configuración de la clínica en cualquier momento.
+              <div style={{
+                width: '18px', height: '18px', borderRadius: '2px', flexShrink: 0, marginTop: '2px',
+                border: rgpd2 ? '1px solid #929C92' : '1px solid rgba(255,255,255,0.15)',
+                background: rgpd2 ? 'rgba(146,156,146,0.15)' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.15s',
+              }}>
+                {rgpd2 && <span style={{ fontSize: '11px', color: '#929C92', lineHeight: 1 }}>✓</span>}
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(247,245,242,0.4)', lineHeight: 1.6, margin: 0 }}>
+                  Acepto el tratamiento de datos clínicos de mis pacientes bajo mi responsabilidad
+                  como responsable del tratamiento (RGPD UE 2016/679)
+                </p>
+                <span style={{ fontFamily: DM_MONO, fontSize: '9px', color: 'rgba(146,156,146,0.5)', letterSpacing: '0.08em', marginTop: '4px', display: 'block' }}>
+                  OBLIGATORIO
+                </span>
+              </div>
+            </div>
+
+            {/* Info trial */}
+            <div style={{
+              background: 'rgba(146,156,146,0.06)', border: '1px solid rgba(146,156,146,0.12)',
+              borderRadius: '2px', padding: '14px 16px', marginTop: '16px',
+            }}>
+              <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(247,245,242,0.35)', lineHeight: 1.7, margin: 0 }}>
+                Empezarás con un <strong style={{ fontWeight: 400, color: 'rgba(247,245,242,0.5)' }}>periodo de prueba gratuito</strong>.
+                Podrás gestionar tu plan desde la configuración de la clínica en cualquier momento.
               </p>
             </div>
           </div>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="mt-4 flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200">
-            <AlertCircle size={14} className="text-red-500 flex-shrink-0 mt-0.5" />
-            <p className="text-red-700 text-xs leading-relaxed">{error}</p>
+          <div style={{
+            background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.15)',
+            borderRadius: '2px', padding: '10px 14px', marginTop: '16px',
+            fontSize: '12px', fontWeight: 300, color: 'rgba(255,160,160,0.7)', lineHeight: 1.5,
+          }}>
+            {error}
           </div>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="px-5 pb-6 pt-3 flex-shrink-0 border-t border-gray-100 space-y-2">
+      {/* ── FOOTER ──────────────────────────────────────────── */}
+      <div style={{ flexShrink: 0, padding: '16px 24px 28px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         {paso < 3 ? (
           <button
             onClick={() => { setError(null); setPaso(p => p + 1) }}
             disabled={(paso === 1 && !paso1Ok) || (paso === 2 && !paso2Ok)}
-            className="w-full py-4 rounded-2xl text-white font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-            style={{ backgroundColor: BRAND }}
+            style={{
+              width: '100%', padding: '13px', borderRadius: '2px', border: 'none',
+              fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400,
+              letterSpacing: '0.12em', textTransform: 'uppercase',
+              cursor: canContinue ? 'pointer' : 'not-allowed',
+              background: canContinue ? '#F7F5F2' : 'rgba(255,255,255,0.06)',
+              color: canContinue ? '#161313' : 'rgba(247,245,242,0.2)',
+              transition: 'all 0.15s',
+            }}
           >
-            Siguiente <ChevronRight size={18} />
+            Continuar →
           </button>
         ) : (
           <button
             onClick={handleSubmit}
             disabled={!paso3Ok || enviando}
-            className="w-full py-4 rounded-2xl text-white font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-            style={{ backgroundColor: BRAND }}
+            style={{
+              width: '100%', padding: '13px', borderRadius: '2px', border: 'none',
+              fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400,
+              letterSpacing: '0.12em', textTransform: 'uppercase',
+              cursor: paso3Ok && !enviando ? 'pointer' : 'not-allowed',
+              background: paso3Ok && !enviando ? '#F7F5F2' : 'rgba(255,255,255,0.06)',
+              color: paso3Ok && !enviando ? '#161313' : 'rgba(247,245,242,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              transition: 'all 0.15s',
+            }}
           >
-            {enviando
-              ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              : <><Check size={18} /> Crear mi clínica</>
-            }
+            {enviando ? (
+              <>
+                <span style={{
+                  width: '14px', height: '14px',
+                  border: '2px solid rgba(22,19,19,0.2)',
+                  borderTopColor: '#161313',
+                  borderRadius: '50%',
+                  display: 'inline-block',
+                  animation: 'spin 0.7s linear infinite',
+                }} />
+                Creando…
+              </>
+            ) : 'Crear mi clínica'}
           </button>
         )}
+
         {paso === 1 && (
-          <p className="text-center text-gray-400 text-xs">
+          <p style={{ textAlign: 'center', marginTop: '12px', fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(247,245,242,0.25)' }}>
             ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className="font-semibold" style={{ color: BRAND }}>
+            <Link to="/login" style={{ color: 'rgba(201,211,202,0.5)', textDecoration: 'none' }}>
               Inicia sesión
             </Link>
           </p>
         )}
       </div>
-    </div>
-  )
-}
 
-// ── Helpers UI ──────────────────────────────────────────────────────────────
-function SectionTitle({ icon: Icon, label, subtitle }) {
-  return (
-    <div className="mb-1">
-      <div className="flex items-center gap-2 mb-1">
-        <Icon size={15} style={{ color: BRAND }} />
-        <p className="text-gray-800 font-semibold text-sm">{label}</p>
-      </div>
-      {subtitle && <p className="text-gray-400 text-xs">{subtitle}</p>}
-    </div>
-  )
-}
-
-function Field({ label, children }) {
-  return (
-    <div>
-      <label className="text-gray-600 text-xs font-medium block mb-1">{label}</label>
-      {children}
-    </div>
-  )
-}
-
-function CheckItem({ checked, onChange, label, required }) {
-  return (
-    <div
-      onClick={() => onChange(!checked)}
-      className="flex items-start gap-3 cursor-pointer select-none"
-      role="checkbox"
-      aria-checked={checked}
-      tabIndex={0}
-      onKeyDown={e => {
-        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); onChange(!checked) }
-      }}
-    >
-      <div className="flex-shrink-0 mt-0.5">
-        <div
-          className="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all"
-          style={{
-            borderColor:     checked ? BRAND : '#d1d5db',
-            backgroundColor: checked ? BRAND : '#fff',
-          }}
-        >
-          {checked && <Check size={12} className="text-white" />}
-        </div>
-      </div>
-      <div className="flex-1">
-        <p className="text-gray-700 text-xs leading-relaxed">{label}</p>
-        <span
-          className="text-[10px] font-semibold mt-0.5 inline-block"
-          style={{ color: required ? BRAND : '#9ca3af' }}
-        >
-          {required ? 'Obligatorio' : 'Opcional'}
-        </span>
-      </div>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        input::placeholder { color: rgba(247,245,242,0.18) !important; }
+      `}</style>
     </div>
   )
 }
