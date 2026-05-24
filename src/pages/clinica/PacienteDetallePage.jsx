@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useClinic } from '../../contexts/ClinicContext'
+
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 import { useAuth } from '../../contexts/AuthContext'
 import FeatureGate from '../../components/FeatureGate'
 import StaffLayout from './StaffLayout'
@@ -44,7 +46,7 @@ export default function PacienteDetallePage() {
     if (!texto || enviandoMsg) return
     setEnviandoMsg(true)
     try {
-      if (supabase && clinica?.id && !clinica._isMock && paciente?.id) {
+      if (supabase && isValidUUID(clinica?.id) && paciente?.id) {
         const { error } = await supabase.from('mensajes').insert({
           clinica_id:      clinica.id,
           remitente_id:    user.id,

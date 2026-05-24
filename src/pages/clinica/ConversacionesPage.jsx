@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 import { useClinic } from '../../contexts/ClinicContext'
 import { supabase } from '../../lib/supabase'
 import StaffLayout from './StaffLayout'
@@ -208,7 +210,7 @@ export default function ConversacionesPage() {
     setEnviando(true)
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
     try {
-      if (!supabase) {
+      if (!supabase || !isValidUUID(clinica?.id)) {
         const nuevo = {
           id: `local-${Date.now()}`,
           remitente_id: user.id, destinatario_id: seleccionado.paciente_id,
