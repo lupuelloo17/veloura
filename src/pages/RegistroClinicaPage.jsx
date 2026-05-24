@@ -109,7 +109,7 @@ export default function RegistroClinicaPage() {
         .from('clinicas')
         .insert({
           slug, nombre: nombre.trim(), ciudad: ciudad.trim() || null,
-          plan: 'trial', color_primario: BRAND, activo: true,
+          plan: 'trial', color_primario: BRAND,
         })
         .select('id').single()
       if (clinErr) throw new Error('Error creando la clínica: ' + clinErr.message)
