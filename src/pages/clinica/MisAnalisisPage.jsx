@@ -108,7 +108,7 @@ export default function MisAnalisisPage() {
               return (
                 <div
                   key={a.id}
-                  onClick={() => alert(`Informe completo del análisis del ${fmtFecha(a.fecha)}\n(Próximamente)`)}
+                  onClick={() => navigate(`/clinica/${slug}/dermoscopia`)}
                   style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '16px 20px', cursor: 'pointer' }}
                 >
                   {/* Fila superior */}
