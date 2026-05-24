@@ -1,14 +1,17 @@
 import { useState, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Plus, Clock } from 'lucide-react'
 import { useClinic } from '../../contexts/ClinicContext'
 import { useCitas, ESTADO_STYLE } from '../../contexts/CitasContext'
 import StaffLayout from './StaffLayout'
 import NuevaCitaDrawer from '../../components/NuevaCitaDrawer'
 import CitaDetallePanel from '../../components/CitaDetallePanel'
 
+const FRAUNCES = "'Fraunces', Georgia, serif"
+const DM_SANS  = "'DM Sans', system-ui, sans-serif"
+const DM_MONO  = "'DM Mono', monospace"
+
 // ── Constantes de la rejilla ───────────────────────────────────────────────
-const SLOT_H  = 52   // px por 30 min
+const SLOT_H  = 52
 const START_H = 9
 const END_H   = 20
 
@@ -17,7 +20,7 @@ const DIAS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do']
 
 function getWeekStart(date) {
   const d   = new Date(date)
-  const day = d.getDay() || 7      // 1=Lu … 7=Do
+  const day = d.getDay() || 7
   d.setDate(d.getDate() - day + 1)
   d.setHours(0, 0, 0, 0)
   return d
@@ -44,19 +47,26 @@ function durationToHeight(minutes) {
   return Math.max((minutes / 30) * SLOT_H, SLOT_H)
 }
 
-// Fecha "hoy" del demo
 const DEMO_TODAY = new Date('2026-05-15')
+
+// ── Colores de estado editorial ────────────────────────────────────────────
+const CITA_STYLE = {
+  pendiente:  { bg: 'rgba(201,164,106,0.12)', border: 'rgba(201,164,106,0.3)', text: '#8B6A3A' },
+  confirmada: { bg: 'rgba(146,156,146,0.12)', border: 'rgba(146,156,146,0.3)', text: '#5A6B5B' },
+  completada: { bg: 'rgba(22,19,19,0.05)',    border: 'rgba(22,19,19,0.12)',   text: 'rgba(22,19,19,0.5)' },
+  cancelada:  { bg: 'rgba(163,147,132,0.08)', border: 'rgba(163,147,132,0.2)', text: '#7A6B5E' },
+  no_asistio: { bg: 'rgba(22,19,19,0.03)',    border: 'rgba(22,19,19,0.08)',   text: 'rgba(22,19,19,0.3)' },
+}
 
 // ── Componente ─────────────────────────────────────────────────────────────
 export default function AgendaPage() {
-  const { slug }   = useParams()
+  const { slug }    = useParams()
   const { clinica } = useClinic()
-  const { citas }  = useCitas()
-  const brand      = clinica?.color_primario ?? '#C8A882'
+  const { citas }   = useCitas()
 
-  const [weekStart, setWeekStart]   = useState(() => getWeekStart(DEMO_TODAY))
-  const [selectedDay, setSelectedDay] = useState(() => new Date(DEMO_TODAY))
-  const [showNueva, setShowNueva]   = useState(false)
+  const [weekStart,    setWeekStart]    = useState(() => getWeekStart(DEMO_TODAY))
+  const [selectedDay,  setSelectedDay]  = useState(() => new Date(DEMO_TODAY))
+  const [showDrawer,   setShowDrawer]   = useState(false)
   const [selectedCita, setSelectedCita] = useState(null)
 
   const weekDays = useMemo(
@@ -75,220 +85,248 @@ export default function AgendaPage() {
     [citas, selectedDay]
   )
 
-  // Time labels (one per hour)
   const timeLabels = useMemo(() => {
     const labels = []
     for (let h = START_H; h <= END_H; h++) {
-      labels.push({ h, label: `${String(h).padStart(2,'0')}:00` })
+      labels.push({ h, label: `${String(h).padStart(2, '0')}:00` })
     }
     return labels
   }, [])
 
-  const totalH = (END_H - START_H) * SLOT_H * 2  // total height of the grid
+  const totalH = (END_H - START_H) * SLOT_H * 2
 
-  const monthLabel = selectedDay.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })
+  const weekRangeLabel = (() => {
+    const start = weekDays[0]
+    const end   = weekDays[6]
+    const fmt   = d => d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+    return `${fmt(start)} — ${fmt(end)} ${end.getFullYear()}`
+  })()
 
   return (
     <StaffLayout>
-      <div className="flex flex-col h-full animate-fade-in">
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
-        {/* ── Header ── */}
-        <div className="bg-white px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-gray-900 font-bold text-base capitalize">{monthLabel}</h1>
-            <button
-              onClick={() => setShowNueva(true)}
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-sm active:scale-95 transition-transform"
-              style={{ backgroundColor: brand }}
-              aria-label="Nueva cita"
-            >
-              <Plus size={18} />
-            </button>
+        {/* ── HEADER ──────────────────────────────────────── */}
+        <div style={{ padding: '24px 40px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <div>
+            <p style={{ fontFamily: DM_MONO, fontSize: '10px', color: 'rgba(22,19,19,0.3)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: 0 }}>
+              Agenda semanal
+            </p>
+            <h1 style={{ fontFamily: FRAUNCES, fontSize: '28px', fontWeight: 300, color: '#161313', margin: '4px 0 0' }}>
+              Agenda
+            </h1>
           </div>
-
-          {/* Semana: nav + tabs de días */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => {
-                const prev = addDays(weekStart, -7)
-                setWeekStart(prev)
-                setSelectedDay(prev)
-              }}
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 flex-shrink-0"
-            >
-              <ChevronLeft size={14} className="text-gray-500" />
-            </button>
-
-            <div className="flex flex-1 justify-between">
-              {weekDays.map((day, i) => {
-                const isToday    = isSameDay(day, DEMO_TODAY)
-                const isSelected = isSameDay(day, selectedDay)
-                const hasCitas   = citas.some(c =>
-                  isSameDay(c.fecha instanceof Date ? c.fecha : new Date(c.fecha), day)
-                )
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedDay(day)}
-                    className="flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-xl transition-all"
-                    style={isSelected ? { backgroundColor: brand } : {}}
-                  >
-                    <span
-                      className="text-[9px] font-semibold"
-                      style={{ color: isSelected ? '#fff' : '#9ca3af' }}
-                    >
-                      {DIAS[i]}
-                    </span>
-                    <span
-                      className="text-sm font-bold leading-none"
-                      style={{ color: isSelected ? '#fff' : isToday ? brand : '#1f2937' }}
-                    >
-                      {day.getDate()}
-                    </span>
-                    <div
-                      className="w-1 h-1 rounded-full transition-all"
-                      style={{
-                        backgroundColor: hasCitas
-                          ? (isSelected ? 'rgba(255,255,255,0.6)' : brand)
-                          : 'transparent'
-                      }}
-                    />
-                  </button>
-                )
-              })}
-            </div>
-
-            <button
-              onClick={() => {
-                const next = addDays(weekStart, 7)
-                setWeekStart(next)
-                setSelectedDay(next)
-              }}
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 flex-shrink-0"
-            >
-              <ChevronRight size={14} className="text-gray-500" />
-            </button>
-          </div>
+          <button
+            onClick={() => setShowDrawer(true)}
+            style={{
+              background: '#161313', color: '#F7F5F2', border: 'none',
+              borderRadius: '2px', padding: '10px 18px',
+              fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400,
+              letterSpacing: '0.12em', textTransform: 'uppercase',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+            }}
+          >
+            <i className="ti ti-plus" style={{ fontSize: '14px' }} />
+            Nueva cita
+          </button>
         </div>
 
-        {/* ── Sub-header: día seleccionado ── */}
-        <div className="bg-gray-50 px-5 py-2 border-b border-gray-100 flex-shrink-0">
-          <p className="text-xs text-gray-500 capitalize">
-            {selectedDay.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-            {' · '}
-            <span className="font-bold text-gray-800">{citasDelDia.length} citas</span>
+        {/* ── NAVEGACIÓN SEMANAL ──────────────────────────── */}
+        <div style={{ padding: '20px 40px 0', display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+
+          {/* Botón anterior */}
+          <button
+            onClick={() => { const p = addDays(weekStart, -7); setWeekStart(p); setSelectedDay(p) }}
+            style={{
+              width: '32px', height: '32px', borderRadius: '2px',
+              border: '1px solid rgba(22,19,19,0.1)', background: 'transparent',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'rgba(22,19,19,0.4)', fontSize: '16px', flexShrink: 0,
+            }}
+          >
+            <i className="ti ti-chevron-left" />
+          </button>
+
+          {/* Rango */}
+          <span style={{ flex: 1, textAlign: 'center', fontFamily: DM_MONO, fontSize: '11px', color: 'rgba(22,19,19,0.4)', letterSpacing: '0.06em' }}>
+            {weekRangeLabel}
+          </span>
+
+          {/* Tabs de días */}
+          <div style={{ display: 'flex', gap: '4px' }}>
+            {weekDays.map((day, i) => {
+              const isSelected = isSameDay(day, selectedDay)
+              const isToday    = isSameDay(day, DEMO_TODAY)
+              const citasCount = citas.filter(c =>
+                isSameDay(c.fecha instanceof Date ? c.fecha : new Date(c.fecha), day)
+              ).length
+
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSelectedDay(day)}
+                  style={{
+                    padding: '8px 12px', borderRadius: '2px', minWidth: '52px',
+                    textAlign: 'center', cursor: 'pointer',
+                    background: isSelected ? '#161313' : 'transparent',
+                    border: `1px solid ${isSelected ? '#161313' : isToday ? '#929C92' : 'rgba(22,19,19,0.08)'}`,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <div style={{
+                    fontFamily: DM_MONO, fontSize: '9px', textTransform: 'uppercase',
+                    letterSpacing: '0.1em', marginBottom: '4px',
+                    color: isSelected ? '#C9D3CA' : 'rgba(22,19,19,0.35)',
+                  }}>
+                    {DIAS[i]}
+                  </div>
+                  <div style={{
+                    fontFamily: DM_SANS, fontSize: '15px', fontWeight: 400,
+                    color: isSelected ? '#F7F5F2' : '#161313',
+                  }}>
+                    {day.getDate()}
+                  </div>
+                  {citasCount > 0 && (
+                    <div style={{
+                      width: '16px', height: '16px', borderRadius: '50%',
+                      fontSize: '9px', fontFamily: DM_MONO,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      margin: '2px auto 0',
+                      background: isSelected ? '#929C92' : 'rgba(22,19,19,0.08)',
+                      color: isSelected ? '#161313' : 'rgba(22,19,19,0.4)',
+                    }}>
+                      {citasCount}
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Botón siguiente */}
+          <button
+            onClick={() => { const n = addDays(weekStart, 7); setWeekStart(n); setSelectedDay(n) }}
+            style={{
+              width: '32px', height: '32px', borderRadius: '2px',
+              border: '1px solid rgba(22,19,19,0.1)', background: 'transparent',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'rgba(22,19,19,0.4)', fontSize: '16px', flexShrink: 0,
+            }}
+          >
+            <i className="ti ti-chevron-right" />
+          </button>
+        </div>
+
+        {/* ── SUB-HEADER ──────────────────────────────────── */}
+        <div style={{ padding: '16px 40px', borderBottom: '1px solid rgba(22,19,19,0.06)', flexShrink: 0 }}>
+          <p style={{ fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: 'rgba(22,19,19,0.4)', margin: 0, textTransform: 'capitalize' }}>
+            {selectedDay.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
 
-        {/* ── Rejilla de tiempo ── */}
-        <div className="flex-1 overflow-y-auto bg-white">
-          {citasDelDia.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center px-8">
+        {/* ── REJILLA DE TIEMPO ───────────────────────────── */}
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+
+          {/* Columna de horas */}
+          <div style={{ width: '64px', flexShrink: 0, borderRight: '1px solid rgba(22,19,19,0.06)', position: 'relative', paddingTop: '8px' }}>
+            {timeLabels.map(({ h, label }) => (
               <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3"
-                style={{ backgroundColor: brand + '18' }}
+                key={h}
+                style={{
+                  position: 'absolute', left: 0, right: 0,
+                  top: (h - START_H) * SLOT_H * 2,
+                  height: SLOT_H * 2,
+                  display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+                  paddingRight: '12px', paddingTop: '4px',
+                }}
               >
-                <Clock size={22} style={{ color: brand }} />
+                <span style={{ fontFamily: DM_MONO, fontSize: '10px', color: 'rgba(22,19,19,0.25)', letterSpacing: '0.06em' }}>
+                  {label}
+                </span>
               </div>
-              <p className="text-gray-700 font-semibold text-sm">Sin citas este día</p>
-              <p className="text-gray-400 text-xs mt-1">
-                Usa el botón <strong>+</strong> para crear una nueva cita
-              </p>
-            </div>
-          ) : (
-            <div className="flex" style={{ minHeight: totalH }}>
-              {/* Columna de horas */}
-              <div className="w-11 flex-shrink-0 relative border-r border-gray-100">
-                {timeLabels.map(({ h, label }) => (
-                  <div
-                    key={h}
-                    className="absolute left-0 right-0 pr-1.5 flex justify-end items-start"
-                    style={{ top: (h - START_H) * SLOT_H * 2, height: SLOT_H * 2 }}
-                  >
-                    <span className="text-[9px] text-gray-300 font-medium mt-0.5 leading-none">
-                      {label}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            ))}
+          </div>
 
-              {/* Columna principal con citas */}
-              <div className="flex-1 relative">
-                {/* Líneas de cuadrícula */}
-                {timeLabels.map(({ h }) => (
-                  <div
-                    key={h}
-                    className="absolute left-0 right-0 border-b border-gray-50"
-                    style={{ top: (h - START_H) * SLOT_H * 2, height: SLOT_H * 2 }}
-                  />
-                ))}
-                {/* Líneas de medias horas (más tenues) */}
-                {timeLabels.map(({ h }) => h < END_H && (
-                  <div
-                    key={`h${h}`}
-                    className="absolute left-0 right-0 border-b border-dashed"
-                    style={{
+          {/* Área de citas */}
+          <div style={{ flex: 1, position: 'relative', overflowY: 'auto' }}>
+            <div style={{ position: 'relative', height: totalH + 'px' }}>
+
+              {/* Líneas de cuadrícula */}
+              {timeLabels.map(({ h }) => (
+                <div key={`full-${h}`}>
+                  <div style={{
+                    position: 'absolute', left: 0, right: 0,
+                    top: (h - START_H) * SLOT_H * 2,
+                    height: SLOT_H + 'px',
+                    borderTop: '1px solid rgba(22,19,19,0.07)',
+                  }} />
+                  {h < END_H && (
+                    <div style={{
+                      position: 'absolute', left: 0, right: 0,
                       top: (h - START_H) * SLOT_H * 2 + SLOT_H,
-                      borderColor: '#f0f0f0',
-                    }}
-                  />
-                ))}
+                      height: SLOT_H + 'px',
+                      borderTop: '1px solid rgba(22,19,19,0.03)',
+                    }} />
+                  )}
+                </div>
+              ))}
 
-                {/* Bloques de cita */}
-                {citasDelDia.map(cita => {
-                  const s      = ESTADO_STYLE[cita.estado]
-                  const top    = timeToTop(cita.fecha)
-                  const height = durationToHeight(cita.duracion_minutos)
-                  const fecha  = cita.fecha instanceof Date ? cita.fecha : new Date(cita.fecha)
-                  return (
-                    <button
-                      key={cita.id}
-                      onClick={() => setSelectedCita(cita)}
-                      className="absolute left-1.5 right-1.5 rounded-xl border text-left transition-all active:scale-95 overflow-hidden"
-                      style={{
-                        top: top + 2,
-                        height: height - 4,
-                        backgroundColor: s.bg,
-                        borderColor: s.border,
-                      }}
-                    >
-                      <div className="px-2 py-1.5">
-                        <p
-                          className="text-xs font-bold truncate leading-snug"
-                          style={{ color: s.text }}
-                        >
-                          {String(fecha.getHours()).padStart(2,'0')}:{String(fecha.getMinutes()).padStart(2,'0')} · {cita.paciente_nombre.split(' ')[0]}
-                        </p>
-                        {height >= SLOT_H * 1.5 && (
-                          <p
-                            className="text-[10px] truncate leading-snug opacity-75"
-                            style={{ color: s.text }}
-                          >
-                            {cita.tratamiento}
-                          </p>
-                        )}
-                        {height >= SLOT_H * 2.5 && (
-                          <p
-                            className="text-[10px] opacity-50 leading-snug mt-0.5"
-                            style={{ color: s.text }}
-                          >
-                            {cita.duracion_minutos} min · {s.label}
-                          </p>
-                        )}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
+              {/* Estado vacío */}
+              {citasDelDia.length === 0 && (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <i className="ti ti-calendar-off" style={{ fontSize: '28px', color: 'rgba(22,19,19,0.12)' }} />
+                  <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 300, color: 'rgba(22,19,19,0.3)', margin: 0 }}>
+                    Sin citas este día
+                  </p>
+                </div>
+              )}
+
+              {/* Bloques de cita */}
+              {citasDelDia.map(cita => {
+                const s      = CITA_STYLE[cita.estado] ?? CITA_STYLE.pendiente
+                const top    = timeToTop(cita.fecha)
+                const height = Math.max(durationToHeight(cita.duracion_minutos), 36)
+                const fecha  = cita.fecha instanceof Date ? cita.fecha : new Date(cita.fecha)
+                const horaStr = `${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`
+
+                return (
+                  <div
+                    key={cita.id}
+                    onClick={() => setSelectedCita(cita)}
+                    style={{
+                      position: 'absolute', left: '8px', right: '8px',
+                      top: top + 'px', height: height + 'px',
+                      borderRadius: '2px', padding: '8px 10px',
+                      cursor: 'pointer', overflow: 'hidden',
+                      border: `1px solid ${s.border}`,
+                      background: s.bg,
+                    }}
+                  >
+                    <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 400, color: s.text, lineHeight: 1.3, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {cita.paciente_nombre}
+                    </p>
+                    {height > 52 && (
+                      <p style={{ fontFamily: DM_SANS, fontSize: '11px', fontWeight: 300, color: s.text, opacity: 0.7, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {cita.tratamiento}
+                      </p>
+                    )}
+                    {height > 52 && (
+                      <p style={{ fontFamily: DM_MONO, fontSize: '10px', color: s.text, opacity: 0.5, margin: '4px 0 0' }}>
+                        {horaStr}
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Modales */}
-      {showNueva && (
+      {/* ── DRAWERS / PANELS ────────────────────────────── */}
+      {showDrawer && (
         <NuevaCitaDrawer
-          onClose={() => setShowNueva(false)}
+          onClose={() => setShowDrawer(false)}
           defaultDate={selectedDay}
         />
       )}
