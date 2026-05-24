@@ -27,7 +27,7 @@ const MOCK_MEDICOS = [
 ]
 
 const MOCK_TRATAMIENTOS = [
-  { id: 't1', nombre: 'Mesoterapia facial',    descripcion: 'Revitalización con vitaminas',      duracion_minutos: 45, precio: 120, color: '#C8A882', activo: true  },
+  { id: 't1', nombre: 'Mesoterapia facial',    descripcion: 'Revitalización con vitaminas',      duracion_minutos: 45, precio: 120, color: '#929C92', activo: true  },
   { id: 't2', nombre: 'Botox',                 descripcion: 'Tratamiento con toxina botulínica', duracion_minutos: 30, precio: 250, color: '#A89BC8', activo: true  },
   { id: 't3', nombre: 'Peeling químico',       descripcion: 'Renovación celular profunda',       duracion_minutos: 60, precio: 180, color: '#C8B8A2', activo: false },
 ]
@@ -121,7 +121,7 @@ function SecIdentidad({ clinica, onSave }) {
     web:       clinica?.web       ?? '',
     horario:   clinica?.horario   ?? '',
   })
-  const [color,       setColor]       = useState(clinica?.color_primario ?? '#C8A882')
+  const [color,       setColor]       = useState(clinica?.color_primario ?? '#929C92')
   const [logoPreview, setLogoPreview] = useState(clinica?.logo_url ?? null)
   const [logoFile,    setLogoFile]    = useState(null)
   const [dirty,       setDirty]       = useState(false)
@@ -141,7 +141,7 @@ function SecIdentidad({ clinica, onSave }) {
       web:       clinica.web       ?? '',
       horario:   clinica.horario   ?? '',
     })
-    setColor(clinica.color_primario ?? '#C8A882')
+    setColor(clinica.color_primario ?? '#929C92')
     setLogoPreview(clinica.logo_url ?? null)
     setDirty(false)
   }, [clinica?.id])
@@ -458,7 +458,7 @@ function SecEquipo({ clinica, showToast }) {
 }
 
 // ── SECCIÓN 3: CATÁLOGO ──────────────────────────────────────────
-const EMPTY_TRAT = { nombre: '', descripcion: '', duracion_minutos: 60, precio: '', color: '#C8A882', activo: true }
+const EMPTY_TRAT = { nombre: '', descripcion: '', duracion_minutos: 60, precio: '', color: '#929C92', activo: true }
 
 function SecCatalogo({ clinica, showToast }) {
   const [lista,   setLista]   = useState([])
@@ -517,7 +517,7 @@ function SecCatalogo({ clinica, showToast }) {
   }
 
   function openAdd()   { setForm(EMPTY_TRAT); setModal({ mode: 'add' }) }
-  function openEdit(t) { setForm({ nombre: t.nombre, descripcion: t.descripcion ?? '', duracion_minutos: t.duracion_minutos, precio: t.precio ?? '', color: t.color ?? '#C8A882', activo: t.activo }); setModal({ mode: 'edit', id: t.id }) }
+  function openEdit(t) { setForm({ nombre: t.nombre, descripcion: t.descripcion ?? '', duracion_minutos: t.duracion_minutos, precio: t.precio ?? '', color: t.color ?? '#929C92', activo: t.activo }); setModal({ mode: 'edit', id: t.id }) }
 
   return (
     <>
@@ -535,7 +535,7 @@ function SecCatalogo({ clinica, showToast }) {
 
         {lista.map(t => (
           <div key={t.id} style={{ padding: '16px 24px', borderBottom: '1px solid rgba(22,19,19,0.05)', display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: t.color ?? '#C8A882', flexShrink: 0 }} />
+            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: t.color ?? '#929C92', flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 400, color: '#161313', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.nombre}</p>
               <p style={{ fontFamily: DM_MONO, fontSize: '11px', color: 'rgba(22,19,19,0.4)', margin: '2px 0 0' }}>{t.duracion_minutos}min · {t.precio ? formatEUR(t.precio) : 'Sin precio'}</p>

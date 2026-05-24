@@ -1,31 +1,32 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Phone, Mail, AlertCircle, BellOff, MessageCircle, Send, X } from 'lucide-react'
 import { useClinic } from '../../contexts/ClinicContext'
 import { useAuth } from '../../contexts/AuthContext'
 import FeatureGate from '../../components/FeatureGate'
-import ClinicLayout from './ClinicLayout'
+import StaffLayout from './StaffLayout'
 import PACIENTES, { SESIONES_DB, ANALISIS_DB } from '../../data/pacientes'
 import { supabase } from '../../lib/supabase'
 import NuevaSesionDrawer from '../../components/NuevaSesionDrawer'
 import { formatFecha } from '../../utils/fecha'
 import EvolucionPage from './EvolucionPage'
 
+const FRAUNCES = "'Fraunces', Georgia, serif"
+const DM_SANS  = "'DM Sans', system-ui, sans-serif"
+const DM_MONO  = "'DM Mono', monospace"
+
 const RIESGO_STYLE = {
-  bajo:     { bg: '#dcfce7', text: '#15803d' },
-  moderado: { bg: '#fef9c3', text: '#a16207' },
-  alto:     { bg: '#fee2e2', text: '#b91c1c' },
+  bajo:     { color: '#929C92', bg: 'rgba(146,156,146,0.10)', border: 'rgba(146,156,146,0.2)', label: 'BAJO'     },
+  moderado: { color: '#A39384', bg: 'rgba(163,147,132,0.10)', border: 'rgba(163,147,132,0.2)', label: 'MODERADO' },
+  alto:     { color: '#8B3A3A', bg: 'rgba(139,58,58,0.08)',   border: 'rgba(139,58,58,0.2)',   label: 'ALTO'     },
 }
 
 const TABS = ['Información', 'Sesiones', 'Análisis', 'Evolución']
 
 export default function PacienteDetallePage() {
   const navigate     = useNavigate()
-  // ── FIX 1: leer `id` de la URL ──────────────────────────────────────────
   const { slug, id } = useParams()
   const { clinica }  = useClinic()
   const { user }     = useAuth()
-  const brand        = clinica?.color_primario ?? '#C8A882'
 
   const [tab,      setTab]      = useState(0)
   const [paciente, setPaciente] = useState(null)
@@ -33,10 +34,10 @@ export default function PacienteDetallePage() {
   const [analisis, setAnalisis] = useState([])
   const [cargando, setCargando] = useState(true)
   const [nuevaSesionAbierta, setNuevaSesionAbierta] = useState(false)
-  const [msgDrawer,    setMsgDrawer]    = useState(false)
-  const [msgTexto,     setMsgTexto]     = useState('')
-  const [enviandoMsg,  setEnviandoMsg]  = useState(false)
-  const [msgEnviado,   setMsgEnviado]   = useState(false)
+  const [msgDrawer,   setMsgDrawer]   = useState(false)
+  const [msgTexto,    setMsgTexto]    = useState('')
+  const [enviandoMsg, setEnviandoMsg] = useState(false)
+  const [msgEnviado,  setMsgEnviado]  = useState(false)
 
   async function handleEnviarMensaje() {
     const texto = msgTexto.trim()
@@ -126,324 +127,310 @@ export default function PacienteDetallePage() {
 
   if (cargando && !paciente) {
     return (
-      <ClinicLayout>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-gray-400 text-sm">Cargando…</p>
+      <StaffLayout>
+        <div style={{ padding: '32px 40px', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px' }}>
+          <p style={{ fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', margin: 0 }}>Cargando…</p>
         </div>
-      </ClinicLayout>
+      </StaffLayout>
     )
   }
 
-  // ── FIX 3: pantalla de error si el id no existe ──────────────────────────
   if (!paciente) {
     return (
-      <ClinicLayout>
-        <div className="flex flex-col items-center justify-center h-64 px-5 text-center">
-          <AlertCircle size={40} className="text-gray-300 mb-3" />
-          <p className="text-gray-500 font-semibold text-sm">Paciente no encontrado</p>
-          <p className="text-gray-400 text-xs mt-1 mb-4">ID: {id}</p>
+      <StaffLayout>
+        <div style={{ padding: '32px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '200px', textAlign: 'center' }}>
+          <i className="ti ti-alert-circle" style={{ fontSize: '32px', color: 'rgba(22,19,19,0.15)', display: 'block', marginBottom: '12px' }} />
+          <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 400, color: '#161313', margin: '0 0 4px' }}>Paciente no encontrado</p>
+          <p style={{ fontFamily: DM_MONO, fontSize: '10px', color: 'rgba(22,19,19,0.3)', margin: '0 0 16px' }}>ID: {id}</p>
           <button
             onClick={() => navigate(`/clinica/${slug}/pacientes`)}
-            className="text-sm font-semibold underline"
-            style={{ color: brand }}
+            style={{ background: 'none', border: 'none', fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: '#161313', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
           >
             Volver a la lista
           </button>
         </div>
-      </ClinicLayout>
+      </StaffLayout>
     )
   }
 
   const alergiasDestacadas = paciente.alergias &&
     !paciente.alergias.toLowerCase().includes('ninguna')
+  const iniciales = `${paciente.nombre?.[0] ?? ''}${paciente.apellido?.[0] ?? ''}`
 
   return (
-    <ClinicLayout>
-      <div className="animate-fade-in">
+    <StaffLayout>
+      <div style={{ padding: '32px 40px', minHeight: '100%' }}>
 
-        {/* Header */}
-        <div className="bg-white px-5 pt-7 pb-4 border-b border-gray-100">
-          <div className="flex items-center gap-3 mb-4">
+        {/* ── HEADER ─────────────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
+
+          {/* Izquierda */}
+          <div>
             <button
-              onClick={() => navigate(`/clinica/${slug}/pacientes`)}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-600"
+              onClick={() => navigate(-1)}
+              style={{ display: 'block', background: 'none', border: 'none', fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: 'rgba(22,19,19,0.4)', cursor: 'pointer', marginBottom: '12px', padding: 0 }}
             >
-              <ArrowLeft size={18} />
+              ← Pacientes
             </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-gray-900 font-bold text-base leading-tight truncate">
-                {paciente.nombre} {paciente.apellido}
-              </h1>
-              <p className="text-gray-400 text-xs">
-                {paciente.edad ? `${paciente.edad} años · ` : ''}{paciente.medico ?? 'Dra. García'}
-              </p>
-            </div>
-            {/* Botón Mensaje */}
-            <button
-              onClick={() => setMsgDrawer(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white flex-shrink-0 transition-all active:scale-95"
-              style={{ backgroundColor: brand }}
-            >
-              <MessageCircle size={13} /> Mensaje
-            </button>
-            {/* Marketing badge */}
-            {!paciente.marketing_aceptado && (
-              <div
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold flex-shrink-0"
-                style={{ backgroundColor: '#f3f4f6', color: '#6b7280' }}
-                title="Sin consentimiento de marketing"
-              >
-                <BellOff size={11} /> Sin marketing
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(22,19,19,0.06)', border: '1px solid rgba(22,19,19,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ fontFamily: FRAUNCES, fontSize: '20px', fontWeight: 300, color: 'rgba(22,19,19,0.4)' }}>{iniciales}</span>
               </div>
-            )}
+              <div>
+                <h1 style={{ fontFamily: FRAUNCES, fontSize: '28px', fontWeight: 300, color: '#161313', letterSpacing: '-0.02em', margin: 0 }}>
+                  {paciente.nombre} {paciente.apellido}
+                </h1>
+                <p style={{ fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: 'rgba(22,19,19,0.4)', marginTop: '4px', marginBottom: 0 }}>
+                  {paciente.edad ? `${paciente.edad} años · ` : ''}{paciente.medico ?? 'Dra. García'}
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Avatar + quick stats */}
-          <div className="flex items-center gap-4">
-            {paciente.foto_perfil
-              ? <img src={paciente.foto_perfil} alt={paciente.nombre} className="w-16 h-16 rounded-2xl object-cover flex-shrink-0" />
-              : (
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold flex-shrink-0"
-                  style={{ backgroundColor: brand }}
-                >
-                  {paciente.nombre[0]}{paciente.apellido?.[0] ?? ''}
-                </div>
-              )
-            }
-            <div className="flex gap-4">
-              {[
-                { label: 'Visitas',   value: paciente.total_visitas },
-                { label: 'Análisis',  value: analisis.length },
-                { label: 'Tipo piel', value: paciente.tipo_piel ?? '—' },
-              ].map(s => (
-                <div key={s.label} className="text-center">
-                  <p className="text-gray-900 font-bold text-base">{s.value}</p>
-                  <p className="text-gray-400 text-[10px]">{s.label}</p>
-                </div>
-              ))}
-            </div>
+          {/* Derecha — KPIs + Mensaje */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+            {[
+              { label: 'VISITAS',   value: paciente.total_visitas ?? 0 },
+              { label: 'ANÁLISIS',  value: analisis.length },
+              { label: 'TIPO PIEL', value: paciente.tipo_piel ?? '—' },
+            ].map(kpi => (
+              <div key={kpi.label} style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '12px 20px', textAlign: 'center' }}>
+                <p style={{ fontFamily: FRAUNCES, fontSize: '24px', fontWeight: 300, color: '#161313', margin: 0 }}>{kpi.value}</p>
+                <p style={{ fontFamily: DM_MONO, fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(22,19,19,0.3)', marginTop: '4px', marginBottom: 0 }}>{kpi.label}</p>
+              </div>
+            ))}
+            <button
+              onClick={() => setMsgDrawer(true)}
+              style={{ alignSelf: 'center', background: '#161313', color: '#F7F5F2', border: 'none', borderRadius: '2px', padding: '10px 18px', fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <i className="ti ti-message" style={{ fontSize: '14px' }} />
+              Mensaje
+            </button>
           </div>
         </div>
 
-        {/* Tab bar */}
-        <div className="bg-white border-b border-gray-100 flex">
+        {/* ── TABS ───────────────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(22,19,19,0.08)', marginBottom: '28px' }}>
           {TABS.map((t, i) => (
             <button
               key={t}
               onClick={() => setTab(i)}
-              className="flex-1 py-3 text-xs font-semibold border-b-2 transition-colors"
-              style={tab === i
-                ? { borderBottomColor: brand, color: brand }
-                : { borderBottomColor: 'transparent', color: '#9ca3af' }
-              }
+              style={{
+                padding: '10px 20px',
+                fontFamily: DM_SANS,
+                fontSize: '13px',
+                fontWeight: tab === i ? 400 : 300,
+                color: tab === i ? '#161313' : 'rgba(22,19,19,0.35)',
+                background: 'none',
+                border: 'none',
+                borderBottom: tab === i ? '2px solid #161313' : '2px solid transparent',
+                cursor: 'pointer',
+                marginBottom: '-1px',
+              }}
             >
               {t}
             </button>
           ))}
         </div>
 
-        <div className="bg-gray-50 px-5 py-4 space-y-3">
+        {/* ── TAB 0: INFORMACIÓN ─────────────────────────────────────────── */}
+        {tab === 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
 
-          {/* ── Tab 0: Info ── */}
-          {tab === 0 && (
-            <>
-              {/* Alergias destacadas en amarillo */}
-              {alergiasDestacadas && (
-                <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-                  <AlertCircle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-amber-700 text-xs font-semibold">Alerta de alergias</p>
-                    <p className="text-amber-600 text-xs mt-0.5">{paciente.alergias}</p>
-                  </div>
+            {/* Alerta alergias */}
+            {alergiasDestacadas && (
+              <div style={{ gridColumn: '1 / -1', background: 'rgba(139,58,58,0.04)', border: '1px solid rgba(139,58,58,0.15)', borderLeft: '3px solid rgba(139,58,58,0.4)', borderRadius: '2px', padding: '12px 16px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <i className="ti ti-alert-circle" style={{ fontSize: '14px', color: '#8B3A3A', flexShrink: 0, marginTop: '1px' }} />
+                <div>
+                  <p style={{ fontFamily: DM_MONO, fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8B3A3A', margin: '0 0 3px' }}>Alerta de alergias</p>
+                  <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: '#8B3A3A', margin: 0 }}>{paciente.alergias}</p>
                 </div>
-              )}
-
-              {/* Marketing warning */}
-              {!paciente.marketing_aceptado && (
-                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3">
-                  <BellOff size={14} className="text-gray-400 flex-shrink-0" />
-                  <p className="text-gray-500 text-xs">
-                    Esta paciente <strong>no ha dado consentimiento de marketing</strong>. No enviar comunicaciones comerciales.
-                  </p>
-                </div>
-              )}
-
-              {/* Contacto */}
-              <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-                <p className="text-gray-900 font-semibold text-sm">Datos de contacto</p>
-                <div className="flex items-center gap-2">
-                  <Mail size={14} className="text-gray-400" />
-                  <span className="text-gray-700 text-sm">{paciente.email}</span>
-                </div>
-                {paciente.telefono && (
-                  <div className="flex items-center gap-2">
-                    <Phone size={14} className="text-gray-400" />
-                    <span className="text-gray-700 text-sm">{paciente.telefono}</span>
-                  </div>
-                )}
               </div>
+            )}
 
-              {/* Ficha clínica */}
-              <div className="bg-white rounded-2xl p-4 shadow-sm space-y-2.5">
-                <p className="text-gray-900 font-semibold text-sm">Ficha clínica</p>
-                {[
-                  { label: 'Tipo de piel',   value: paciente.tipo_piel  ?? '—' },
-                  { label: 'Alergias',
-                    value: (
-                      <span style={{ color: alergiasDestacadas ? '#d97706' : undefined }}>
-                        {paciente.alergias ?? '—'}
-                      </span>
-                    )
-                  },
-                  { label: 'Medicamentos',   value: paciente.medicamentos ?? '—' },
-                  { label: 'Motivo',         value: paciente.motivo_consulta ?? '—' },
-                  { label: 'Cómo nos conoció', value: paciente.como_nos_conocio ?? '—' },
-                  { label: 'Riesgo',
-                    value: (
-                      <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize"
-                        style={{ backgroundColor: RIESGO_STYLE[paciente.riesgo]?.bg, color: RIESGO_STYLE[paciente.riesgo]?.text }}
-                      >
-                        {paciente.riesgo}
-                      </span>
-                    )
-                  },
-                  { label: 'Paciente desde', value: formatFecha(paciente.creado_en) },
-                ].map(({ label, value }) => (
-                  <div key={label} className="flex items-start justify-between gap-3">
-                    <span className="text-gray-400 text-xs flex-shrink-0">{label}</span>
-                    <span className="text-gray-800 text-xs font-semibold text-right">{value}</span>
-                  </div>
-                ))}
+            {/* Marketing warning */}
+            {!paciente.marketing_aceptado && (
+              <div style={{ gridColumn: '1 / -1', background: 'rgba(22,19,19,0.03)', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <i className="ti ti-bell-off" style={{ fontSize: '13px', color: 'rgba(22,19,19,0.3)', flexShrink: 0 }} />
+                <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.45)', margin: 0 }}>
+                  Esta paciente <strong style={{ fontWeight: 400 }}>no ha dado consentimiento de marketing</strong>. No enviar comunicaciones comerciales.
+                </p>
               </div>
+            )}
 
-              {/* Tratamientos previos */}
-              {paciente.tratamientos_previos?.length > 0 && (
-                <div className="bg-white rounded-2xl p-4 shadow-sm">
-                  <p className="text-gray-900 font-semibold text-sm mb-2">Tratamientos previos</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {paciente.tratamientos_previos.map(t => (
-                      <span
-                        key={t}
-                        className="text-xs px-2.5 py-1 rounded-full font-medium"
-                        style={{ backgroundColor: brand + '18', color: brand }}
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
+            {/* Datos de contacto */}
+            <div style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '24px' }}>
+              <p style={{ fontFamily: FRAUNCES, fontSize: '16px', fontWeight: 400, color: '#161313', margin: '0 0 16px' }}>Datos de contacto</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <i className="ti ti-mail" style={{ fontSize: '14px', color: 'rgba(22,19,19,0.3)' }} />
+                <span style={{ fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: '#161313' }}>{paciente.email}</span>
+              </div>
+              {paciente.telefono && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <i className="ti ti-phone" style={{ fontSize: '14px', color: 'rgba(22,19,19,0.3)' }} />
+                  <span style={{ fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: '#161313' }}>{paciente.telefono}</span>
                 </div>
               )}
-            </>
-          )}
+            </div>
 
-          {/* ── Tab 1: Sesiones ── */}
-          {tab === 1 && (
-            <div className="space-y-2">
-              {sesiones.length === 0 && (
-                <p className="text-center text-gray-400 text-sm py-8">Sin sesiones registradas</p>
-              )}
-              {sesiones.map(s => (
-                <div key={s.id} className="bg-white rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <p className="text-gray-900 text-sm font-semibold">{s.tratamiento}</p>
-                    <span className="text-gray-400 text-[10px] flex-shrink-0">{s.fecha}</span>
-                  </div>
-                  <p className="text-gray-500 text-xs mb-1">{s.medico}</p>
-                  <p className="text-gray-600 text-xs leading-relaxed">{s.nota}</p>
+            {/* Ficha clínica */}
+            <div style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '24px' }}>
+              <p style={{ fontFamily: FRAUNCES, fontSize: '16px', fontWeight: 400, color: '#161313', margin: '0 0 16px' }}>Ficha clínica</p>
+              {[
+                { label: 'Tipo de piel',     value: paciente.tipo_piel          ?? '—' },
+                { label: 'Alergias',         value: paciente.alergias           ?? '—', highlight: alergiasDestacadas },
+                { label: 'Medicamentos',     value: paciente.medicamentos       ?? '—' },
+                { label: 'Motivo',           value: paciente.motivo_consulta    ?? '—' },
+                { label: 'Cómo nos conoció', value: paciente.como_nos_conocio   ?? '—' },
+                { label: 'Paciente desde',   value: formatFecha(paciente.creado_en) },
+              ].map(({ label, value, highlight }) => (
+                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '10px', borderBottom: '1px solid rgba(22,19,19,0.05)', marginBottom: '10px', gap: '12px' }}>
+                  <span style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(22,19,19,0.3)', flexShrink: 0 }}>{label}</span>
+                  <span style={{ fontFamily: DM_SANS, fontSize: '13px', fontWeight: 400, color: highlight ? '#8B3A3A' : '#161313', textAlign: 'right' }}>{value}</span>
                 </div>
               ))}
+              {/* Badge riesgo */}
+              {(() => {
+                const rs = RIESGO_STYLE[paciente.riesgo] ?? RIESGO_STYLE.bajo
+                return (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(22,19,19,0.3)' }}>Riesgo</span>
+                    <span style={{ fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.1em', padding: '3px 8px', borderRadius: '2px', border: `1px solid ${rs.border}`, background: rs.bg, color: rs.color }}>
+                      {rs.label}
+                    </span>
+                  </div>
+                )
+              })()}
+            </div>
+
+            {/* Tratamientos previos */}
+            {paciente.tratamientos_previos?.length > 0 && (
+              <div style={{ gridColumn: '1 / -1', background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '24px' }}>
+                <p style={{ fontFamily: FRAUNCES, fontSize: '16px', fontWeight: 400, color: '#161313', margin: '0 0 12px' }}>Tratamientos previos</p>
+                <div>
+                  {paciente.tratamientos_previos.map(t => (
+                    <span
+                      key={t}
+                      style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 10px', borderRadius: '2px', background: 'rgba(22,19,19,0.04)', border: '1px solid rgba(22,19,19,0.08)', color: 'rgba(22,19,19,0.5)', display: 'inline-block', marginRight: '6px', marginBottom: '6px' }}
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB 1: SESIONES ────────────────────────────────────────────── */}
+        {tab === 1 && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <p style={{ fontFamily: FRAUNCES, fontSize: '16px', fontWeight: 400, color: '#161313', margin: 0 }}>Historial de sesiones</p>
               <button
                 onClick={() => setNuevaSesionAbierta(true)}
-                className="w-full bg-white border border-dashed text-xs font-semibold py-3 rounded-2xl transition-colors active:scale-[0.99]"
-                style={{ borderColor: brand, color: brand }}
+                style={{ background: 'none', border: '1px solid rgba(22,19,19,0.15)', borderRadius: '2px', padding: '8px 16px', fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#161313', cursor: 'pointer' }}
               >
-                + Nueva sesión
+                Nueva sesión
               </button>
             </div>
-          )}
+            {sesiones.length === 0 && (
+              <p style={{ fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', textAlign: 'center', padding: '48px 0', margin: 0 }}>Sin sesiones registradas</p>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {sesiones.map(s => (
+                <div key={s.id} style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 400, color: '#161313', margin: 0 }}>{s.tratamiento}</p>
+                    <span style={{ fontFamily: DM_MONO, fontSize: '11px', color: 'rgba(22,19,19,0.35)', flexShrink: 0 }}>{s.fecha}</span>
+                  </div>
+                  <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.45)', margin: '0 0 4px' }}>{s.medico}</p>
+                  <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.6)', lineHeight: 1.5, margin: 0 }}>{s.nota}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
-          {/* ── Tab 3: Evolución (fotos antes/después) ── */}
-          {tab === 3 && (
-            <EvolucionPage
-              pacienteIdProp={id}
-              readOnly={false}
-            />
-          )}
-
-          {/* ── Tab 2: Análisis ── */}
-          {tab === 2 && (
-            <FeatureGate feature="dermoscopia_ia">
-              <div className="space-y-2">
-                {analisis.length === 0 && (
-                  <p className="text-center text-gray-400 text-sm py-8">Sin análisis registrados</p>
-                )}
+        {/* ── TAB 2: ANÁLISIS ────────────────────────────────────────────── */}
+        {tab === 2 && (
+          <FeatureGate feature="dermoscopia_ia">
+            <div>
+              {analisis.length === 0 && (
+                <p style={{ fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', textAlign: 'center', padding: '48px 0', margin: 0 }}>Sin análisis registrados</p>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {analisis.map(a => {
-                  const rs = RIESGO_STYLE[a.nivel]
+                  const rs = RIESGO_STYLE[a.nivel] ?? RIESGO_STYLE.bajo
                   return (
-                    <div key={a.id} className="bg-white rounded-2xl p-4 shadow-sm">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-gray-500 text-xs">{a.fecha}</p>
-                        <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-full capitalize"
-                          style={{ backgroundColor: rs.bg, color: rs.text }}
-                        >
-                          Riesgo {a.nivel}
+                    <div key={a.id} style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '16px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <span style={{ fontFamily: DM_MONO, fontSize: '11px', color: 'rgba(22,19,19,0.35)' }}>{a.fecha}</span>
+                        <span style={{ fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.1em', padding: '3px 10px', borderRadius: '2px', border: `1px solid ${rs.border}`, background: rs.bg, color: rs.color }}>
+                          {rs.label}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <div>
-                          <p className="text-gray-900 text-2xl font-bold">{a.puntuacion}</p>
-                          <p className="text-gray-400 text-[10px]">/ 9 pts</p>
+                          <p style={{ fontFamily: FRAUNCES, fontSize: '28px', fontWeight: 300, color: '#161313', margin: 0, lineHeight: 1 }}>{a.puntuacion}</p>
+                          <p style={{ fontFamily: DM_MONO, fontSize: '9px', color: 'rgba(22,19,19,0.3)', margin: '2px 0 0' }}>/ 9 pts</p>
                         </div>
-                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full"
-                            style={{ width: `${(a.puntuacion / 9) * 100}%`, backgroundColor: rs.text }}
-                          />
+                        <div style={{ flex: 1, height: '3px', background: 'rgba(22,19,19,0.08)', borderRadius: '2px' }}>
+                          <div style={{ width: `${(a.puntuacion / 9) * 100}%`, height: '100%', background: rs.color, borderRadius: '2px', transition: 'width 0.3s' }} />
                         </div>
-                        <div className="text-right">
-                          <p className="text-gray-900 text-sm font-semibold">{a.criterios_pos}</p>
-                          <p className="text-gray-400 text-[10px]">criterios +</p>
+                        <div style={{ textAlign: 'right' }}>
+                          <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 400, color: '#161313', margin: 0 }}>{a.criterios_pos}</p>
+                          <p style={{ fontFamily: DM_MONO, fontSize: '9px', color: 'rgba(22,19,19,0.3)', margin: '2px 0 0' }}>criterios +</p>
                         </div>
                       </div>
                     </div>
                   )
                 })}
                 <button
-                  onClick={() => navigate(`/clinica/${slug}/analisis`)}
-                  className="w-full text-xs font-semibold py-3 rounded-2xl border border-dashed border-gray-200 text-gray-400"
+                  onClick={() => navigate(`/clinica/${slug}/dermoscopia`)}
+                  style={{ width: '100%', background: 'none', border: '1px dashed rgba(22,19,19,0.15)', borderRadius: '2px', padding: '12px', fontFamily: DM_SANS, fontSize: '11px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', cursor: 'pointer', letterSpacing: '0.06em' }}
                 >
                   + Nuevo análisis dermoscópico
                 </button>
               </div>
-            </FeatureGate>
-          )}
-        </div>
+            </div>
+          </FeatureGate>
+        )}
+
+        {/* ── TAB 3: EVOLUCIÓN ───────────────────────────────────────────── */}
+        {tab === 3 && (
+          <EvolucionPage
+            pacienteIdProp={id}
+            readOnly={false}
+          />
+        )}
+
       </div>
 
-      {/* ── Drawer: enviar mensaje ── */}
+      {/* ── DRAWER: MENSAJE ────────────────────────────────────────────────── */}
       {msgDrawer && (
-        <div className="fixed inset-0 z-40 flex flex-col justify-end" onClick={() => setMsgDrawer(false)}>
+        <>
           <div
-            className="bg-white rounded-t-3xl px-5 pt-5 pb-8 shadow-2xl"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-gray-900 text-base">
+            style={{ position: 'fixed', inset: 0, background: 'rgba(22,19,19,0.4)', zIndex: 40 }}
+            onClick={() => setMsgDrawer(false)}
+          />
+          <div style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: '400px', background: '#FFFFFF', zIndex: 50, padding: '24px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h3 style={{ fontFamily: FRAUNCES, fontSize: '18px', fontWeight: 300, color: '#161313', margin: 0 }}>
                 Mensaje a {paciente.nombre}
               </h3>
-              <button onClick={() => setMsgDrawer(false)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <X size={16} className="text-gray-500" />
+              <button
+                onClick={() => setMsgDrawer(false)}
+                style={{ background: 'none', border: 'none', fontSize: '22px', lineHeight: 1, color: 'rgba(22,19,19,0.4)', cursor: 'pointer', padding: 0 }}
+              >
+                ×
               </button>
             </div>
+
             {msgEnviado ? (
-              <div className="py-6 flex flex-col items-center gap-2">
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                  <MessageCircle size={22} style={{ color: brand }} />
-                </div>
-                <p className="text-gray-700 font-semibold text-sm">Mensaje enviado</p>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                <i className="ti ti-circle-check" style={{ fontSize: '32px', color: '#929C92' }} />
+                <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 300, color: '#161313', margin: 0 }}>Mensaje enviado</p>
               </div>
             ) : (
               <>
@@ -451,21 +438,19 @@ export default function PacienteDetallePage() {
                   value={msgTexto}
                   onChange={e => setMsgTexto(e.target.value)}
                   placeholder={`Escribe un mensaje para ${paciente.nombre}…`}
-                  rows={4}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-800 outline-none resize-none focus:border-gray-400 transition-colors mb-3"
+                  style={{ flex: 1, border: '1px solid rgba(22,19,19,0.08)', borderRadius: '2px', padding: '14px', fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: '#161313', resize: 'none', outline: 'none', marginBottom: '12px' }}
                 />
                 <button
                   onClick={handleEnviarMensaje}
                   disabled={!msgTexto.trim() || enviandoMsg}
-                  className="w-full py-3 rounded-2xl text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-40"
-                  style={{ backgroundColor: brand }}
+                  style={{ background: '#161313', color: '#F7F5F2', border: 'none', width: '100%', padding: '12px', fontFamily: FRAUNCES, fontSize: '14px', fontWeight: 300, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: !msgTexto.trim() || enviandoMsg ? 'not-allowed' : 'pointer', opacity: !msgTexto.trim() || enviandoMsg ? 0.4 : 1, borderRadius: '2px' }}
                 >
-                  <Send size={15} /> {enviandoMsg ? 'Enviando…' : 'Enviar mensaje'}
+                  {enviandoMsg ? 'Enviando…' : 'Enviar mensaje'}
                 </button>
               </>
             )}
           </div>
-        </div>
+        </>
       )}
 
       {nuevaSesionAbierta && (
@@ -473,12 +458,11 @@ export default function PacienteDetallePage() {
           pacienteId={id}
           onClose={() => setNuevaSesionAbierta(false)}
           onGuardado={(nueva) => {
-            // Añade la sesión al principio (más reciente primero) y cambia a la pestaña Sesiones
             setSesiones(prev => [nueva, ...prev])
             setTab(1)
           }}
         />
       )}
-    </ClinicLayout>
+    </StaffLayout>
   )
 }

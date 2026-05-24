@@ -12,7 +12,7 @@ const MOCK_CLINICAS = {
     nombre: 'Clínica Lumière Valencia',
     slug: 'clinica-lumiere',
     logo_url: null,
-    color_primario: '#C8A882',
+    color_primario: '#929C92',
     plan: 'premium',
     plan_activo: true,
     max_pacientes: 300,

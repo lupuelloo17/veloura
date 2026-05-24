@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { X, Check, User, Mail, Phone, Calendar, Droplets, AlertCircle, MessageSquare } from 'lucide-react'
 import { useClinic } from '../contexts/ClinicContext'
 import { supabase } from '../lib/supabase'
+
+const FRAUNCES = "'Fraunces', Georgia, serif"
+const DM_SANS  = "'DM Sans', system-ui, sans-serif"
+const DM_MONO  = "'DM Mono', monospace"
 
 const TIPOS_PIEL = ['Normal', 'Seca', 'Grasa', 'Mixta', 'Sensible']
 
@@ -16,9 +19,29 @@ function validate(fields) {
   return errors
 }
 
+const inputStyle = {
+  width: '100%',
+  padding: '11px 14px',
+  background: '#F7F5F2',
+  border: '1px solid rgba(22,19,19,0.08)',
+  borderRadius: '2px',
+  fontFamily: DM_SANS,
+  fontSize: '13px',
+  fontWeight: 300,
+  color: '#161313',
+  outline: 'none',
+  boxSizing: 'border-box',
+  marginBottom: '16px',
+}
+
+const inputErrorStyle = {
+  ...inputStyle,
+  border: '1px solid rgba(139,58,58,0.4)',
+  background: 'rgba(139,58,58,0.03)',
+}
+
 export default function NuevoPacienteDrawer({ onClose, onGuardado }) {
   const { clinica } = useClinic()
-  const brand = clinica?.color_primario ?? '#C8A882'
 
   const [nombre,   setNombre]   = useState('')
   const [email,    setEmail]    = useState('')
@@ -28,7 +51,7 @@ export default function NuevoPacienteDrawer({ onClose, onGuardado }) {
   const [alergias, setAlergias] = useState('')
   const [motivo,   setMotivo]   = useState('')
 
-  const [errors,   setErrors]   = useState({})
+  const [errors,    setErrors]   = useState({})
   const [guardando, setGuardando] = useState(false)
 
   async function handleGuardar() {
@@ -38,23 +61,23 @@ export default function NuevoPacienteDrawer({ onClose, onGuardado }) {
     setGuardando(true)
 
     // Split "Nombre Apellido Apellido2" → nombre + apellido
-    const partes   = nombre.trim().split(/\s+/)
+    const partes       = nombre.trim().split(/\s+/)
     const primerNombre = partes[0]
     const apellido     = partes.slice(1).join(' ') || '—'
 
     const nuevoPaciente = {
-      nombre:           primerNombre,
+      nombre:             primerNombre,
       apellido,
-      email:            email.trim(),
+      email:              email.trim(),
       telefono,
-      fecha_nacimiento: fechaNac || null,
-      tipo_piel:        tipoPiel || null,
-      alergias:         alergias.trim() || null,
-      motivo_consulta:  motivo.trim()   || null,
-      clinica_id:       clinica?.id ?? 'mock-lumiere',
-      riesgo:           'bajo',
-      total_visitas:    0,
-      rgpd_aceptado:    false,
+      fecha_nacimiento:   fechaNac || null,
+      tipo_piel:          tipoPiel || null,
+      alergias:           alergias.trim() || null,
+      motivo_consulta:    motivo.trim()   || null,
+      clinica_id:         clinica?.id ?? 'mock-lumiere',
+      riesgo:             'bajo',
+      total_visitas:      0,
+      rgpd_aceptado:      false,
       marketing_aceptado: false,
     }
 
@@ -81,175 +104,177 @@ export default function NuevoPacienteDrawer({ onClose, onGuardado }) {
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-
-      {/* Drawer */}
+      {/* Overlay */}
       <div
-        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-3xl z-50 shadow-2xl flex flex-col animate-slide-up"
-        style={{ maxHeight: '92vh' }}
-      >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 rounded-full bg-gray-200" />
-        </div>
+        style={{ position: 'fixed', inset: 0, background: 'rgba(22,19,19,0.4)', zIndex: 40 }}
+        onClick={onClose}
+      />
+
+      {/* Panel */}
+      <div style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: '480px', background: '#FFFFFF', zIndex: 50, display: 'flex', flexDirection: 'column' }}>
 
         {/* Header */}
-        <div className="px-5 pb-3 flex items-center justify-between flex-shrink-0">
+        <div style={{ padding: '24px 28px', borderBottom: '1px solid rgba(22,19,19,0.06)', flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
-            <h2 className="text-gray-900 font-bold text-base">Nuevo paciente</h2>
-            <p className="text-gray-400 text-xs">Rellena los datos del paciente</p>
+            <h2 style={{ fontFamily: FRAUNCES, fontSize: '20px', fontWeight: 300, color: '#161313', margin: 0 }}>Nuevo paciente</h2>
+            <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', marginTop: '2px', marginBottom: 0 }}>Rellena los datos del paciente</p>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+            style={{ background: 'none', border: 'none', fontSize: '22px', lineHeight: 1, color: 'rgba(22,19,19,0.3)', cursor: 'pointer', padding: 0, marginTop: '2px' }}
           >
-            <X size={15} className="text-gray-500" />
+            ×
           </button>
         </div>
 
-        {/* Scrollable form */}
-        <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
+        {/* Form */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '28px' }}>
 
           {/* Error de envío */}
           {errors.submit && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
-              <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
-              <p className="text-red-600 text-xs">{errors.submit}</p>
+            <div style={{ background: 'rgba(139,58,58,0.05)', border: '1px solid rgba(139,58,58,0.2)', borderLeft: '3px solid rgba(139,58,58,0.4)', borderRadius: '2px', padding: '10px 14px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="ti ti-alert-circle" style={{ fontSize: '13px', color: '#8B3A3A', flexShrink: 0 }} />
+              <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: '#8B3A3A', margin: 0 }}>{errors.submit}</p>
             </div>
           )}
 
-          {/* Nombre */}
-          <Field label="Nombre completo *" icon={User} error={errors.nombre}>
-            <input
-              value={nombre}
-              onChange={e => { setNombre(e.target.value); setErrors(prev => ({ ...prev, nombre: null })) }}
-              placeholder="Ana Martínez García"
-              autoComplete="name"
-              className={inputCls(!!errors.nombre)}
-            />
-          </Field>
+          {/* Nombre completo */}
+          <label style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(22,19,19,0.35)', marginBottom: '6px', display: 'block' }}>
+            Nombre completo *
+          </label>
+          <input
+            value={nombre}
+            onChange={e => { setNombre(e.target.value); setErrors(prev => ({ ...prev, nombre: null })) }}
+            placeholder="Ana Martínez García"
+            autoComplete="name"
+            style={errors.nombre ? inputErrorStyle : inputStyle}
+          />
+          {errors.nombre && (
+            <span style={{ fontFamily: DM_SANS, fontSize: '10px', color: '#8B3A3A', display: 'block', marginTop: '-10px', marginBottom: '8px' }}>{errors.nombre}</span>
+          )}
 
           {/* Email */}
-          <Field label="Email *" icon={Mail} error={errors.email}>
-            <input
-              type="email"
-              value={email}
-              onChange={e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: null })) }}
-              placeholder="ana@email.es"
-              autoComplete="email"
-              className={inputCls(!!errors.email)}
-            />
-          </Field>
+          <label style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(22,19,19,0.35)', marginBottom: '6px', display: 'block' }}>
+            Email *
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); setErrors(prev => ({ ...prev, email: null })) }}
+            placeholder="ana@email.es"
+            autoComplete="email"
+            style={errors.email ? inputErrorStyle : inputStyle}
+          />
+          {errors.email && (
+            <span style={{ fontFamily: DM_SANS, fontSize: '10px', color: '#8B3A3A', display: 'block', marginTop: '-10px', marginBottom: '8px' }}>{errors.email}</span>
+          )}
 
           {/* Teléfono */}
-          <Field label="Teléfono" icon={Phone}>
-            <input
-              type="tel"
-              value={telefono}
-              onChange={e => setTelefono(e.target.value)}
-              placeholder="+34 612 345 678"
-              autoComplete="tel"
-              className={inputCls(false)}
-            />
-            <p className="text-gray-400 text-[10px] mt-1">Prefijo +34 incluido</p>
-          </Field>
+          <label style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(22,19,19,0.35)', marginBottom: '6px', display: 'block' }}>
+            Teléfono
+          </label>
+          <input
+            type="tel"
+            value={telefono}
+            onChange={e => setTelefono(e.target.value)}
+            placeholder="+34 612 345 678"
+            autoComplete="tel"
+            style={inputStyle}
+          />
 
           {/* Fecha de nacimiento */}
-          <Field label="Fecha de nacimiento" icon={Calendar}>
-            <input
-              type="date"
-              value={fechaNac}
-              onChange={e => setFechaNac(e.target.value)}
-              className={inputCls(false)}
-            />
-          </Field>
+          <label style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(22,19,19,0.35)', marginBottom: '6px', display: 'block' }}>
+            Fecha de nacimiento
+          </label>
+          <input
+            type="date"
+            value={fechaNac}
+            onChange={e => setFechaNac(e.target.value)}
+            style={inputStyle}
+          />
 
           {/* Tipo de piel */}
-          <Field label="Tipo de piel" icon={Droplets}>
-            <div className="flex flex-wrap gap-2">
-              {TIPOS_PIEL.map(t => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setTipoPiel(prev => prev === t ? '' : t)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all"
-                  style={tipoPiel === t
-                    ? { backgroundColor: brand, borderColor: brand, color: '#fff' }
-                    : { backgroundColor: '#fff', borderColor: '#e5e7eb', color: '#6b7280' }
-                  }
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-          </Field>
+          <label style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(22,19,19,0.35)', marginBottom: '6px', display: 'block' }}>
+            Tipo de piel
+          </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+            {TIPOS_PIEL.map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTipoPiel(prev => prev === t ? '' : t)}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '2px',
+                  fontSize: '11px',
+                  fontFamily: DM_SANS,
+                  letterSpacing: '0.06em',
+                  cursor: 'pointer',
+                  border: 'none',
+                  ...(tipoPiel === t
+                    ? { background: '#161313', color: '#F7F5F2' }
+                    : { background: 'transparent', border: '1px solid rgba(22,19,19,0.1)', color: 'rgba(22,19,19,0.4)' }
+                  ),
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
 
-          {/* Alergias */}
-          <Field label="Alergias o medicación actual" icon={AlertCircle}>
-            <textarea
-              value={alergias}
-              onChange={e => setAlergias(e.target.value)}
-              placeholder="Ej: alérgica al ibuprofeno, penicilina…"
-              rows={2}
-              className={`${inputCls(false)} resize-none`}
-            />
-          </Field>
+          {/* Alergias o medicación */}
+          <label style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(22,19,19,0.35)', marginBottom: '6px', display: 'block' }}>
+            Alergias o medicación actual
+          </label>
+          <textarea
+            value={alergias}
+            onChange={e => setAlergias(e.target.value)}
+            placeholder="Ej: alérgica al ibuprofeno, penicilina…"
+            rows={3}
+            style={{ ...inputStyle, resize: 'none' }}
+          />
 
           {/* Motivo de consulta */}
-          <Field label="Motivo de consulta" icon={MessageSquare}>
-            <textarea
-              value={motivo}
-              onChange={e => setMotivo(e.target.value)}
-              placeholder="Ej: manchas solares, arrugas de expresión…"
-              rows={2}
-              className={`${inputCls(false)} resize-none`}
-            />
-          </Field>
+          <label style={{ fontFamily: DM_MONO, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'rgba(22,19,19,0.35)', marginBottom: '6px', display: 'block' }}>
+            Motivo de consulta
+          </label>
+          <textarea
+            value={motivo}
+            onChange={e => setMotivo(e.target.value)}
+            placeholder="Ej: manchas solares, arrugas de expresión…"
+            rows={3}
+            style={{ ...inputStyle, resize: 'none' }}
+          />
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-6 pt-3 flex-shrink-0 border-t border-gray-100">
+        <div style={{ padding: '20px 28px', borderTop: '1px solid rgba(22,19,19,0.06)', flexShrink: 0 }}>
           <button
             onClick={handleGuardar}
             disabled={guardando}
-            className="w-full py-4 rounded-2xl text-white font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
-            style={{ backgroundColor: guardando ? '#d1d5db' : brand }}
+            style={{
+              width: '100%',
+              background: '#161313',
+              color: '#F7F5F2',
+              border: 'none',
+              borderRadius: '2px',
+              padding: '13px',
+              fontFamily: DM_SANS,
+              fontSize: '11px',
+              fontWeight: 400,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              cursor: guardando ? 'not-allowed' : 'pointer',
+              opacity: guardando ? 0.6 : 1,
+            }}
           >
-            {guardando
-              ? 'Guardando…'
-              : <><Check size={16} /> Guardar paciente</>
-            }
+            {guardando ? 'Guardando...' : 'Guardar paciente'}
           </button>
-          <p className="text-center text-gray-400 text-xs mt-2">* Campos obligatorios</p>
+          <p style={{ fontFamily: DM_MONO, fontSize: '10px', color: 'rgba(22,19,19,0.25)', textAlign: 'center', marginTop: '8px', marginBottom: 0 }}>
+            * Campos obligatorios
+          </p>
         </div>
       </div>
     </>
-  )
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-function inputCls(hasError) {
-  return `w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none transition-colors ${
-    hasError
-      ? 'border-red-300 focus:border-red-400 focus:ring-1 focus:ring-red-400'
-      : 'border-gray-200 focus:border-[#C8A882] focus:ring-1 focus:ring-[#C8A882]'
-  }`
-}
-
-function Field({ label, icon: Icon, error, children }) {
-  return (
-    <div>
-      <div className="flex items-center gap-1.5 mb-1">
-        <Icon size={12} className="text-gray-400" />
-        <label className="text-gray-600 text-xs font-medium">{label}</label>
-      </div>
-      {children}
-      {error && (
-        <p className="text-red-500 text-[10px] mt-1 flex items-center gap-1">
-          <AlertCircle size={10} /> {error}
-        </p>
-      )}
-    </div>
   )
 }
