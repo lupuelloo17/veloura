@@ -285,7 +285,7 @@ export default function ConversacionesPage() {
 
   const conversacionesFiltradas = useMemo(() => {
     return conversaciones
-      .filter(c => c.canal === canalActivo)
+      .filter(c => !c.canal || c.canal === canalActivo)
       .filter(c => !busqueda.trim() || `${c.nombre} ${c.apellido}`.toLowerCase().includes(busqueda.toLowerCase()))
   }, [conversaciones, busqueda, canalActivo])
 
