@@ -247,9 +247,13 @@ function CriterionCard({ criterion, result, index, visible }) {
         transform: visible ? 'translateY(0)' : 'translateY(10px)',
         transition: `opacity 0.3s ease ${index * 90}ms, transform 0.3s ease ${index * 90}ms`,
       }}
-      className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${
-        criterion.major ? 'border-l-4 border-l-gray-700' : 'border-l-4 border-l-gray-300'
-      }`}
+      style={{
+        background: '#FFFFFF',
+        border: '1px solid rgba(22,19,19,0.08)',
+        borderLeft: criterion.major ? '3px solid #161313' : '3px solid rgba(22,19,19,0.2)',
+        borderRadius: '2px',
+        overflow: 'hidden',
+      }}
     >
       <div className="px-4 pt-3 pb-3">
         <div className="flex items-start gap-3">
@@ -297,7 +301,7 @@ function CriterionCard({ criterion, result, index, visible }) {
 
 function MorphoCard({ param, value }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center justify-between gap-2">
+    <div style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
       <p className="text-gray-600 text-xs leading-snug flex-1">{param}</p>
       <span className="text-gray-900 text-xs font-semibold text-right flex-shrink-0 max-w-[120px]">{value}</span>
     </div>
@@ -522,8 +526,8 @@ export default function DermoscopiaPage({ embedded = false }) {
     <div className="flex flex-col flex-1 animate-fade-in">
 
       {/* ── Top bar ── */}
-      <div className="bg-white border-b border-gray-100 px-5 pt-7 pb-4">
-        <div className="flex items-center gap-3 mb-1">
+      <div style={{ background: '#161313', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '20px 20px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
           <button
             onClick={() => {
               if (step === 'report') return reset()
@@ -532,39 +536,41 @@ export default function DermoscopiaPage({ embedded = false }) {
               }
               return navigate(-1)
             }}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 flex-shrink-0"
+            style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '2px', border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', color: 'rgba(247,245,242,0.5)', cursor: 'pointer', flexShrink: 0 }}
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={16} />
           </button>
           <div>
-            <h1 className="text-gray-900 font-semibold text-base leading-tight">
-              Análisis Dermoscópico Asistido
+            <h1 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '18px', fontWeight: 300, color: '#F7F5F2', letterSpacing: '-0.01em', margin: 0, lineHeight: 1.2 }}>
+              Análisis Dermoscópico
             </h1>
-            <p className="text-gray-400 text-xs">
-              Seven-Point Checklist · Argenziano et al., 1998
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: 'rgba(247,245,242,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '2px 0 0' }}>
+              Seven-Point Checklist · Argenziano 1998
             </p>
           </div>
         </div>
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1 mt-3 ml-12">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '12px', paddingLeft: '44px' }}>
           {['Captura', 'Análisis', 'Informe'].map((label, i) => {
             const stepIdx = step === 'capture' ? 0 : step === 'analyzing' ? 1 : 2
-            const done = i < stepIdx
+            const done   = i < stepIdx
             const active = i === stepIdx
             return (
-              <div key={label} className="flex items-center gap-1">
-                <div className={`flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold border ${
-                  done   ? 'bg-gray-800 border-gray-800 text-white' :
-                  active ? 'bg-white border-gray-800 text-gray-800' :
-                           'bg-white border-gray-300 text-gray-400'
-                }`}>
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{
+                  width: '18px', height: '18px', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: "'DM Mono', monospace", fontSize: '9px', fontWeight: 400,
+                  background: done ? '#929C92' : active ? 'rgba(255,255,255,0.1)' : 'transparent',
+                  border: `1px solid ${done ? '#929C92' : active ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                  color: done ? '#161313' : active ? '#F7F5F2' : 'rgba(255,255,255,0.25)',
+                }}>
                   {done ? '✓' : i + 1}
                 </div>
-                <span className={`text-[10px] font-medium ${active ? 'text-gray-800' : 'text-gray-400'}`}>
+                <span style={{ fontFamily: "'DM Sans', system-ui", fontSize: '10px', fontWeight: 300, color: active ? 'rgba(247,245,242,0.7)' : 'rgba(247,245,242,0.25)' }}>
                   {label}
                 </span>
-                {i < 2 && <div className="w-4 h-px bg-gray-200 mx-0.5" />}
+                {i < 2 && <div style={{ width: '16px', height: '1px', background: 'rgba(255,255,255,0.1)', margin: '0 2px' }} />}
               </div>
             )
           })}
@@ -713,26 +719,38 @@ export default function DermoscopiaPage({ embedded = false }) {
         {step === 'report' && (
           <>
             {/* Risk banner */}
-            <div className={`rounded-xl border ${risk.bg} ${risk.border} p-4`}>
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-gray-700 text-xs font-semibold uppercase tracking-wider">Resultado · Seven-Point Score</p>
-                <span className={`text-2xl font-bold ${risk.color}`}>{score} / 9</span>
-              </div>
-              {/* Score bar */}
-              <div className="h-2.5 bg-white/70 rounded-full overflow-hidden mb-2 relative">
-                <div
-                  className={`h-full ${risk.barColor} rounded-full transition-all duration-700`}
-                  style={{ width: `${(score / 9) * 100}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[9px] text-gray-400 mb-2">
-                <span>0–1 Bajo</span><span>2–4 Moderado</span><span>5–9 Alto</span>
-              </div>
-              <p className={`text-sm font-semibold ${risk.color}`}>
-                Riesgo {risk.label}
-              </p>
-              <p className="text-gray-600 text-xs mt-1 leading-relaxed">{risk.text}</p>
-            </div>
+            {(() => {
+              const riskColor = risk.nivel === 'alto' ? '#8B3A3A' : risk.nivel === 'moderado' ? '#A39384' : '#929C92'
+              const riskBg    = risk.nivel === 'alto' ? 'rgba(139,58,58,0.06)' : risk.nivel === 'moderado' ? 'rgba(163,147,132,0.08)' : 'rgba(146,156,146,0.08)'
+              const riskBdr   = risk.nivel === 'alto' ? 'rgba(139,58,58,0.2)'  : risk.nivel === 'moderado' ? 'rgba(163,147,132,0.2)' : 'rgba(146,156,146,0.2)'
+              return (
+                <div style={{ background: riskBg, border: `1px solid ${riskBdr}`, borderRadius: '2px', padding: '20px 24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <div>
+                      <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.35)', margin: '0 0 4px' }}>
+                        Resultado · Seven-Point Score
+                      </p>
+                      <p style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '13px', fontWeight: 400, color: riskColor, margin: 0 }}>
+                        Riesgo {risk.label}
+                      </p>
+                    </div>
+                    <span style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '40px', fontWeight: 300, color: riskColor, lineHeight: 1 }}>
+                      {score}<span style={{ fontSize: '18px', color: 'rgba(22,19,19,0.3)' }}>/9</span>
+                    </span>
+                  </div>
+                  {/* Score bar */}
+                  <div style={{ height: '3px', background: 'rgba(22,19,19,0.08)', borderRadius: '2px', marginBottom: '8px' }}>
+                    <div style={{ width: `${(score / 9) * 100}%`, height: '100%', background: riskColor, borderRadius: '2px', transition: 'width 0.7s ease' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Mono', monospace", fontSize: '9px', color: 'rgba(22,19,19,0.3)', marginBottom: '10px' }}>
+                    <span>0–1 Bajo</span><span>2–4 Moderado</span><span>5–9 Alto</span>
+                  </div>
+                  <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.55)', lineHeight: 1.5, margin: 0 }}>
+                    {risk.text}
+                  </p>
+                </div>
+              )
+            })()}
 
             {/* Major criteria */}
             <div>
