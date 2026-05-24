@@ -1,9 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  ArrowLeft, Camera, Upload, FileText, RefreshCw, CalendarDays, Printer,
-  Grid3x3, Cloud, Activity, Sun, Palette, Circle, MinusCircle, Send, Shield, CheckCircle2,
-} from 'lucide-react'
 import BottomNav from '../components/BottomNav'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -24,25 +20,25 @@ const LOADING_STEPS = [
 //   - accessible: explicación en lenguaje paciente-friendly
 //   - icon:       icono visual de lucide-react
 const CRITERIA = [
-  { id: 1, major: true,  pts: 2, label: 'Red de pigmento atípica',     icon: Grid3x3,
+  { id: 1, major: true,  pts: 2, label: 'Red de pigmento atípica',     icon: 'ti-grid-3x3',
     clinical:   'Retículo melanocítico irregular con líneas engrosadas y orificios asimétricos.',
     accessible: 'Un patrón de "red" en la piel que normalmente es uniforme, pero en esta lesión parece desigual o roto.' },
-  { id: 2, major: true,  pts: 2, label: 'Velo azul-blanquecino',       icon: Cloud,
+  { id: 2, major: true,  pts: 2, label: 'Velo azul-blanquecino',       icon: 'ti-cloud',
     clinical:   'Área azul-blanca difusa e irregular superpuesta sobre una zona elevada de la lesión.',
     accessible: 'Un área que se ve como cubierta por una capa azulada o blanquecina, como si tuviera un velo encima.' },
-  { id: 3, major: true,  pts: 2, label: 'Patrón vascular atípico',     icon: Activity,
+  { id: 3, major: true,  pts: 2, label: 'Patrón vascular atípico',     icon: 'ti-activity',
     clinical:   'Vasos sanguíneos irregulares: puntiformes, glomerulares, en horquilla o polimorfos no asociados a regresión.',
     accessible: 'Vasos sanguíneos visibles con formas o disposición fuera de lo normal dentro de la lesión.' },
-  { id: 4, major: false, pts: 1, label: 'Estrías radiales irregulares', icon: Sun,
+  { id: 4, major: false, pts: 1, label: 'Estrías radiales irregulares', icon: 'ti-sun',
     clinical:   'Proyecciones lineales en la periferia de la lesión sin pigmentación folicular visible.',
     accessible: 'Pequeñas líneas que salen del borde de la lesión hacia fuera, como rayos de sol asimétricos.' },
-  { id: 5, major: false, pts: 1, label: 'Manchas de pigmento irregulares', icon: Palette,
+  { id: 5, major: false, pts: 1, label: 'Manchas de pigmento irregulares', icon: 'ti-palette',
     clinical:   'Áreas de pigmentación marrón, gris o negra con distribución asimétrica e irregular.',
     accessible: 'Zonas de distinto color (marrón, gris, negro) repartidas de forma desigual.' },
-  { id: 6, major: false, pts: 1, label: 'Puntos y glóbulos irregulares', icon: Circle,
+  { id: 6, major: false, pts: 1, label: 'Puntos y glóbulos irregulares', icon: 'ti-circle',
     clinical:   'Estructuras redondeadas u ovales, negras, marrones o grises con variación en tamaño y distribución irregular.',
     accessible: 'Puntitos pequeños y "bolitas" dentro de la lesión, con tamaños y distribución desiguales.' },
-  { id: 7, major: false, pts: 1, label: 'Estructuras de regresión',     icon: MinusCircle,
+  { id: 7, major: false, pts: 1, label: 'Estructuras de regresión',     icon: 'ti-circle-minus',
     clinical:   'Áreas blancas cicatriciales o zonas de pigmentación azul-pizarra (peppering) en el contexto de la lesión melanocítica.',
     accessible: 'Áreas más claras o blanquecinas, como si la piel se hubiera "despigmentado" en esa zona.' },
 ]
@@ -238,62 +234,64 @@ function selectProducts(results, morpho, score) {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function CriterionCard({ criterion, result, index, visible }) {
-  const s = RESULT_STYLE[result]
-  const Icon = criterion.icon || Circle
+  const iconColor = result === 'present' ? '#8B3A3A' : result === 'absent' ? '#929C92' : '#A39384'
+  const iconBg    = result === 'present' ? 'rgba(139,58,58,0.08)' : result === 'absent' ? 'rgba(146,156,146,0.08)' : 'rgba(163,147,132,0.08)'
+  const badgeColor  = result === 'present' ? '#8B3A3A' : result === 'absent' ? '#929C92' : '#A39384'
+  const badgeBg     = result === 'present' ? 'rgba(139,58,58,0.08)' : result === 'absent' ? 'rgba(146,156,146,0.08)' : 'rgba(163,147,132,0.08)'
+  const badgeBorder = result === 'present' ? 'rgba(139,58,58,0.2)'  : result === 'absent' ? 'rgba(146,156,146,0.2)' : 'rgba(163,147,132,0.2)'
+  const badgeLabel  = result === 'present' ? 'PRESENTE' : result === 'absent' ? 'AUSENTE' : 'INDETERMINADO'
+  const borderLeft  = result === 'present'
+    ? '3px solid rgba(139,58,58,0.4)'
+    : result === 'absent'
+    ? '3px solid rgba(146,156,146,0.4)'
+    : '3px solid rgba(163,147,132,0.4)'
+
   return (
     <div
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',
         transition: `opacity 0.3s ease ${index * 90}ms, transform 0.3s ease ${index * 90}ms`,
-      }}
-      style={{
         background: '#FFFFFF',
         border: '1px solid rgba(22,19,19,0.08)',
-        borderLeft: criterion.major ? '3px solid #161313' : '3px solid rgba(22,19,19,0.2)',
+        borderLeft,
         borderRadius: '2px',
         overflow: 'hidden',
+        padding: '14px 16px',
       }}
     >
-      <div className="px-4 pt-3 pb-3">
-        <div className="flex items-start gap-3">
-          {/* Icono visual */}
-          <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center ${
-            result === 'present' ? 'bg-red-50' : result === 'absent' ? 'bg-green-50' : 'bg-amber-50'
-          }`}>
-            <Icon size={20} className={
-              result === 'present' ? 'text-red-600' : result === 'absent' ? 'text-green-600' : 'text-amber-600'
-            } />
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-              {criterion.major
-                ? <span className="text-[9px] font-bold bg-gray-800 text-white px-1.5 py-0.5 rounded tracking-wide">MAYOR · {criterion.pts}pts</span>
-                : <span className="text-[9px] font-bold bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded tracking-wide">MENOR · {criterion.pts}pt</span>
-              }
-              <span className="text-gray-400 text-[9px]">#{criterion.id}</span>
-            </div>
-            <p className="text-gray-900 text-sm font-semibold leading-snug">{criterion.label}</p>
-          </div>
-
-          <span className={`flex-shrink-0 flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md border ${s.bg} ${s.text} ${s.border}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-            {s.label}
-          </span>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+        {/* Icon */}
+        <div style={{ width: '36px', height: '36px', borderRadius: '2px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: iconBg }}>
+          <i className={`ti ${criterion.icon || 'ti-circle'}`} style={{ fontSize: '18px', color: iconColor }} />
         </div>
-        {/* Descripción accesible para paciente + clínica colapsable */}
-        <div className="mt-2.5 ml-13" style={{ paddingLeft: '52px' }}>
-          <p className="text-gray-700 text-xs leading-relaxed mb-1">
-            {criterion.accessible}
-          </p>
-          <details className="text-[10px]">
-            <summary className="text-gray-400 cursor-pointer hover:text-gray-600 select-none">
-              Ver descripción clínica
-            </summary>
-            <p className="text-gray-500 mt-1 leading-relaxed">{criterion.clinical}</p>
-          </details>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px', flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.1em', padding: '2px 6px', borderRadius: '2px', background: criterion.major ? '#161313' : 'rgba(22,19,19,0.08)', color: criterion.major ? '#F7F5F2' : 'rgba(22,19,19,0.5)' }}>
+              {criterion.major ? `MAYOR · ${criterion.pts}pts` : `MENOR · ${criterion.pts}pt`}
+            </span>
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: 'rgba(22,19,19,0.3)' }}>#{criterion.id}</span>
+          </div>
+          <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 400, color: '#161313', margin: 0, lineHeight: 1.3 }}>{criterion.label}</p>
         </div>
+
+        <span style={{ flexShrink: 0, fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.1em', padding: '3px 8px', borderRadius: '2px', border: `1px solid ${badgeBorder}`, background: badgeBg, color: badgeColor }}>
+          {badgeLabel}
+        </span>
+      </div>
+
+      {/* Descripción accesible + clínica colapsable */}
+      <div style={{ paddingLeft: '48px', marginTop: '10px' }}>
+        <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.6)', lineHeight: 1.5, margin: '0 0 6px' }}>
+          {criterion.accessible}
+        </p>
+        <details>
+          <summary style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(22,19,19,0.3)', cursor: 'pointer', userSelect: 'none', letterSpacing: '0.06em' }}>
+            Ver descripción clínica
+          </summary>
+          <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '11px', fontWeight: 300, color: 'rgba(22,19,19,0.45)', lineHeight: 1.5, margin: '6px 0 0' }}>{criterion.clinical}</p>
+        </details>
       </div>
     </div>
   )
@@ -302,8 +300,8 @@ function CriterionCard({ criterion, result, index, visible }) {
 function MorphoCard({ param, value }) {
   return (
     <div style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-      <p className="text-gray-600 text-xs leading-snug flex-1">{param}</p>
-      <span className="text-gray-900 text-xs font-semibold text-right flex-shrink-0 max-w-[120px]">{value}</span>
+      <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.5)', lineHeight: 1.4, flex: 1, margin: 0 }}>{param}</p>
+      <span style={{ fontFamily: "'DM Sans', system-ui", fontSize: '12px', fontWeight: 400, color: '#161313', textAlign: 'right', flexShrink: 0, maxWidth: '120px' }}>{value}</span>
     </div>
   )
 }
@@ -523,7 +521,7 @@ export default function DermoscopiaPage({ embedded = false }) {
 
   // ── Render ──
   return (
-    <div className="flex flex-col flex-1 animate-fade-in">
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
 
       {/* ── Top bar ── */}
       <div style={{ background: '#161313', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '20px 20px 16px' }}>
@@ -538,7 +536,7 @@ export default function DermoscopiaPage({ embedded = false }) {
             }}
             style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '2px', border: '1px solid rgba(255,255,255,0.12)', background: 'transparent', color: 'rgba(247,245,242,0.5)', cursor: 'pointer', flexShrink: 0 }}
           >
-            <ArrowLeft size={16} />
+            <i className="ti ti-arrow-left" style={{ fontSize: '16px' }} />
           </button>
           <div>
             <h1 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '18px', fontWeight: 300, color: '#F7F5F2', letterSpacing: '-0.01em', margin: 0, lineHeight: 1.2 }}>
@@ -578,7 +576,7 @@ export default function DermoscopiaPage({ embedded = false }) {
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 px-5 py-4 space-y-4">
+      <div style={{ flex: 1, overflowY: 'auto', background: '#F7F5F2', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
         {/* ══ STEP 1: Capture ══ */}
         {step === 'capture' && (
@@ -589,22 +587,26 @@ export default function DermoscopiaPage({ embedded = false }) {
               onDragLeave={() => setDragging(false)}
               onDragOver={e => e.preventDefault()}
               onDrop={handleDrop}
-              className={`rounded-xl border-2 border-dashed transition-colors overflow-hidden ${
-                dragging ? 'border-gray-400 bg-gray-100' : 'border-gray-300 bg-white'
-              }`}
-              style={{ minHeight: preview ? 220 : 180 }}
+              style={{
+                minHeight: preview ? 220 : 180,
+                border: `2px dashed ${dragging ? 'rgba(22,19,19,0.3)' : 'rgba(22,19,19,0.15)'}`,
+                background: dragging ? 'rgba(22,19,19,0.03)' : '#FFFFFF',
+                borderRadius: '2px',
+                overflow: 'hidden',
+                transition: 'border-color 0.15s, background 0.15s',
+              }}
             >
               {preview ? (
-                <img src={preview} alt="Lesión" className="w-full object-cover rounded-xl" style={{ maxHeight: 260 }} />
+                <img src={preview} alt="Lesión" style={{ width: '100%', objectFit: 'cover', maxHeight: 260, display: 'block' }} />
               ) : (
-                <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                    <Upload size={20} className="text-gray-400" />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 16px', textAlign: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', background: 'rgba(22,19,19,0.05)', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                    <i className="ti ti-upload" style={{ fontSize: '20px', color: 'rgba(22,19,19,0.3)' }} />
                   </div>
-                  <p className="text-gray-700 text-sm font-medium mb-1">
+                  <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 400, color: '#161313', margin: '0 0 4px' }}>
                     Fotografiar lesión o subir imagen
                   </p>
-                  <p className="text-gray-400 text-xs">
+                  <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '11px', fontWeight: 300, color: 'rgba(22,19,19,0.4)', margin: 0 }}>
                     JPG, PNG · Arrastra o toca para seleccionar
                   </p>
                 </div>
@@ -622,26 +624,26 @@ export default function DermoscopiaPage({ embedded = false }) {
 
             {/* Two capture buttons */}
             {!preview && (
-              <div className="grid grid-cols-2 gap-2">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <button
                   onClick={() => { fileRef.current.removeAttribute('capture'); fileRef.current.click() }}
-                  className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium py-3 rounded-xl hover:border-gray-300 active:scale-95 transition-all"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.12)', color: '#161313', fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 400, padding: '12px', borderRadius: '2px', cursor: 'pointer' }}
                 >
-                  <Upload size={16} /> Subir imagen
+                  <i className="ti ti-upload" style={{ fontSize: '15px' }} /> Subir imagen
                 </button>
                 <button
                   onClick={() => { fileRef.current.setAttribute('capture', 'environment'); fileRef.current.click() }}
-                  className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 text-sm font-medium py-3 rounded-xl hover:border-gray-300 active:scale-95 transition-all"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.12)', color: '#161313', fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 400, padding: '12px', borderRadius: '2px', cursor: 'pointer' }}
                 >
-                  <Camera size={16} /> Fotografiar
+                  <i className="ti ti-camera" style={{ fontSize: '15px' }} /> Fotografiar
                 </button>
               </div>
             )}
 
             {/* Clinical note */}
-            <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
-              <p className="text-gray-500 text-xs leading-relaxed">
-                <span className="font-semibold text-gray-700">Nota clínica: </span>
+            <div style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderLeft: '2px solid rgba(146,156,146,0.3)', borderRadius: '2px', padding: '12px 16px' }}>
+              <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '11px', fontWeight: 300, color: 'rgba(22,19,19,0.45)', lineHeight: 1.6, margin: 0 }}>
+                <span style={{ fontWeight: 400, color: 'rgba(22,19,19,0.7)' }}>Nota clínica: </span>
                 Para resultados óptimos, capture la lesión a una distancia de 2–5 cm con iluminación uniforme sin flash directo. Resolución mínima recomendada: 1280×960 px.
               </p>
             </div>
@@ -650,11 +652,12 @@ export default function DermoscopiaPage({ embedded = false }) {
             <button
               disabled={!preview}
               onClick={startAnalysis}
-              className={`w-full font-semibold text-sm py-4 rounded-xl transition-all duration-200 ${
-                preview
-                  ? 'bg-gray-900 text-white active:scale-95 shadow-sm'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
+              style={{
+                width: '100%', fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 400,
+                letterSpacing: '0.06em', padding: '14px', borderRadius: '2px', border: 'none', cursor: preview ? 'pointer' : 'not-allowed',
+                background: preview ? '#161313' : 'rgba(22,19,19,0.08)', color: preview ? '#F7F5F2' : 'rgba(22,19,19,0.3)',
+                transition: 'background 0.2s',
+              }}
             >
               Iniciar análisis dermoscópico
             </button>
@@ -664,7 +667,7 @@ export default function DermoscopiaPage({ embedded = false }) {
                 onClick={() => {
                   setPreview('https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=400&h=400&fit=crop')
                 }}
-                className="w-full text-gray-500 text-xs border border-dashed border-gray-300 py-2.5 rounded-xl hover:bg-white transition-colors"
+                style={{ width: '100%', fontFamily: "'DM Sans', system-ui", fontSize: '11px', fontWeight: 300, color: 'rgba(22,19,19,0.4)', border: '1px dashed rgba(22,19,19,0.15)', background: 'transparent', padding: '10px', borderRadius: '2px', cursor: 'pointer' }}
               >
                 Usar imagen de demostración
               </button>
@@ -674,19 +677,19 @@ export default function DermoscopiaPage({ embedded = false }) {
 
         {/* ══ STEP 2: Analyzing ══ */}
         {step === 'analyzing' && (
-          <div className="flex flex-col items-center justify-center py-8 gap-6">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', gap: '24px' }}>
             {preview && (
-              <div className="w-full rounded-xl overflow-hidden" style={{ maxHeight: 180 }}>
-                <img src={preview} alt="Lesión" className="w-full object-cover opacity-60" style={{ maxHeight: 180 }} />
+              <div style={{ width: '100%', borderRadius: '2px', overflow: 'hidden', maxHeight: 180 }}>
+                <img src={preview} alt="Lesión" style={{ width: '100%', objectFit: 'cover', opacity: 0.6, maxHeight: 180, display: 'block' }} />
               </div>
             )}
 
             {/* Spinner + message */}
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-700 rounded-full animate-spin" />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '40px', height: '40px', border: '3px solid rgba(22,19,19,0.1)', borderTopColor: '#161313', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
               <p
-                className="text-gray-700 text-sm font-medium text-center px-4"
                 style={{
+                  fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 300, color: 'rgba(22,19,19,0.65)', textAlign: 'center', padding: '0 16px', margin: 0,
                   opacity: msgVisible ? 1 : 0,
                   transition: 'opacity 0.2s ease',
                 }}
@@ -696,20 +699,19 @@ export default function DermoscopiaPage({ embedded = false }) {
             </div>
 
             {/* Progress bar */}
-            <div className="w-full">
-              <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+            <div style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(22,19,19,0.35)', marginBottom: '6px' }}>
                 <span>Procesando</span>
                 <span>{progress}%</span>
               </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div style={{ height: '3px', background: 'rgba(22,19,19,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
                 <div
-                  className="h-full bg-gray-800 rounded-full transition-all duration-100"
-                  style={{ width: `${progress}%` }}
+                  style={{ height: '100%', background: '#161313', borderRadius: '2px', transition: 'width 0.1s', width: `${progress}%` }}
                 />
               </div>
             </div>
 
-            <p className="text-gray-400 text-xs text-center">
+            <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '11px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', textAlign: 'center', margin: 0, lineHeight: 1.5 }}>
               Aplicando algoritmo Seven-Point Checklist sobre los parámetros morfológicos detectados
             </p>
           </div>
@@ -754,11 +756,11 @@ export default function DermoscopiaPage({ embedded = false }) {
 
             {/* Major criteria */}
             <div>
-              <h2 className="text-gray-800 font-semibold text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
-                <span className="w-3 h-3 bg-gray-800 rounded-sm inline-block" />
-                Criterios mayores (2 pts c/u)
-              </h2>
-              <div className="space-y-2">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ width: '10px', height: '10px', background: '#161313', borderRadius: '2px', display: 'inline-block', flexShrink: 0 }} />
+                <h2 style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.5)', margin: 0, fontWeight: 400 }}>Criterios mayores (2 pts c/u)</h2>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {CRITERIA.filter(c => c.major).map((c, i) => (
                   <CriterionCard key={c.id} criterion={c} result={results[c.id]} index={i} visible={cardsVisible} />
                 ))}
@@ -767,11 +769,11 @@ export default function DermoscopiaPage({ embedded = false }) {
 
             {/* Minor criteria */}
             <div>
-              <h2 className="text-gray-800 font-semibold text-xs uppercase tracking-wider mb-2 flex items-center gap-2">
-                <span className="w-3 h-3 bg-gray-300 rounded-sm inline-block" />
-                Criterios menores (1 pt c/u)
-              </h2>
-              <div className="space-y-2">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <span style={{ width: '10px', height: '10px', background: 'rgba(22,19,19,0.15)', borderRadius: '2px', display: 'inline-block', flexShrink: 0 }} />
+                <h2 style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.5)', margin: 0, fontWeight: 400 }}>Criterios menores (1 pt c/u)</h2>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {CRITERIA.filter(c => !c.major).map((c, i) => (
                   <CriterionCard key={c.id} criterion={c} result={results[c.id]} index={i + 3} visible={cardsVisible} />
                 ))}
@@ -785,10 +787,10 @@ export default function DermoscopiaPage({ embedded = false }) {
                 transition: 'opacity 0.4s ease',
               }}
             >
-              <h2 className="text-gray-800 font-semibold text-xs uppercase tracking-wider mb-2 mt-2">
+              <h2 style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.5)', margin: '0 0 8px', fontWeight: 400 }}>
                 Parámetros morfológicos adicionales
               </h2>
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {MORPHO_PARAMS.map(p => (
                   <MorphoCard key={p.label} param={p.label} value={morpho[p.label]} />
                 ))}
@@ -800,12 +802,14 @@ export default function DermoscopiaPage({ embedded = false }) {
               style={{
                 opacity: reportVisible ? 1 : 0,
                 transition: 'opacity 0.4s ease 0.2s',
+                background: '#161313',
+                borderRadius: '2px',
+                padding: '16px',
               }}
-              className="bg-gray-900 rounded-xl p-4"
             >
-              <div className="flex items-center gap-2 mb-3">
-                <FileText size={14} className="text-gray-400" />
-                <p className="text-gray-300 text-xs font-semibold uppercase tracking-wider">Informe dermoscópico</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <i className="ti ti-file-text" style={{ fontSize: '14px', color: 'rgba(247,245,242,0.4)' }} />
+                <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(247,245,242,0.5)', margin: 0, fontWeight: 400 }}>Informe dermoscópico</p>
               </div>
               <pre className="font-mono text-[11px] leading-relaxed text-gray-300 whitespace-pre-wrap">
 {`INFORME DERMOSCÓPICO — ${datetime}
@@ -839,24 +843,24 @@ especialista en Dermatología.`}
                 transition: 'opacity 0.4s ease 0.3s',
               }}
             >
-              <div className="border-t border-gray-200 pt-4 mb-3">
-                <h2 className="text-gray-900 font-semibold text-sm">
+              <div style={{ borderTop: '1px solid rgba(22,19,19,0.1)', paddingTop: '16px', marginBottom: '12px' }}>
+                <h2 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '16px', fontWeight: 300, color: '#161313', margin: '0 0 4px', letterSpacing: '-0.01em' }}>
                   Protocolo cosmecéutico complementario
                 </h2>
-                <p className="text-gray-400 text-xs leading-relaxed mt-1">
+                <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '11px', fontWeight: 300, color: 'rgba(22,19,19,0.45)', lineHeight: 1.5, margin: 0 }}>
                   Los siguientes productos de cosmética médica son compatibles con los
                   hallazgos de la exploración. Su uso no sustituye el tratamiento prescrito
                   por su dermatólogo.
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {products.map(p => (
                   <ProductCard key={p.id} product={p} />
                 ))}
               </div>
 
-              <p className="text-gray-400 text-[10px] leading-relaxed mt-3 px-1">
+              <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '10px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', lineHeight: 1.6, marginTop: '12px', padding: '0 4px' }}>
                 Veloura no mantiene relación comercial con las marcas citadas. Las
                 recomendaciones se basan en la composición y evidencia clínica publicada
                 de cada formulación.
@@ -868,30 +872,29 @@ especialista en Dermatología.`}
               style={{
                 opacity: reportVisible ? 1 : 0,
                 transition: 'opacity 0.4s ease 0.4s',
+                display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '8px',
               }}
-              className="space-y-2 pb-2"
             >
               {/* Indicador de guardado / estado para pacientes */}
               {user?.rol === 'paciente' && (
-                <div className="mb-2 px-3 py-2 rounded-xl text-xs flex items-center gap-2"
-                     style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                <div style={{ padding: '10px 14px', borderRadius: '2px', border: '1px solid rgba(22,19,19,0.08)', background: '#F7F5F2', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {guardando ? (
-                    <span className="text-gray-500">Guardando análisis en tu historial…</span>
+                    <span style={{ fontFamily: "'DM Sans', system-ui", fontSize: '11px', fontWeight: 300, color: 'rgba(22,19,19,0.45)' }}>Guardando análisis en tu historial…</span>
                   ) : analysisId ? (
-                    <span className="text-green-700 flex items-center gap-1.5">
-                      <CheckCircle2 size={12} /> Análisis guardado en tu historial
+                    <span style={{ fontFamily: "'DM Sans', system-ui", fontSize: '11px', fontWeight: 300, color: '#929C92', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <i className="ti ti-circle-check" style={{ fontSize: '12px' }} /> Análisis guardado en tu historial
                     </span>
                   ) : (
-                    <span className="text-gray-500">Análisis disponible solo en esta sesión</span>
+                    <span style={{ fontFamily: "'DM Sans', system-ui", fontSize: '11px', fontWeight: 300, color: 'rgba(22,19,19,0.45)' }}>Análisis disponible solo en esta sesión</span>
                   )}
                 </div>
               )}
 
               <button
                 onClick={() => navigate(solicitarCitaPath)}
-                className="w-full bg-blush-400 text-white font-semibold text-sm py-4 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"
+                style={{ width: '100%', background: '#161313', color: '#F7F5F2', border: 'none', borderRadius: '2px', padding: '14px', fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 400, letterSpacing: '0.04em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               >
-                <CalendarDays size={16} />
+                <i className="ti ti-calendar" style={{ fontSize: '15px' }} />
                 Solicitar cita con mi médico
               </button>
 
@@ -900,35 +903,40 @@ especialista en Dermatología.`}
                 <button
                   onClick={handleCompartir}
                   disabled={compartido}
-                  className="w-full font-semibold text-sm py-4 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-60"
                   style={{
-                    backgroundColor: compartido ? '#dcfce7' : '#dbeafe',
-                    color: compartido ? '#15803d' : '#1d4ed8',
-                    border: `1px solid ${compartido ? '#bbf7d0' : '#bfdbfe'}`,
+                    width: '100%', borderRadius: '2px', padding: '14px',
+                    fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 400, letterSpacing: '0.04em',
+                    cursor: compartido ? 'default' : 'pointer', opacity: compartido ? 0.7 : 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    background: compartido ? 'rgba(146,156,146,0.1)' : 'rgba(22,19,19,0.06)',
+                    color: compartido ? '#929C92' : '#161313',
+                    border: `1px solid ${compartido ? 'rgba(146,156,146,0.3)' : 'rgba(22,19,19,0.12)'}`,
                   }}
                 >
-                  {compartido ? <><CheckCircle2 size={16} /> Compartido con tu médico</> : <><Send size={16} /> Compartir con mi médico</>}
+                  {compartido
+                    ? <><i className="ti ti-circle-check" style={{ fontSize: '15px' }} /> Compartido con tu médico</>
+                    : <><i className="ti ti-send" style={{ fontSize: '15px' }} /> Compartir con mi médico</>}
                 </button>
               )}
 
               <button
                 onClick={() => window.print()}
-                className="w-full bg-white border border-gray-200 text-gray-700 font-medium text-sm py-3.5 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"
+                style={{ width: '100%', background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.12)', color: '#161313', borderRadius: '2px', padding: '12px', fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 400, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               >
-                <Printer size={16} />
+                <i className="ti ti-printer" style={{ fontSize: '15px' }} />
                 Descargar informe PDF
               </button>
               <button
                 onClick={reset}
-                className="w-full text-gray-500 text-sm font-medium py-3 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"
+                style={{ width: '100%', background: 'transparent', border: 'none', color: 'rgba(22,19,19,0.4)', borderRadius: '2px', padding: '10px', fontFamily: "'DM Sans', system-ui", fontSize: '12px', fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               >
-                <RefreshCw size={14} />
+                <i className="ti ti-refresh" style={{ fontSize: '14px' }} />
                 Nueva exploración
               </button>
             </div>
 
             {/* Footer reference */}
-            <p className="text-gray-400 text-[10px] text-center pb-2 leading-relaxed">
+            <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'rgba(22,19,19,0.3)', textAlign: 'center', paddingBottom: '8px', lineHeight: 1.5, margin: 0 }}>
               Basado en: Argenziano G. et al. Arch Dermatol. 1998;134(12):1563–1570
             </p>
           </>
