@@ -325,11 +325,17 @@ export default function ConversacionesPage() {
                       transition: 'color 0.15s',
                     }}
                   >
-                    {canal === 'admin' ? 'Administrativo' : 'Clínico'}
+                    {canal === 'admin' ? 'Recepción' : 'Canal Médico'}
                   </button>
                 ))}
               </div>
             )}
+            {/* Descripción del canal activo */}
+            <p style={{ fontFamily: DM_SANS, fontSize: '11px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', margin: '0 0 12px' }}>
+              {canalActivo === 'admin'
+                ? 'Citas, confirmaciones y gestión administrativa'
+                : 'Resultados clínicos, protocolos y seguimiento médico'}
+            </p>
             {/* Búsqueda */}
             <div style={{ position: 'relative' }}>
               <i className="ti ti-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: 'rgba(22,19,19,0.25)' }} />
