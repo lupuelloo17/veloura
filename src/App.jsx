@@ -45,6 +45,7 @@ import MisDatosPage from './pages/paciente/MisDatosPage'
 import ChatPacientePage         from './pages/clinica/ChatPacientePage'
 import MisMensajesPage from './pages/paciente/MisMensajesPage'
 import ConversacionesPage       from './pages/clinica/ConversacionesPage'
+import FinanzasPage             from './pages/clinica/FinanzasPage'
 
 // Wrapper que renderiza DermoscopiaPage dentro del ClinicLayout del paciente.
 // Así el paciente ve el bottom nav del portal (Inicio/Análisis/Citas/Datos)
@@ -146,6 +147,7 @@ function ClinicRoutes() {
           <Route path="paciente/:id"  element={<RequireRole roles={STAFF_ROLES}><PacienteDetallePage /></RequireRole>} />
           <Route path="agenda"        element={<RequireRole roles={STAFF_ROLES}><AgendaPage /></RequireRole>} />
           <Route path="configuracion" element={<RequireRole roles={['admin']}><ConfiguracionPage /></RequireRole>} />
+          <Route path="finanzas"      element={<RequireRole roles={['admin']}><FinanzasPage /></RequireRole>} />
 
           {/* ── Paciente ── */}
           <Route path="mi-perfil"              element={<RequireRole roles={['paciente']}><MiPerfilPage /></RequireRole>} />

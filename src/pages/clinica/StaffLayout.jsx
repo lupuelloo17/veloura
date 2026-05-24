@@ -8,6 +8,7 @@ const ADMIN_RECEPCION_NAV = [
   { label: 'Agenda',        icon: 'ti-calendar',          path: 'agenda'         },
   { label: 'Análisis',      icon: 'ti-microscope',        path: 'analisis'       },
   { label: 'Mensajes',      icon: 'ti-message',           path: 'conversaciones' },
+  { label: 'Finanzas',      icon: 'ti-chart-bar',         path: 'finanzas'       },
   { label: 'Configuración', icon: 'ti-settings',          path: 'configuracion'  },
 ]
 
