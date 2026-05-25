@@ -64,27 +64,16 @@ export function useRoutine(userEmail, clinicaId) {
 
       if (pasosError) throw pasosError
 
-      // 4. Cargar médicos via email (medico_id apunta a usuarios.id, no a medicos.id)
+      // 4. Cargar médicos directamente desde tabla medicos (medico_id = medicos.id)
       let medicosMap = {}
       if (medicoIds.length > 0) {
-        const { data: usuariosMedicos } = await supabase
-          .from('usuarios')
-          .select('id, email')
+        const { data: medicosData } = await supabase
+          .from('medicos')
+          .select('id, nombre, especialidad, foto, email')
           .in('id', medicoIds)
 
-        const emails = (usuariosMedicos || []).map(u => u.email).filter(Boolean)
-        if (emails.length) {
-          const { data: medicosData } = await supabase
-            .from('medicos')
-            .select('id, nombre, foto, especialidad, email')
-            .in('email', emails)
-
-          if (medicosData) {
-            ;(usuariosMedicos || []).forEach(u => {
-              const medico = medicosData.find(m => m.email === u.email)
-              if (medico) medicosMap[u.id] = medico
-            })
-          }
+        if (medicosData) {
+          medicosData.forEach(m => { medicosMap[m.id] = m })
         }
       }
 
