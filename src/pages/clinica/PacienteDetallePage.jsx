@@ -22,7 +22,7 @@ const RIESGO_STYLE = {
   alto:     { color: '#8B3A3A', bg: 'rgba(139,58,58,0.08)',   border: 'rgba(139,58,58,0.2)',   label: 'ALTO'     },
 }
 
-const TABS = ['Información', 'Sesiones', 'Análisis', 'Evolución']
+const TABS = ['Información', 'Sesiones', 'Análisis', 'Evolución', 'Rutina']
 
 export default function PacienteDetallePage() {
   const navigate     = useNavigate()
@@ -40,6 +40,83 @@ export default function PacienteDetallePage() {
   const [msgTexto,    setMsgTexto]    = useState('')
   const [enviandoMsg, setEnviandoMsg] = useState(false)
   const [msgEnviado,  setMsgEnviado]  = useState(false)
+
+  const [rutinasPaciente,  setRutinasPaciente]  = useState([])
+  const [cargandoRutinas,  setCargandoRutinas]  = useState(false)
+  const [creandoRutina,    setCreandoRutina]    = useState(false)
+  const [guardandoRutina,  setGuardandoRutina]  = useState(false)
+  const [rutinaForm,       setRutinaForm]       = useState({ nombre: '', descripcion: '', periodo: 'ambos' })
+  const [pasos,            setPasos]            = useState([
+    { nombre_producto: '', instrucciones: '', advertencias: '', momento: 'mañana', frecuencia_dias: 1, orden: 1 },
+  ])
+
+  useEffect(() => {
+    if (!paciente?.id || !isValidUUID(paciente.id)) return
+    setCargandoRutinas(true)
+    supabase
+      .from('rutinas_paciente')
+      .select('id, nombre, descripcion, periodo, activo, asignado_en, medico_id')
+      .eq('paciente_id', paciente.id)
+      .eq('activo', true)
+      .order('asignado_en', { ascending: false })
+      .then(({ data }) => {
+        setRutinasPaciente(data || [])
+        setCargandoRutinas(false)
+      })
+  }, [paciente])
+
+  async function handleGuardarRutina() {
+    if (!rutinaForm.nombre.trim() || !paciente?.id || !user?.id) return
+    setGuardandoRutina(true)
+    try {
+      const medicoId = await supabase
+        .from('medicos')
+        .select('id')
+        .eq('email', user.email)
+        .single()
+        .then(r => r.data?.id)
+
+      const { data: rutina, error: rErr } = await supabase
+        .from('rutinas_paciente')
+        .insert({
+          paciente_id: paciente.id,
+          clinica_id:  clinica.id,
+          medico_id:   medicoId || null,
+          nombre:      rutinaForm.nombre.trim(),
+          descripcion: rutinaForm.descripcion.trim(),
+          periodo:     rutinaForm.periodo,
+          activo:      true,
+        })
+        .select('id, nombre, descripcion, periodo, activo, asignado_en, medico_id')
+        .single()
+      if (rErr) throw rErr
+
+      const pasosInsert = pasos
+        .filter(p => p.nombre_producto.trim())
+        .map((p, i) => ({
+          rutina_id:        rutina.id,
+          orden:            i + 1,
+          momento:          p.momento,
+          nombre_producto:  p.nombre_producto.trim(),
+          instrucciones:    p.instrucciones.trim(),
+          advertencias:     p.advertencias.trim() || null,
+          frecuencia_dias:  p.frecuencia_dias,
+        }))
+
+      if (pasosInsert.length > 0) {
+        await supabase.from('pasos_rutina').insert(pasosInsert)
+      }
+
+      setRutinasPaciente(prev => [rutina, ...prev])
+      setCreandoRutina(false)
+      setRutinaForm({ nombre: '', descripcion: '', periodo: 'ambos' })
+      setPasos([{ nombre_producto: '', instrucciones: '', advertencias: '', momento: 'mañana', frecuencia_dias: 1, orden: 1 }])
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setGuardandoRutina(false)
+    }
+  }
 
   async function handleEnviarMensaje() {
     const texto = msgTexto.trim()
@@ -405,6 +482,147 @@ export default function PacienteDetallePage() {
             pacienteIdProp={id}
             readOnly={false}
           />
+        )}
+
+        {/* ── TAB 4: RUTINA ──────────────────────────────────────────────── */}
+        {tab === 4 && (
+          <div>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <span style={{ fontFamily: FRAUNCES, fontSize: '18px', fontWeight: 400, color: '#161313' }}>
+                Rutinas asignadas
+              </span>
+              <button
+                onClick={() => setCreandoRutina(true)}
+                style={{ background: '#161313', color: '#C9D3CA', border: 'none', borderRadius: '2px', padding: '9px 16px', fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <i className="ti ti-plus" style={{ fontSize: '13px' }} /> Nueva rutina
+              </button>
+            </div>
+
+            {/* Lista */}
+            {cargandoRutinas ? (
+              <div style={{ height: '60px', background: 'rgba(22,19,19,0.04)', borderRadius: '2px', marginBottom: '8px' }} />
+            ) : rutinasPaciente.length === 0 && !creandoRutina ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                <i className="ti ti-notebook" style={{ fontSize: '28px', color: 'rgba(22,19,19,0.15)', display: 'block', marginBottom: '8px' }} />
+                <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', margin: 0 }}>
+                  Sin rutinas asignadas
+                </p>
+              </div>
+            ) : (
+              rutinasPaciente.map(r => (
+                <div key={r.id} style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '16px 20px', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <p style={{ fontFamily: FRAUNCES, fontSize: '16px', fontWeight: 400, color: '#161313', margin: 0 }}>{r.nombre}</p>
+                    <p style={{ fontFamily: DM_MONO, fontSize: '10px', color: 'rgba(22,19,19,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '4px 0 0' }}>
+                      {r.periodo} · {r.asignado_en ? new Date(r.asignado_en).toLocaleDateString('es-ES') : '—'}
+                    </p>
+                  </div>
+                  <span style={{ fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '2px', background: 'rgba(146,156,146,0.1)', color: '#929C92', border: '1px solid rgba(146,156,146,0.2)' }}>
+                    ACTIVA
+                  </span>
+                </div>
+              ))
+            )}
+
+            {/* Formulario nueva rutina */}
+            {creandoRutina && (
+              <div style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.08)', borderRadius: '2px', padding: '24px', marginTop: '16px' }}>
+                <p style={{ fontFamily: FRAUNCES, fontSize: '18px', fontWeight: 400, color: '#161313', margin: '0 0 20px' }}>Nueva rutina</p>
+
+                <label style={{ fontFamily: DM_MONO, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.35)', display: 'block', marginBottom: '6px' }}>Nombre de la rutina *</label>
+                <input
+                  value={rutinaForm.nombre}
+                  onChange={e => setRutinaForm(f => ({ ...f, nombre: e.target.value }))}
+                  placeholder="Ej: Rutina anti-manchas, Protocolo post-tratamiento…"
+                  style={{ width: '100%', padding: '11px 14px', background: 'rgba(22,19,19,0.03)', border: '1px solid rgba(22,19,19,0.08)', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '13px', color: '#161313', outline: 'none', boxSizing: 'border-box', marginBottom: '16px' }}
+                />
+
+                <label style={{ fontFamily: DM_MONO, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.35)', display: 'block', marginBottom: '6px' }}>Descripción</label>
+                <textarea
+                  value={rutinaForm.descripcion}
+                  onChange={e => setRutinaForm(f => ({ ...f, descripcion: e.target.value }))}
+                  placeholder="Descripción del protocolo…"
+                  rows={2}
+                  style={{ width: '100%', padding: '11px 14px', background: 'rgba(22,19,19,0.03)', border: '1px solid rgba(22,19,19,0.08)', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '13px', color: '#161313', outline: 'none', boxSizing: 'border-box', marginBottom: '16px', resize: 'vertical' }}
+                />
+
+                <label style={{ fontFamily: DM_MONO, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.35)', display: 'block', marginBottom: '8px' }}>Período</label>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+                  {['mañana', 'noche', 'ambos'].map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setRutinaForm(f => ({ ...f, periodo: p }))}
+                      style={{ padding: '8px 14px', borderRadius: '2px', border: '1px solid', cursor: 'pointer', fontFamily: DM_MONO, fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', background: rutinaForm.periodo === p ? '#161313' : 'transparent', color: rutinaForm.periodo === p ? '#C9D3CA' : 'rgba(22,19,19,0.4)', borderColor: rutinaForm.periodo === p ? '#161313' : 'rgba(22,19,19,0.15)' }}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+
+                <p style={{ fontFamily: FRAUNCES, fontSize: '16px', fontWeight: 400, color: '#161313', margin: '0 0 12px' }}>Pasos del protocolo</p>
+                {pasos.map((paso, i) => (
+                  <div key={i} style={{ border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '16px', marginBottom: '10px', background: 'rgba(22,19,19,0.01)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontFamily: DM_MONO, fontSize: '10px', color: 'rgba(22,19,19,0.35)', letterSpacing: '0.1em' }}>PASO {i + 1}</span>
+                      {pasos.length > 1 && (
+                        <button
+                          onClick={() => setPasos(ps => ps.filter((_, j) => j !== i))}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(22,19,19,0.3)', fontSize: '14px' }}
+                        >✕</button>
+                      )}
+                    </div>
+                    <input
+                      value={paso.nombre_producto}
+                      onChange={e => setPasos(ps => ps.map((p, j) => j === i ? { ...p, nombre_producto: e.target.value } : p))}
+                      placeholder="Nombre del producto *"
+                      style={{ width: '100%', padding: '9px 12px', background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.1)', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '13px', color: '#161313', outline: 'none', boxSizing: 'border-box', marginBottom: '8px' }}
+                    />
+                    <textarea
+                      value={paso.instrucciones}
+                      onChange={e => setPasos(ps => ps.map((p, j) => j === i ? { ...p, instrucciones: e.target.value } : p))}
+                      placeholder="Instrucciones de uso…"
+                      rows={2}
+                      style={{ width: '100%', padding: '9px 12px', background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.1)', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '13px', color: '#161313', outline: 'none', boxSizing: 'border-box', marginBottom: '8px', resize: 'none' }}
+                    />
+                    <select
+                      value={paso.momento}
+                      onChange={e => setPasos(ps => ps.map((p, j) => j === i ? { ...p, momento: e.target.value } : p))}
+                      style={{ padding: '7px 10px', border: '1px solid rgba(22,19,19,0.1)', borderRadius: '2px', fontFamily: DM_MONO, fontSize: '10px', letterSpacing: '0.06em', color: 'rgba(22,19,19,0.6)', background: '#FFFFFF', outline: 'none', textTransform: 'uppercase' }}
+                    >
+                      <option value="mañana">MAÑANA</option>
+                      <option value="noche">NOCHE</option>
+                      <option value="ambos">AMBOS</option>
+                    </select>
+                  </div>
+                ))}
+
+                <button
+                  onClick={() => setPasos(ps => [...ps, { nombre_producto: '', instrucciones: '', advertencias: '', momento: 'mañana', frecuencia_dias: 1, orden: ps.length + 1 }])}
+                  style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px dashed rgba(22,19,19,0.15)', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', color: 'rgba(22,19,19,0.4)', cursor: 'pointer', letterSpacing: '0.06em', marginBottom: '20px' }}
+                >
+                  + Añadir paso
+                </button>
+
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={() => setCreandoRutina(false)}
+                    style={{ padding: '10px 18px', background: 'transparent', border: '1px solid rgba(22,19,19,0.1)', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.4)', cursor: 'pointer' }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleGuardarRutina}
+                    disabled={guardandoRutina || !rutinaForm.nombre.trim()}
+                    style={{ padding: '10px 20px', background: '#161313', border: 'none', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#C9D3CA', cursor: 'pointer', opacity: guardandoRutina || !rutinaForm.nombre.trim() ? 0.5 : 1 }}
+                  >
+                    {guardandoRutina ? 'Guardando…' : 'Guardar rutina'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
       </div>
