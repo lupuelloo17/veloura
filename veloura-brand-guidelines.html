@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veloura — Brand Guidelines</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --carbon:#161313;
+  --sage:#C9D3CA;
+  --sage-mid:#929C92;
+  --taupe:#A39384;
+  --cream:#F7F5F2;
+  --cream-dark:#EDE9E3;
+  --border:rgba(22,19,19,0.08);
+  --muted:rgba(22,19,19,0.35);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',system-ui;background:var(--cream);color:var(--carbon);-webkit-font-smoothing:antialiased}
+
+/* COVER */
+.cover{
+  min-height:100vh;background:var(--carbon);
+  display:flex;flex-direction:column;
+  justify-content:space-between;padding:48px;
+  position:relative;overflow:hidden;
+}
+.cover-circle{
+  position:absolute;border-radius:50%;border:1px solid rgba(201,211,202,0.06);
+  pointer-events:none;
+}
+.cover-top{display:flex;justify-content:space-between;align-items:flex-start}
+.wordmark{font-family:'Fraunces',Georgia,serif;font-size:28px;font-weight:300;color:var(--cream);letter-spacing:-0.02em}
+.cover-tag{font-family:'DM Mono',monospace;font-size:10px;color:rgba(201,211,202,0.4);letter-spacing:0.16em;text-transform:uppercase}
+.cover-main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:80px 0}
+.cover-eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.cover-eyebrow-line{width:28px;height:1px;background:rgba(201,211,202,0.4)}
+.cover-eyebrow-text{font-family:'DM Mono',monospace;font-size:11px;color:rgba(201,211,202,0.5);letter-spacing:0.16em;text-transform:uppercase}
+.cover-h1{font-family:'Fraunces',Georgia,serif;font-size:clamp(56px,8vw,96px);font-weight:300;line-height:0.95;letter-spacing:-0.02em;color:var(--cream);margin-bottom:8px}
+.cover-h1 em{font-style:italic;color:var(--taupe)}
+.cover-tagline{font-family:'DM Sans',system-ui;font-size:18px;font-weight:300;color:rgba(247,245,242,0.4);margin-top:24px;max-width:480px;line-height:1.7}
+.cover-bottom{display:flex;justify-content:space-between;align-items:flex-end}
+.cover-version{font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,242,0.2);letter-spacing:0.1em}
+.cover-url{font-family:'DM Mono',monospace;font-size:11px;color:rgba(201,211,202,0.4);letter-spacing:0.08em}
+
+/* SECTIONS */
+.section{padding:96px 48px}
+.section-dark{background:var(--carbon)}
+.section-mid{background:#1A1816}
+.section-light{background:var(--cream)}
+.section-white{background:#FFFFFF}
+
+.section-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--sage-mid);display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.section-eyebrow::before{content:'';display:block;width:20px;height:1px;background:currentColor;opacity:0.5}
+
+.section-h2{font-family:'Fraunces',Georgia,serif;font-size:clamp(36px,4vw,56px);font-weight:300;line-height:1.05;letter-spacing:-0.02em;margin-bottom:16px}
+.section-h2-light{color:var(--cream)}
+.section-h2-dark{color:var(--carbon)}
+
+.section-lead{font-family:'DM Sans',system-ui;font-size:16px;font-weight:300;line-height:1.8;max-width:560px}
+.section-lead-light{color:rgba(247,245,242,0.45)}
+.section-lead-dark{color:var(--muted)}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+/* COLORS */
+.color-swatch{border-radius:4px;overflow:hidden}
+.swatch-main{height:160px;position:relative;display:flex;align-items:flex-end;padding:20px}
+.swatch-hex{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.06em}
+.swatch-info{padding:16px 20px;background:#FFFFFF;border:1px solid var(--border);border-top:none}
+.swatch-name{font-family:'DM Sans',system-ui;font-size:13px;font-weight:400;color:var(--carbon);margin-bottom:2px}
+.swatch-use{font-family:'DM Sans',system-ui;font-size:11px;font-weight:300;color:var(--muted)}
+
+/* TYPOGRAPHY */
+.type-specimen{padding:32px;border:1px solid var(--border);border-radius:4px;background:#FFFFFF;margin-bottom:16px}
+.type-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:block}
+
+/* COMPONENTS */
+.component-group{margin-bottom:48px}
+.component-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;display:block}
+
+.btn-primary{display:inline-flex;align-items:center;gap:8px;background:var(--carbon);color:var(--sage);border:none;border-radius:2px;padding:12px 20px;font-family:'DM Sans',system-ui;font-size:11px;font-weight:400;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer}
+.btn-secondary{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--carbon);border:1px solid var(--border);border-radius:2px;padding:12px 20px;font-family:'DM Sans',system-ui;font-size:11px;font-weight:400;letter-spacing:0.12em;text-transform:uppercase;cursor:pointer}
+.badge-sage{display:inline-flex;align-items:center;gap:5px;background:rgba(146,156,146,0.10);color:var(--sage-mid);border:1px solid rgba(146,156,146,0.22);border-radius:999px;padding:3px 12px;font-family:'DM Mono',monospace;font-size:10px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase}
+.badge-taupe{display:inline-flex;align-items:center;gap:5px;background:rgba(163,147,132,0.10);color:var(--taupe);border:1px solid rgba(163,147,132,0.22);border-radius:999px;padding:3px 12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase}
+.badge-dark{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(201,211,202,0.2);border-radius:999px;padding:3px 12px;font-family:'DM Mono',monospace;font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--sage)}
+
+.input-demo{width:100%;padding:12px 14px;background:rgba(22,19,19,0.03);border:1px solid var(--border);border-radius:2px;font-family:'DM Sans',system-ui;font-size:14px;font-weight:300;color:var(--carbon);outline:none}
+.input-label{font-family:'DM Mono',monospace;font-size:10px;font-weight:300;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;display:block}
+
+/* FEATURE CARDS */
+.feature-card{border:1px solid rgba(247,245,242,0.07);border-radius:2px;padding:36px;position:relative}
+.feature-num{position:absolute;top:20px;right:24px;font-family:'Fraunces',Georgia,serif;font-size:64px;font-weight:300;color:rgba(247,245,242,0.05);line-height:1}
+.feature-cat{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(201,211,202,0.35);margin-bottom:18px}
+.feature-title{font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:400;color:var(--cream);margin-bottom:10px}
+.feature-desc{font-family:'DM Sans',system-ui;font-size:13px;font-weight:300;color:rgba(247,245,242,0.4);line-height:1.7}
+
+/* PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid rgba(247,245,242,0.07);border-radius:4px;overflow:hidden}
+.price-col{padding:36px;border-right:1px solid rgba(247,245,242,0.07)}
+.price-col:last-child{border-right:none}
+.price-col.featured{background:rgba(247,245,242,0.03)}
+.price-plan{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(201,211,202,0.4);margin-bottom:20px}
+.price-amount{font-family:'Fraunces',Georgia,serif;font-size:44px;font-weight:300;color:var(--cream);letter-spacing:-0.02em}
+.price-period{font-family:'DM Sans',system-ui;font-size:13px;font-weight:300;color:rgba(247,245,242,0.3);margin-left:6px}
+.price-desc{font-family:'DM Sans',system-ui;font-size:13px;font-weight:300;color:rgba(247,245,242,0.35);margin:14px 0 28px;line-height:1.6}
+.price-feature{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
+.price-check{font-family:'DM Mono',monospace;font-size:12px;color:var(--sage-mid);flex-shrink:0;margin-top:1px}
+.price-feat-text{font-family:'DM Sans',system-ui;font-size:12px;font-weight:300;color:rgba(247,245,242,0.45)}
+
+/* APP MOCKUP */
+.mockup-shell{
+  background:var(--carbon);border-radius:8px;overflow:hidden;
+  border:1px solid rgba(255,255,255,0.08);
+}
+.mockup-sidebar{
+  width:200px;background:var(--carbon);border-right:1px solid rgba(255,255,255,0.06);
+  padding:20px 0;flex-shrink:0;
+}
+.mockup-layout{display:flex;height:380px}
+.mockup-content{flex:1;background:var(--cream);padding:28px;overflow:hidden}
+.mockup-nav-item{padding:9px 18px;display:flex;align-items:center;gap:10px;font-family:'DM Sans',system-ui;font-size:12px;font-weight:300;color:rgba(247,245,242,0.3);cursor:default}
+.mockup-nav-item.active{color:var(--sage);border-left:2px solid var(--sage-mid);background:rgba(255,255,255,0.03)}
+.mockup-wordmark{font-family:'Fraunces',Georgia,serif;font-size:16px;font-weight:300;color:var(--cream);padding:0 18px 16px;border-bottom:1px solid rgba(255,255,255,0.06);margin-bottom:12px;letter-spacing:-0.02em}
+.mockup-clinic{font-family:'DM Mono',monospace;font-size:9px;color:rgba(247,245,242,0.25);letter-spacing:0.08em;text-transform:uppercase;padding:0 18px;margin-top:-10px;padding-bottom:16px}
+
+.m-eyebrow{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.m-h1{font-family:'Fraunces',Georgia,serif;font-size:24px;font-weight:300;color:var(--carbon);letter-spacing:-0.02em;margin-bottom:16px}
+.m-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.m-kpi{background:#FFFFFF;border:1px solid var(--border);border-radius:2px;padding:14px;text-align:center}
+.m-kpi-val{font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:300;color:var(--carbon)}
+.m-kpi-label{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.m-chart{background:#FFFFFF;border:1px solid var(--border);border-radius:2px;padding:16px;height:120px;display:flex;align-items:flex-end;gap:6px}
+.m-bar{border-radius:1px 1px 0 0;background:rgba(146,156,146,0.5)}
+.m-bar-alt{border-radius:1px 1px 0 0;background:rgba(163,147,132,0.35)}
+
+/* PATIENT MOCKUP */
+.patient-shell{
+  background:var(--carbon);border-radius:16px;overflow:hidden;
+  border:1px solid rgba(255,255,255,0.08);
+  width:200px;margin:0 auto;
+}
+.patient-hero{background:var(--carbon);padding:20px 16px 16px}
+.patient-eyebrow{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(201,211,202,0.45);display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.patient-eyebrow::before{content:'';display:block;width:14px;height:1px;background:currentColor;opacity:0.5}
+.patient-title{font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:300;color:var(--cream);letter-spacing:-0.02em;line-height:1}
+.patient-title em{font-style:italic;color:var(--sage)}
+.patient-body{background:var(--cream);padding:12px}
+.patient-step{border-bottom:1px solid rgba(22,19,19,0.07);padding:10px 0;display:grid;grid-template-columns:30px 1fr 16px;gap:0;align-items:start}
+.patient-step:last-child{border-bottom:none}
+.patient-num{font-family:'Fraunces',Georgia,serif;font-size:28px;font-weight:300;color:rgba(22,19,19,0.08);line-height:1}
+.patient-step-name{font-family:'Fraunces',Georgia,serif;font-size:12px;font-weight:400;color:var(--carbon);margin-top:4px}
+.patient-step-freq{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.08em;text-transform:uppercase;color:var(--sage-mid)}
+.patient-chevron{width:14px;height:14px;border-radius:50%;border:1px solid rgba(22,19,19,0.15);display:flex;align-items:center;justify-content:center;margin-top:6px}
+
+/* FOOTER */
+.doc-footer{background:var(--carbon);padding:48px;display:flex;justify-content:space-between;align-items:center}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border)}
+.divider-dark{height:1px;background:rgba(255,255,255,0.06)}
+
+/* NAV */
+.doc-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(22,19,19,0.92);backdrop-filter:blur(12px);padding:0 48px;height:52px;display:flex;align-items:center;justify-content:space-between}
+.doc-nav-wordmark{font-family:'Fraunces',Georgia,serif;font-size:18px;font-weight:300;color:var(--cream);letter-spacing:-0.02em}
+.doc-nav-links{display:flex;gap:28px}
+.doc-nav-link{font-family:'DM Sans',system-ui;font-size:12px;font-weight:300;color:rgba(247,245,242,0.4);text-decoration:none;letter-spacing:0.02em}
+
+.page-offset{padding-top:52px}
+</style>
+</head>
+<body>
+
+<nav class="doc-nav">
+  <span class="doc-nav-wordmark">Veloura</span>
+  <div class="doc-nav-links">
+    <a href="#marca" class="doc-nav-link">Marca</a>
+    <a href="#colores" class="doc-nav-link">Colores</a>
+    <a href="#tipografia" class="doc-nav-link">Tipografía</a>
+    <a href="#plataforma" class="doc-nav-link">Plataforma</a>
+    <a href="#precios" class="doc-nav-link">Precios</a>
+  </div>
+</nav>
+
+<!-- COVER -->
+<div class="cover page-offset">
+  <div class="cover-circle" style="width:600px;height:600px;top:-200px;right:-150px"></div>
+  <div class="cover-circle" style="width:400px;height:400px;bottom:-180px;left:-80px"></div>
+
+  <div class="cover-top">
+    <span class="wordmark">Veloura</span>
+    <span class="cover-tag">Brand Guidelines · 2026</span>
+  </div>
+
+  <div class="cover-main">
+    <div class="cover-eyebrow">
+      <div class="cover-eyebrow-line"></div>
+      <span class="cover-eyebrow-text">Documento de marca</span>
+    </div>
+    <h1 class="cover-h1">
+      La plataforma<br>
+      <em>inteligente</em><br>
+      para clínicas<br>
+      estéticas.
+    </h1>
+    <p class="cover-tagline">Guía completa de identidad visual, sistema de diseño y plataforma Veloura para clínicas de medicina estética.</p>
+  </div>
+
+  <div class="cover-bottom">
+    <span class="cover-version">Versión 1.0 · Mayo 2026</span>
+    <span class="cover-url">veloura-estetica.vercel.app</span>
+  </div>
+</div>
+
+<!-- BRAND STORY -->
+<div id="marca" class="section section-light">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="section-eyebrow">Identidad de marca</div>
+    <h2 class="section-h2 section-h2-dark">Veloura existe para<br>elevar la experiencia<br><em style="font-style:italic;color:var(--taupe)">clínica.</em></h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:48px">
+      <div>
+        <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Visión</p>
+        <p style="font-family:'DM Sans',system-ui;font-size:15px;font-weight:300;color:var(--carbon);line-height:1.8">Ser el sistema operativo de las mejores clínicas estéticas del mundo. No un software más — la plataforma que define el estándar de excelencia en medicina estética.</p>
+      </div>
+      <div>
+        <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Misión</p>
+        <p style="font-family:'DM Sans',system-ui;font-size:15px;font-weight:300;color:var(--carbon);line-height:1.8">Darle a cada clínica las herramientas que antes solo tenían las grandes cadenas: agenda inteligente, expediente clínico digital, análisis con IA y comunicación automatizada.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:56px;padding-top:40px;border-top:1px solid var(--border)">
+      <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:20px">Personalidad de marca</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <span class="badge-sage">Premium</span>
+        <span class="badge-sage">Sofisticada</span>
+        <span class="badge-sage">Minimalista</span>
+        <span class="badge-sage">Tecnológica</span>
+        <span class="badge-sage">Exclusiva</span>
+        <span class="badge-sage">Humana</span>
+      </div>
+    </div>
+
+    <div style="margin-top:48px;padding:36px;background:#FFFFFF;border:1px solid var(--border);border-radius:4px;border-left:3px solid var(--sage-mid)">
+      <p style="font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:300;font-style:italic;color:var(--carbon);line-height:1.5;margin-bottom:12px">"Cuando un dueño de clínica ve Veloura, debe pensar: esto eleva la imagen de mi clínica."</p>
+      <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--muted)">Principio de diseño · Veloura</p>
+    </div>
+  </div>
+</div>
+
+<!-- COLORS -->
+<div id="colores" class="section section-white">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="section-eyebrow" style="color:var(--sage-mid)">Paleta de colores</div>
+    <h2 class="section-h2 section-h2-dark">Cuatro colores.<br>Un carácter.</h2>
+    <p class="section-lead section-lead-dark" style="margin-bottom:48px">La paleta de Veloura combina el carbón editorial con el sage natural. Sofisticación sin frialdad.</p>
+
+    <div class="grid-4">
+      <div class="color-swatch">
+        <div class="swatch-main" style="background:#161313">
+          <span class="swatch-hex" style="color:rgba(247,245,242,0.5)">#161313</span>
+        </div>
+        <div class="swatch-info">
+          <p class="swatch-name">Carbon</p>
+          <p class="swatch-use">Fondos hero, texto primario, botones principales</p>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-main" style="background:#C9D3CA">
+          <span class="swatch-hex" style="color:rgba(22,19,19,0.5)">#C9D3CA</span>
+        </div>
+        <div class="swatch-info">
+          <p class="swatch-name">Sage Light</p>
+          <p class="swatch-use">Acentos sobre oscuro, elementos activos</p>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-main" style="background:#929C92">
+          <span class="swatch-hex" style="color:rgba(247,245,242,0.7)">#929C92</span>
+        </div>
+        <div class="swatch-info">
+          <p class="swatch-name">Sage Mid</p>
+          <p class="swatch-use">Badges, indicadores, progreso, bordes activos</p>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-main" style="background:#A39384">
+          <span class="swatch-hex" style="color:rgba(247,245,242,0.7)">#A39384</span>
+        </div>
+        <div class="swatch-info">
+          <p class="swatch-name">Taupe</p>
+          <p class="swatch-use">Acentos editoriales, cursiva en títulos</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:24px" class="grid-2">
+      <div class="color-swatch">
+        <div class="swatch-main" style="background:#F7F5F2;border:1px solid var(--border)">
+          <span class="swatch-hex" style="color:var(--muted)">#F7F5F2</span>
+        </div>
+        <div class="swatch-info">
+          <p class="swatch-name">Cream (Page)</p>
+          <p class="swatch-use">Fondo general de la aplicación</p>
+        </div>
+      </div>
+      <div class="color-swatch">
+        <div class="swatch-main" style="background:#FFFFFF;border:1px solid var(--border)">
+          <span class="swatch-hex" style="color:var(--muted)">#FFFFFF</span>
+        </div>
+        <div class="swatch-info">
+          <p class="swatch-name">White (Surface)</p>
+          <p class="swatch-use">Cards, tablas, superficies elevadas</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TYPOGRAPHY -->
+<div id="tipografia" class="section section-light">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="section-eyebrow">Sistema tipográfico</div>
+    <h2 class="section-h2 section-h2-dark">Dos fuentes.<br>Una voz editorial.</h2>
+
+    <div style="margin-top:48px">
+      <div class="type-specimen">
+        <span class="type-label">Display / Títulos — Fraunces Light 300</span>
+        <p style="font-family:'Fraunces',Georgia,serif;font-size:48px;font-weight:300;color:var(--carbon);line-height:1;letter-spacing:-0.02em">La medicina estética del siglo XXI.</p>
+        <p style="font-family:'Fraunces',Georgia,serif;font-size:48px;font-weight:300;font-style:italic;color:var(--taupe);line-height:1;letter-spacing:-0.02em;margin-top:4px">La medicina estética del siglo XXI.</p>
+      </div>
+      <div class="type-specimen">
+        <span class="type-label">Body / UI — DM Sans Light 300</span>
+        <p style="font-family:'DM Sans',system-ui;font-size:16px;font-weight:300;color:var(--carbon);line-height:1.8">Gestión de citas, expediente clínico digital, análisis dermoscópico con inteligencia artificial y comunicación automatizada con pacientes. Todo en una sola plataforma diseñada para clínicas que quieren crecer sin perder el control.</p>
+      </div>
+      <div class="type-specimen">
+        <span class="type-label">Labels / Datos — DM Mono Regular 400</span>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase">PROTOCOLO RECETADO · CLÍNICA LUMIÈRE</p>
+          <p style="font-family:'DM Mono',monospace;font-size:13px;color:var(--carbon)">F-2026-034 · €174.00 · 14 may 2026</p>
+          <p style="font-family:'DM Mono',monospace;font-size:10px;color:var(--sage-mid);letter-spacing:0.1em">BAJO RIESGO · BAJO MODERADO ALTO</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px;padding:28px;background:#FFFFFF;border:1px solid var(--border);border-radius:4px">
+      <p style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:16px">Jerarquía tipográfica</p>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:baseline;gap:24px">
+          <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);width:80px;flex-shrink:0">Hero</span>
+          <span style="font-family:'Fraunces',Georgia,serif;font-size:32px;font-weight:300;color:var(--carbon);letter-spacing:-0.02em">Fraunces 300 · clamp(48-96px)</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:24px">
+          <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);width:80px;flex-shrink:0">H1</span>
+          <span style="font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:300;color:var(--carbon);letter-spacing:-0.02em">Fraunces 300 · 32-40px</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:24px">
+          <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);width:80px;flex-shrink:0">H2</span>
+          <span style="font-family:'Fraunces',Georgia,serif;font-size:18px;font-weight:400;color:var(--carbon)">Fraunces 400 · 18-24px</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:24px">
+          <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);width:80px;flex-shrink:0">Body</span>
+          <span style="font-family:'DM Sans',system-ui;font-size:15px;font-weight:300;color:var(--carbon)">DM Sans 300 · 13-16px · line-height 1.7</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:24px">
+          <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);width:80px;flex-shrink:0">Label</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase">DM Mono 400 · 9-11px · UPPERCASE</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PLATFORM -->
+<div id="plataforma" class="section section-mid">
+  <div style="max-width:960px;margin:0 auto">
+    <div class="section-eyebrow" style="color:var(--sage-mid)">La plataforma</div>
+    <h2 class="section-h2 section-h2-light" style="margin-bottom:16px">Cada herramienta que<br>necesita tu clínica.</h2>
+    <p class="section-lead section-lead-light" style="margin-bottom:56px">Diseñado para clínicas de 1 a 50+ médicos. Desde el día uno.</p>
+
+    <!-- App mockup desktop -->
+    <div class="mockup-shell" style="margin-bottom:48px">
+      <div class="mockup-layout">
+        <div class="mockup-sidebar">
+          <div class="mockup-wordmark">Veloura</div>
+          <div class="mockup-clinic">Clínica Lumière</div>
+          <div class="mockup-nav-item active">Dashboard</div>
+          <div class="mockup-nav-item">Pacientes</div>
+          <div class="mockup-nav-item">Agenda</div>
+          <div class="mockup-nav-item">Análisis IA</div>
+          <div class="mockup-nav-item">Mensajes</div>
+          <div class="mockup-nav-item">Finanzas</div>
+          <div class="mockup-nav-item">Configuración</div>
+        </div>
+        <div class="mockup-content">
+          <div class="m-eyebrow">Dashboard ejecutivo</div>
+          <div class="m-h1">Buenos días, Dra. García</div>
+          <div class="m-kpi-grid">
+            <div class="m-kpi"><div class="m-kpi-val">148</div><div class="m-kpi-label">Pacientes</div></div>
+            <div class="m-kpi"><div class="m-kpi-val">34</div><div class="m-kpi-label">Sesiones/mes</div></div>
+            <div class="m-kpi"><div class="m-kpi-val">87%</div><div class="m-kpi-label">Satisfacción</div></div>
+            <div class="m-kpi"><div class="m-kpi-val" style="font-size:16px">12.4K€</div><div class="m-kpi-label">Ingresos</div></div>
+          </div>
+          <div class="m-chart">
+            <div class="m-bar" style="height:55%;flex:1"></div>
+            <div class="m-bar-alt" style="height:20%;flex:0.4"></div>
+            <div class="m-bar" style="height:65%;flex:1"></div>
+            <div class="m-bar-alt" style="height:22%;flex:0.4"></div>
+            <div class="m-bar" style="height:50%;flex:1"></div>
+            <div class="m-bar-alt" style="height:18%;flex:0.4"></div>
+            <div class="m-bar" style="height:72%;flex:1"></div>
+            <div class="m-bar-alt" style="height:25%;flex:0.4"></div>
+            <div class="m-bar" style="height:68%;flex:1"></div>
+            <div class="m-bar-alt" style="height:23%;flex:0.4"></div>
+            <div class="m-bar" style="height:80%;flex:1"></div>
+            <div class="m-bar-alt" style="height:28%;flex:0.4"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features grid -->
+    <div class="grid-3" style="gap:0;border:1px solid rgba(247,245,242,0.07);border-radius:4px;overflow:hidden">
+      <div class="feature-card" style="border-right:1px solid rgba(247,245,242,0.07);border-bottom:1px solid rgba(247,245,242,0.07)">
+        <div class="feature-num">01</div>
+        <div class="feature-cat">Gestión</div>
+        <div class="feature-title">Agenda inteligente</div>
+        <div class="feature-desc">IA predictiva. Recordatorios automáticos. Lista de espera. Reduce cancelaciones un 42%.</div>
+      </div>
+      <div class="feature-card" style="border-right:1px solid rgba(247,245,242,0.07);border-bottom:1px solid rgba(247,245,242,0.07)">
+        <div class="feature-num">02</div>
+        <div class="feature-cat">Pacientes</div>
+        <div class="feature-title">Expediente clínico digital</div>
+        <div class="feature-desc">Historial completo, fotos antes/después, alergias, consentimientos y notas clínicas.</div>
+      </div>
+      <div class="feature-card" style="border-bottom:1px solid rgba(247,245,242,0.07)">
+        <div class="feature-num">03</div>
+        <div class="feature-cat">Inteligencia Artificial</div>
+        <div class="feature-title">Dermoscopia con IA</div>
+        <div class="feature-desc">Análisis dermoscópico Seven-Point Checklist con IA. Informe clínico completo en segundos.</div>
+      </div>
+      <div class="feature-card" style="border-right:1px solid rgba(247,245,242,0.07)">
+        <div class="feature-num">04</div>
+        <div class="feature-cat">Crecimiento</div>
+        <div class="feature-title">Marketing automatizado</div>
+        <div class="feature-desc">Campañas por WhatsApp, email y SMS. Reactivación de pacientes inactivos automática.</div>
+      </div>
+      <div class="feature-card" style="border-right:1px solid rgba(247,245,242,0.07)">
+        <div class="feature-num">05</div>
+        <div class="feature-cat">Finanzas</div>
+        <div class="feature-title">Facturación y cobro</div>
+        <div class="feature-desc">Facturas, cuentas por cobrar, TPV integrado y reportes fiscales listos para descarga.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-num">06</div>
+        <div class="feature-cat">Portal del paciente</div>
+        <div class="feature-title">App móvil del paciente</div>
+        <div class="feature-desc">Rutina recetada, evolución fotográfica, chat con el médico e historial de citas.</div>
+      </div>
+    </div>
+
+    <!-- Patient app mockup -->
+    <div style="margin-top:56px;text-align:center">
+      <p style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(201,211,202,0.4);margin-bottom:32px">Portal del paciente · app instalable iOS & Android</p>
+      <div style="display:flex;gap:24px;justify-content:center">
+        <!-- Patient routine mockup -->
+        <div class="patient-shell">
+          <div class="patient-hero">
+            <div class="patient-eyebrow">Protocolo recetado</div>
+            <div class="patient-title">Mi Rutina<br><em>Recetada</em></div>
+          </div>
+          <div style="background:var(--carbon);padding:8px 16px">
+            <div style="display:flex;border:1px solid rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
+              <div style="flex:1;padding:8px;background:rgba(201,211,202,0.08);text-align:center;font-family:'DM Mono',monospace;font-size:9px;color:var(--sage);letter-spacing:0.1em;text-transform:uppercase">MAÑANA •</div>
+              <div style="flex:1;padding:8px;text-align:center;font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.2);letter-spacing:0.1em;text-transform:uppercase">NOCHE</div>
+            </div>
+          </div>
+          <div class="patient-body">
+            <div class="patient-step">
+              <div class="patient-num">1</div>
+              <div style="padding-left:6px">
+                <div class="patient-step-name">Gel Limpiador</div>
+                <div class="patient-step-freq">Diario</div>
+              </div>
+              <div class="patient-chevron"></div>
+            </div>
+            <div class="patient-step">
+              <div class="patient-num">2</div>
+              <div style="padding-left:6px">
+                <div class="patient-step-name">Sérum Vitamina C</div>
+                <div class="patient-step-freq">Diario</div>
+              </div>
+              <div class="patient-chevron"></div>
+            </div>
+            <div class="patient-step">
+              <div class="patient-num">3</div>
+              <div style="padding-left:6px">
+                <div class="patient-step-name">Hidratante SPF 50+</div>
+                <div class="patient-step-freq">Diario</div>
+              </div>
+              <div class="patient-chevron"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Patient analysis mockup -->
+        <div class="patient-shell">
+          <div class="patient-hero">
+            <div class="patient-eyebrow">Mis análisis</div>
+            <div class="patient-title">Mis<br>Análisis</div>
+          </div>
+          <div class="patient-body">
+            <div style="background:#FFFFFF;border:1px solid rgba(22,19,19,0.07);border-radius:2px;padding:12px;margin-bottom:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid rgba(146,156,146,0.2);color:var(--sage-mid);padding:2px 7px;border-radius:2px">BAJO</span>
+                <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)">12 may 2026</span>
+              </div>
+              <div style="font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:300;color:var(--carbon)">2/7</div>
+              <div style="height:2px;background:rgba(22,19,19,0.06);margin-top:6px;border-radius:1px"><div style="height:100%;width:28%;background:var(--sage-mid);border-radius:1px"></div></div>
+            </div>
+            <div style="background:#FFFFFF;border:1px solid rgba(22,19,19,0.07);border-radius:2px;padding:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span style="font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid rgba(163,147,132,0.2);color:var(--taupe);padding:2px 7px;border-radius:2px">MODERADO</span>
+                <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)">24 may 2026</span>
+              </div>
+              <div style="font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:300;color:var(--carbon)">4/7</div>
+              <div style="height:2px;background:rgba(22,19,19,0.06);margin-top:6px;border-radius:1px"><div style="height:100%;width:57%;background:var(--taupe);border-radius:1px"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div id="precios" class="section section-dark">
+  <div style="max-width:900px;margin:0 auto">
+    <div class="section-eyebrow" style="color:var(--sage-mid)">Precios</div>
+    <h2 class="section-h2 section-h2-light">Transparente.<br>Sin sorpresas.</h2>
+    <p class="section-lead section-lead-light" style="margin-bottom:56px">14 días de prueba gratuita en todos los planes. Sin tarjeta de crédito.</p>
+
+    <div class="pricing-grid">
+      <div class="price-col">
+        <div class="price-plan">Esencial</div>
+        <div><span class="price-amount">€149</span><span class="price-period">/mes + IVA</span></div>
+        <div class="price-desc">Para clínicas que empiezan. Todo lo esencial para gestionar tu día a día sin complicaciones.</div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">1 sede · hasta 1 especialista</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Agenda y citas online</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Expediente básico</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Facturación simple</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Soporte por email</span></div>
+      </div>
+      <div class="price-col featured" style="position:relative">
+        <div style="position:absolute;top:20px;right:20px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.12em;border:1px solid rgba(201,211,202,0.2);color:rgba(201,211,202,0.5);padding:3px 10px">MÁS POPULAR</div>
+        <div class="price-plan">Clínica Pro</div>
+        <div><span class="price-amount">€249</span><span class="price-period">/mes + IVA</span></div>
+        <div class="price-desc">La elección de la mayoría. Todo lo que necesita una clínica en crecimiento.</div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Especialistas ilimitados</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Agenda inteligente con IA</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Expediente clínico completo</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Dermoscopia con IA</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Marketing automatizado</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Analítica avanzada</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Soporte prioritario</span></div>
+      </div>
+      <div class="price-col">
+        <div class="price-plan">Enterprise</div>
+        <div><span class="price-amount" style="font-size:32px">Consultar</span></div>
+        <div class="price-desc">Para grupos y redes de clínicas con necesidades específicas.</div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Sedes ilimitadas</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Panel multi-sede unificado</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Integraciones a medida</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">SLA garantizado 99.9%</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Gestor de cuenta dedicado</span></div>
+        <div class="price-feature"><span class="price-check">✓</span><span class="price-feat-text">Onboarding presencial</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+  <div>
+    <div style="font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:300;color:var(--cream);letter-spacing:-0.02em;margin-bottom:6px">Veloura</div>
+    <div style="font-family:'DM Sans',system-ui;font-size:13px;font-weight:300;color:rgba(247,245,242,0.3);line-height:1.6;max-width:320px">La plataforma inteligente para clínicas estéticas. Gestión, crecimiento y control en un solo lugar.</div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:rgba(247,245,242,0.3);margin-bottom:6px">veloura-estetica.vercel.app</div>
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,242,0.15)">© 2026 Veloura Technologies SL · Madrid, España</div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,18 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { CalendarDays, Clock, ChevronLeft, Plus, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useClinic } from '../../contexts/ClinicContext'
 import { supabase } from '../../lib/supabase'
 import ClinicLayout from './ClinicLayout'
 import SolicitarCitaDrawer from '../../components/SolicitarCitaDrawer'
 
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
+const DM_MONO   = "'DM Mono', monospace"
+const DM_SANS   = "'DM Sans', system-ui, sans-serif"
+const FRAUNCES  = "'Fraunces', Georgia, serif"
+
 const ESTADO_BADGE = {
-  pendiente:  { bg: '#fef9c3', text: '#a16207', label: 'Pendiente'   },
-  confirmada: { bg: '#dcfce7', text: '#15803d', label: 'Confirmada'  },
-  completada: { bg: '#dbeafe', text: '#1d4ed8', label: 'Completada'  },
-  cancelada:  { bg: '#fee2e2', text: '#b91c1c', label: 'Cancelada'   },
-  no_asistio: { bg: '#f3f4f6', text: '#6b7280', label: 'No asistió'  },
+  pendiente:  { color: '#C8A882',              bg: 'rgba(200,168,130,0.12)', border: 'rgba(200,168,130,0.25)', label: 'Pendiente'  },
+  confirmada: { color: '#6B8F6E',              bg: 'rgba(107,143,110,0.10)', border: 'rgba(107,143,110,0.20)', label: 'Confirmada' },
+  completada: { color: 'rgba(22,19,19,0.45)',  bg: 'rgba(22,19,19,0.04)',    border: 'rgba(22,19,19,0.10)',    label: 'Completada' },
+  cancelada:  { color: 'rgba(22,19,19,0.35)',  bg: 'rgba(22,19,19,0.03)',    border: 'rgba(22,19,19,0.08)',    label: 'Cancelada'  },
+  no_asistio: { color: 'rgba(22,19,19,0.35)',  bg: 'rgba(22,19,19,0.03)',    border: 'rgba(22,19,19,0.08)',    label: 'No asistió' },
 }
 
 function fmtFechaHora(d) {
@@ -28,21 +33,21 @@ export default function MisCitasPacientePage() {
   const { slug } = useParams()
   const { user } = useAuth()
   const { clinica } = useClinic()
-  const brand = clinica?.color_primario ?? '#C8A882'
 
-  const [citas, setCitas]       = useState([])
-  const [cargando, setCargando] = useState(true)
+  const [citas,      setCitas]      = useState([])
+  const [cargando,   setCargando]   = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [error,      setError]      = useState(null)
 
   async function recargar() {
     if (!supabase || !user?.id) { setCargando(false); return }
     setCargando(true)
-    const { data, error } = await supabase
+    const { data, error: err } = await supabase
       .from('citas')
       .select('*')
       .eq('paciente_id', user.id)
       .order('fecha', { ascending: false })
-    if (!error) setCitas(data || [])
+    if (!err) setCitas(data || [])
     setCargando(false)
   }
 
@@ -63,7 +68,6 @@ export default function MisCitasPacientePage() {
     return () => { cancelled = true }
   }, [user?.id])
 
-  // Separar próximas vs histórico
   const { proximas, historico } = useMemo(() => {
     const ahora = new Date()
     const prox  = []
@@ -80,7 +84,19 @@ export default function MisCitasPacientePage() {
     return { proximas: prox, historico: hist }
   }, [citas])
 
+  function handleSolicitarCita() {
+    if (!clinica?.id || !isValidUUID(clinica.id)) {
+      setError('Servicio no disponible en modo demo')
+      return
+    }
+    setDrawerOpen(true)
+  }
+
   async function handleCancelar(cita) {
+    if (!clinica?.id || !isValidUUID(clinica.id)) {
+      setError('Servicio no disponible en modo demo')
+      return
+    }
     const horasRestantes = (new Date(cita.fecha) - new Date()) / 36e5
     if (horasRestantes < 24) {
       alert('No se puede cancelar con menos de 24 horas de antelación. Contacta con tu clínica.')
@@ -88,67 +104,160 @@ export default function MisCitasPacientePage() {
     }
     if (!confirm(`¿Cancelar la cita de ${cita.tratamiento}? La clínica recibirá la notificación.`)) return
     if (!supabase) return alert('Modo demo: sin Supabase configurado')
-    const { error } = await supabase
+    const { error: err } = await supabase
       .from('citas')
       .update({ estado: 'cancelada' })
       .eq('id', cita.id)
-    if (error) return alert('Error: ' + error.message)
+    if (err) return alert('Error: ' + err.message)
     recargar()
   }
 
   return (
     <ClinicLayout>
-      <div className="animate-fade-in">
-        <div className="bg-white px-5 pt-6 pb-5 border-b border-gray-100">
-          <button
-            onClick={() => navigate(`/clinica/${slug}/mi-perfil`)}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center mb-3"
-          >
-            <ChevronLeft size={16} className="text-gray-500" />
-          </button>
-          <h1 className="text-gray-900 font-bold text-xl">Mis citas</h1>
-          <p className="text-gray-400 text-xs mt-0.5">
+      <div style={{ fontFamily: DM_SANS, background: 'var(--vl-page)', paddingBottom: '104px' }}>
+
+        {/* ── HERO ─────────────────────────────────────────────── */}
+        <div style={{
+          background:  '#161313',
+          padding:     '32px 24px 24px',
+          position:    'relative',
+          overflow:    'hidden',
+        }}>
+          <div style={{
+            position: 'absolute', top: '-60px', right: '-60px',
+            width: '200px', height: '200px', borderRadius: '50%',
+            border: '1px solid rgba(201,211,202,0.06)', pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', top: '20px', right: '20px',
+            width: '120px', height: '120px', borderRadius: '50%',
+            border: '1px solid rgba(201,211,202,0.04)', pointerEvents: 'none',
+          }} />
+
+          <p style={{
+            fontFamily:    DM_MONO,
+            fontSize:      '10px',
+            fontWeight:    300,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color:         'rgba(201,211,202,0.5)',
+            margin:        '0 0 12px',
+          }}>
+            Mis Citas
+          </p>
+
+          <h1 style={{
+            fontFamily:    FRAUNCES,
+            fontSize:      '40px',
+            fontWeight:    400,
+            letterSpacing: '-0.02em',
+            color:         '#F7F5F2',
+            margin:        '0 0 6px',
+            lineHeight:    1.05,
+          }}>
+            Mis Citas
+          </h1>
+
+          <p style={{
+            fontFamily:    DM_SANS,
+            fontSize:      '12px',
+            fontWeight:    300,
+            color:         'rgba(247,245,242,0.35)',
+            letterSpacing: '0.04em',
+            margin:        0,
+          }}>
             {citas.length} {citas.length === 1 ? 'cita registrada' : 'citas registradas'}
           </p>
         </div>
 
-        <div className="px-5 py-5 space-y-5">
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="w-full py-4 rounded-2xl text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
-            style={{ backgroundColor: brand }}
-          >
-            <Plus size={16} /> Solicitar nueva cita
-          </button>
+        {/* ── CONTENT ─────────────────────────────────────────── */}
+        <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-          {cargando && (
-            <p className="text-center text-gray-400 text-sm py-4">Cargando citas…</p>
+          {/* Error banner */}
+          {error && (
+            <div style={{
+              background:  'rgba(200,168,130,0.08)',
+              border:      '1px solid rgba(200,168,130,0.2)',
+              borderLeft:  '3px solid #C8A882',
+              borderRadius: '2px',
+              padding:     '10px 14px',
+              display:     'flex',
+              alignItems:  'center',
+              gap:         '10px',
+            }}>
+              <i className="ti ti-alert-circle" style={{ fontSize: '14px', color: '#C8A882', flexShrink: 0 }} />
+              <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: '#C8A882', margin: 0, flex: 1 }}>
+                {error}
+              </p>
+              <button
+                onClick={() => setError(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(200,168,130,0.6)', fontSize: '18px', lineHeight: 1, padding: 0, flexShrink: 0 }}
+              >×</button>
+            </div>
           )}
 
+          {/* Solicitar cita */}
+          <button
+            onClick={handleSolicitarCita}
+            style={{
+              width:          '100%',
+              background:     '#161313',
+              color:          '#C9D3CA',
+              border:         'none',
+              borderRadius:   '2px',
+              padding:        '14px 20px',
+              fontFamily:     DM_SANS,
+              fontSize:       '11px',
+              fontWeight:     400,
+              letterSpacing:  '0.12em',
+              textTransform:  'uppercase',
+              cursor:         'pointer',
+              display:        'flex',
+              alignItems:     'center',
+              justifyContent: 'center',
+              gap:            '8px',
+            }}
+          >
+            <i className="ti ti-calendar-plus" style={{ fontSize: '14px' }} />
+            Solicitar nueva cita
+          </button>
+
+          {/* Loading */}
+          {cargando && (
+            <p style={{
+              fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300,
+              color: 'rgba(22,19,19,0.35)', textAlign: 'center', padding: '24px 0', margin: 0,
+            }}>
+              Cargando citas…
+            </p>
+          )}
+
+          {/* Próximas */}
           {!cargando && (
-            <Section title="Próximas" brand={brand} icon={CalendarDays}>
+            <SeccionCitas titulo="Próximas">
               {proximas.length === 0 ? (
-                <EmptyState text="No tienes citas próximas. Pulsa 'Solicitar nueva cita' para reservar." />
+                <EstadoVacio texto="No tienes citas próximas. Pulsa 'Solicitar nueva cita' para reservar." />
               ) : (
                 proximas.map(c => (
                   <CitaCard
                     key={c.id}
                     cita={c}
-                    brand={brand}
                     onCancelar={() => handleCancelar(c)}
                   />
                 ))
               )}
-            </Section>
+            </SeccionCitas>
           )}
 
+          {/* Histórico */}
           {!cargando && historico.length > 0 && (
-            <Section title="Histórico" brand={brand} icon={Clock}>
+            <SeccionCitas titulo="Histórico">
               {historico.map(c => (
-                <CitaCard key={c.id} cita={c} brand={brand} compacta />
+                <CitaCard key={c.id} cita={c} compacta />
               ))}
-            </Section>
+            </SeccionCitas>
           )}
+
         </div>
       </div>
 
@@ -162,65 +271,171 @@ export default function MisCitasPacientePage() {
   )
 }
 
-function Section({ title, brand, icon: Icon, children }) {
+
+// ═══════════════════════════════════════════════════════════════════
+//  SECCIÓN
+// ═══════════════════════════════════════════════════════════════════
+function SeccionCitas({ titulo, children }) {
   return (
     <div>
-      <p className="text-gray-800 font-semibold text-sm mb-2 flex items-center gap-2">
-        <Icon size={14} style={{ color: brand }} /> {title}
+      <p style={{
+        fontFamily:    DM_MONO,
+        fontSize:      '9px',
+        fontWeight:    300,
+        letterSpacing: '0.15em',
+        textTransform: 'uppercase',
+        color:         'rgba(22,19,19,0.35)',
+        margin:        '0 0 10px',
+      }}>
+        {titulo}
       </p>
-      <div className="space-y-2">{children}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {children}
+      </div>
     </div>
   )
 }
 
-function CitaCard({ cita, brand, compacta, onCancelar }) {
-  const estado = ESTADO_BADGE[cita.estado] || ESTADO_BADGE.pendiente
+
+// ═══════════════════════════════════════════════════════════════════
+//  CITA CARD
+// ═══════════════════════════════════════════════════════════════════
+function CitaCard({ cita, compacta, onCancelar }) {
+  const badge = ESTADO_BADGE[cita.estado] ?? ESTADO_BADGE.pendiente
   const f = new Date(cita.fecha)
   const horasRestantes = (f - new Date()) / 36e5
 
   return (
-    <div
-      className="bg-white rounded-2xl p-4 shadow-sm border"
-      style={{
-        borderColor: compacta ? '#f3f4f6' : '#e5e7eb',
-        borderLeftWidth: compacta ? '1px' : '4px',
-        borderLeftColor: compacta ? '#f3f4f6' : brand,
-      }}
-    >
-      <div className="flex items-start justify-between gap-2 mb-1.5">
-        <p className={`text-sm font-bold ${compacta ? 'text-gray-600' : 'text-gray-900'}`}>
+    <div style={{
+      background:    '#FFFFFF',
+      border:        '1px solid rgba(22,19,19,0.07)',
+      borderRadius:  '2px',
+      padding:       compacta ? '14px 16px' : '16px 20px',
+      opacity:       compacta ? 0.75 : 1,
+    }}>
+
+      {/* Tratamiento + badge */}
+      <div style={{
+        display:        'flex',
+        alignItems:     'flex-start',
+        justifyContent: 'space-between',
+        gap:            '10px',
+        marginBottom:   '8px',
+      }}>
+        <p style={{
+          fontFamily: FRAUNCES,
+          fontSize:   compacta ? '14px' : '16px',
+          fontWeight: 300,
+          color:      '#161313',
+          margin:     0,
+          lineHeight: 1.3,
+        }}>
           {cita.tratamiento}
         </p>
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: estado.bg, color: estado.text }}>
-          {estado.label}
+        <span style={{
+          fontFamily:    DM_MONO,
+          fontSize:      '9px',
+          fontWeight:    300,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color:         badge.color,
+          background:    badge.bg,
+          border:        `1px solid ${badge.border}`,
+          borderRadius:  '2px',
+          padding:       '3px 8px',
+          flexShrink:    0,
+        }}>
+          {badge.label}
         </span>
       </div>
-      <p className="text-gray-600 text-xs flex items-center gap-1.5 capitalize">
-        <Clock size={11} className="text-gray-400" /> {fmtFechaHora(f)}
-      </p>
+
+      {/* Fecha */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: cita.duracion_minutos ? '4px' : 0 }}>
+        <i className="ti ti-calendar" style={{ fontSize: '12px', color: 'rgba(22,19,19,0.3)', flexShrink: 0 }} />
+        <p style={{
+          fontFamily:    DM_SANS,
+          fontSize:      '12px',
+          fontWeight:    300,
+          color:         'rgba(22,19,19,0.55)',
+          margin:        0,
+          textTransform: 'capitalize',
+        }}>
+          {fmtFechaHora(f)}
+        </p>
+      </div>
+
+      {/* Duración */}
       {cita.duracion_minutos && (
-        <p className="text-gray-400 text-[11px] mt-0.5">{cita.duracion_minutos} min</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <i className="ti ti-clock" style={{ fontSize: '12px', color: 'rgba(22,19,19,0.25)', flexShrink: 0 }} />
+          <p style={{
+            fontFamily: DM_MONO,
+            fontSize:   '10px',
+            fontWeight: 300,
+            color:      'rgba(22,19,19,0.3)',
+            margin:     0,
+          }}>
+            {cita.duracion_minutos} min
+          </p>
+        </div>
       )}
-      {cita.notas_previas && !compacta && (
-        <p className="text-gray-500 text-[11px] mt-2 leading-relaxed bg-gray-50 rounded-lg px-2.5 py-1.5">
+
+      {/* Notas */}
+      {!compacta && cita.notas_previas && (
+        <p style={{
+          fontFamily:  DM_SANS,
+          fontSize:    '12px',
+          fontWeight:  300,
+          color:       'rgba(22,19,19,0.45)',
+          background:  'rgba(22,19,19,0.03)',
+          border:      '1px solid rgba(22,19,19,0.05)',
+          borderRadius: '2px',
+          padding:     '8px 12px',
+          margin:      '10px 0 0',
+          lineHeight:  1.6,
+        }}>
           {cita.notas_previas}
         </p>
       )}
 
+      {/* Aviso pendiente */}
       {!compacta && cita.estado === 'pendiente' && (
-        <div className="mt-3 flex items-center gap-2 text-amber-600 text-[11px]">
-          <AlertCircle size={11} />
-          <span>Pendiente de confirmación por la clínica</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
+          <i className="ti ti-clock" style={{ fontSize: '12px', color: '#C8A882', flexShrink: 0 }} />
+          <p style={{
+            fontFamily:    DM_MONO,
+            fontSize:      '9px',
+            fontWeight:    300,
+            letterSpacing: '0.08em',
+            color:         '#C8A882',
+            margin:        0,
+          }}>
+            Pendiente de confirmación por la clínica
+          </p>
         </div>
       )}
 
+      {/* Cancelar */}
       {!compacta && onCancelar && (cita.estado === 'pendiente' || cita.estado === 'confirmada') && (
         <button
           onClick={onCancelar}
           disabled={horasRestantes < 24}
-          className="mt-3 text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed"
           title={horasRestantes < 24 ? 'No se puede cancelar con <24h' : 'Cancelar cita'}
+          style={{
+            marginTop:     '12px',
+            background:    'none',
+            border:        '1px solid rgba(22,19,19,0.1)',
+            borderRadius:  '2px',
+            padding:       '7px 14px',
+            fontFamily:    DM_MONO,
+            fontSize:      '9px',
+            fontWeight:    300,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color:         horasRestantes < 24 ? 'rgba(22,19,19,0.2)' : 'rgba(22,19,19,0.45)',
+            cursor:        horasRestantes < 24 ? 'not-allowed' : 'pointer',
+            opacity:       horasRestantes < 24 ? 0.5 : 1,
+          }}
         >
           Cancelar cita
         </button>
@@ -229,10 +444,30 @@ function CitaCard({ cita, brand, compacta, onCancelar }) {
   )
 }
 
-function EmptyState({ text }) {
+
+// ═══════════════════════════════════════════════════════════════════
+//  ESTADO VACÍO
+// ═══════════════════════════════════════════════════════════════════
+function EstadoVacio({ texto }) {
   return (
-    <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-5 text-center">
-      <p className="text-gray-400 text-xs leading-relaxed">{text}</p>
+    <div style={{
+      background:   '#FFFFFF',
+      border:       '1px dashed rgba(22,19,19,0.10)',
+      borderRadius: '2px',
+      padding:      '28px 20px',
+      textAlign:    'center',
+    }}>
+      <i className="ti ti-calendar-off" style={{ fontSize: '24px', color: 'rgba(22,19,19,0.15)', display: 'block', marginBottom: '10px' }} />
+      <p style={{
+        fontFamily: DM_SANS,
+        fontSize:   '12px',
+        fontWeight: 300,
+        color:      'rgba(22,19,19,0.35)',
+        lineHeight: 1.7,
+        margin:     0,
+      }}>
+        {texto}
+      </p>
     </div>
   )
 }
