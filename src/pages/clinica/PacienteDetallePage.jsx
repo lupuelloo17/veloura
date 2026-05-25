@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useClinic } from '../../contexts/ClinicContext'
-
-const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 import { useAuth } from '../../contexts/AuthContext'
 import FeatureGate from '../../components/FeatureGate'
 import StaffLayout from './StaffLayout'
@@ -11,6 +9,8 @@ import { supabase } from '../../lib/supabase'
 import NuevaSesionDrawer from '../../components/NuevaSesionDrawer'
 import { formatFecha } from '../../utils/fecha'
 import EvolucionPage from './EvolucionPage'
+
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 
 const FRAUNCES = "'Fraunces', Georgia, serif"
 const DM_SANS  = "'DM Sans', system-ui, sans-serif"
@@ -51,7 +51,7 @@ export default function PacienteDetallePage() {
   ])
 
   useEffect(() => {
-    if (!paciente?.id || !isValidUUID(paciente.id)) return
+    if (!paciente?.id) return
     setCargandoRutinas(true)
     supabase
       .from('rutinas_paciente')
@@ -67,6 +67,11 @@ export default function PacienteDetallePage() {
 
   async function handleGuardarRutina() {
     if (!rutinaForm.nombre.trim() || !paciente?.id || !user?.id) return
+    if (!clinica?.id || !isValidUUID(clinica.id)) {
+      console.error('clinica.id no disponible')
+      setGuardandoRutina(false)
+      return
+    }
     setGuardandoRutina(true)
     try {
       const medicoId = await supabase
