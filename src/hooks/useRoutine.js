@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
 export function useRoutine(userEmail, clinicaId) {
   const [rutinas, setRutinas] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
 
   const fetchRoutines = useCallback(async () => {
-    if (!userEmail || !clinicaId) {
+    if (!userEmail || !clinicaId || !isValidUUID(clinicaId)) {
       setLoading(false)
       return
     }

@@ -6,6 +6,8 @@ import { supabase }  from '../../lib/supabase'
 import ClinicLayout  from './ClinicLayout'
 import EscribirClinicaDrawer from '../../components/EscribirClinicaDrawer'
 
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
 const TIPOS_PIEL = ['Seca', 'Grasa', 'Mixta', 'Normal', 'Sensible']
 
 function dateOnly(d) {
@@ -48,7 +50,7 @@ export default function MiPerfilPage() {
   useEffect(() => {
     let cancelled = false
     async function load() {
-      if (!user?.id) { setCargando(false); return }
+      if (!user?.id || !isValidUUID(user.id)) { setCargando(false); return }
 
       if (!supabase) {
         try {

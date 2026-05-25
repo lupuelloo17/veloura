@@ -5,6 +5,8 @@ import { useEvolution }    from '../../hooks/useEvolution'
 import EvolutionUploader   from '../../components/evolution/EvolutionUploader'
 import BeforeAfterSlider   from '../../components/evolution/BeforeAfterSlider'
 
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
 const FASE_LABEL = {
   antes:    'Antes',
   despues:  'Después',
@@ -21,7 +23,9 @@ function formatFecha(isoStr) {
 export default function MiEvolucionPage() {
   const { user }    = useAuth()
   const { clinica } = useClinic()
-  const { fotosPorSesion, loading, error, subirFoto } = useEvolution(user?.id, clinica?.id)
+  const safeUserId    = user?.id    && isValidUUID(user.id)    ? user.id    : null
+  const safeClinicaId = clinica?.id && isValidUUID(clinica.id) ? clinica.id : null
+  const { fotosPorSesion, loading, error, subirFoto } = useEvolution(safeUserId, safeClinicaId)
 
   const [tabActiva,    setTabActiva]    = useState('Comparador')
   const [sesionActiva, setSesionActiva] = useState(null)

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
 export function useChat(userEmail, clinicaId) {
   const [mensajes,   setMensajes]   = useState([])
   const [medico,     setMedico]     = useState(null)
@@ -77,7 +79,7 @@ export function useChat(userEmail, clinicaId) {
 
   // ── efecto de montaje ────────────────────────────────────────
   useEffect(() => {
-    if (!userEmail || !clinicaId) return
+    if (!userEmail || !clinicaId || !isValidUUID(clinicaId)) return
 
     let cancelled = false
 

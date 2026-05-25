@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
 export function useEvolution(pacienteId, clinicaId) {
   const [fotosPorSesion, setFotosPorSesion] = useState({})
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
 
   const fetchFotos = useCallback(async () => {
-    if (!pacienteId || !clinicaId) { setLoading(false); return }
+    if (!pacienteId || !clinicaId || !isValidUUID(pacienteId) || !isValidUUID(clinicaId)) { setLoading(false); return }
 
     setLoading(true)
     setError(null)
@@ -41,7 +43,7 @@ export function useEvolution(pacienteId, clinicaId) {
   useEffect(() => { fetchFotos() }, [fetchFotos])
 
   async function subirFoto({ archivo, fase, zona_corporal, notas, sesion_numero }) {
-    if (!supabase || !pacienteId || !clinicaId) throw new Error('Sin conexión')
+    if (!supabase || !pacienteId || !clinicaId || !isValidUUID(pacienteId) || !isValidUUID(clinicaId)) throw new Error('Sin conexión')
 
     const ext  = archivo.name.split('.').pop()?.toLowerCase() ?? 'jpg'
     const path = `${pacienteId}/${sesion_numero}-${fase}-${Date.now()}.${ext}`
