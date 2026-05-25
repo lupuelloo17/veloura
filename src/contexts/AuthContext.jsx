@@ -182,10 +182,21 @@ async function _enrichFromDB(userId, setUser, email) {
 
   if (!data) return
 
+  let clinica_slug = null
+  if (data.clinica_id) {
+    const { data: clinicaData } = await supabase
+      .from('clinicas')
+      .select('slug')
+      .eq('id', data.clinica_id)
+      .single()
+    if (clinicaData?.slug) clinica_slug = clinicaData.slug
+  }
+
   setUser(prev => prev ? {
     ...prev,
-    rol:        data.rol        ?? prev.rol,
-    clinica_id: data.clinica_id ?? prev.clinica_id,
-    nombre:     data.nombre     ?? prev.nombre,
+    rol:          data.rol        ?? prev.rol,
+    clinica_id:   data.clinica_id ?? prev.clinica_id,
+    nombre:       data.nombre     ?? prev.nombre,
+    ...(clinica_slug ? { clinica_slug } : {}),
   } : prev)
 }
