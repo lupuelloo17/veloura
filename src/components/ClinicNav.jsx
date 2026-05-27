@@ -4,6 +4,10 @@ import { useClinic } from '../contexts/ClinicContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
+// Misma regex que usan useChat, useEvolution, MiPerfilPage, etc.
+// Impide lanzar consultas a Supabase con IDs de demo ('mock-garcia', 'mock-lumiere').
+const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
 const ICON_MAP = {
   dashboard:      'ti-layout-dashboard',
   pacientes:      'ti-users',
@@ -32,7 +36,10 @@ export default function ClinicNav() {
   const [unread, setUnread] = useState(0)
 
   useEffect(() => {
-    if (!supabase || !user?.id) return
+    // No disparar contra Supabase si los IDs son mocks o aún no han cargado.
+    // user.id puede ser 'mock-garcia' / 'mock-admin' en modo demo, lo que
+    // provoca un error 400 porque Supabase espera UUIDs válidos.
+    if (!supabase || !user?.id || !isValidUUID(user.id)) return
     let cancelled = false
 
     async function fetchUnread() {
@@ -52,6 +59,8 @@ export default function ClinicNav() {
           .eq('leido', false)
         if (!cancelled) setUnread(count ?? 0)
       } else {
+        // admin / recepcion: necesita clinica_id válido además del user.id
+        if (!isValidUUID(user.clinica_id)) { if (!cancelled) setUnread(0); return }
         const { count } = await supabase
           .from('mensajes')
           .select('id', { count: 'exact', head: true })
