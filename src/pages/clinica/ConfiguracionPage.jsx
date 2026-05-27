@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { Navigate, Link, useParams } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import StaffLayout from './StaffLayout'
 import { useClinic } from '../../contexts/ClinicContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { PLANES, formatEUR } from '../../config/planes'
+import HorarioDrawer from '../../components/HorarioDrawer'
 
 const FRAUNCES = "'Fraunces', Georgia, serif"
 const DM_SANS  = "'DM Sans', system-ui, sans-serif"
@@ -294,11 +296,12 @@ function SecIdentidad({ clinica, onSave }) {
 const EMPTY_MEDICO = { nombre: '', especialidad: '', colegiado: '', email: '', telefono: '', foto: '' }
 
 function SecEquipo({ clinica, showToast }) {
-  const [medicos, setMedicos] = useState([])
-  const [modal,   setModal]   = useState(null)
-  const [form,    setForm]    = useState(EMPTY_MEDICO)
-  const [saving,  setSaving]  = useState(false)
-  const [focusKey, setFocusKey] = useState(null)
+  const [medicos,       setMedicos]       = useState([])
+  const [modal,         setModal]         = useState(null)
+  const [form,          setForm]          = useState(EMPTY_MEDICO)
+  const [saving,        setSaving]        = useState(false)
+  const [focusKey,      setFocusKey]      = useState(null)
+  const [horarioMedico, setHorarioMedico] = useState(null)
 
   useEffect(() => {
     if (supabase && clinica?.id && !clinica._isMock) {
@@ -408,6 +411,23 @@ function SecEquipo({ clinica, showToast }) {
                       <button onClick={() => openEdit(m)} style={{ width: '28px', height: '28px', borderRadius: '2px', border: '1px solid rgba(22,19,19,0.1)', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(22,19,19,0.4)' }}>
                         <i className="ti ti-pencil" style={{ fontSize: '13px' }} />
                       </button>
+                      <button
+                        onClick={() => setHorarioMedico(m)}
+                        title="Gestionar horario"
+                        style={{
+                          height: '28px', padding: '0 10px',
+                          borderRadius: '2px',
+                          border: '1px solid rgba(22,19,19,0.1)',
+                          background: 'none', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: '5px',
+                          color: 'rgba(22,19,19,0.45)',
+                          fontFamily: DM_SANS, fontSize: '11px',
+                          fontWeight: 400, letterSpacing: '0.04em',
+                        }}
+                      >
+                        <i className="ti ti-clock" style={{ fontSize: '13px' }} />
+                        Horario
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -453,6 +473,17 @@ function SecEquipo({ clinica, showToast }) {
           </div>
         </div>
       )}
+
+      {/* Drawer de horario */}
+      <AnimatePresence>
+        {horarioMedico && (
+          <HorarioDrawer
+            empleado={horarioMedico}
+            clinicaId={clinica?.id}
+            onClose={() => setHorarioMedico(null)}
+          />
+        )}
+      </AnimatePresence>
     </>
   )
 }
