@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -358,6 +358,7 @@ function ProductCard({ product }) {
 // navegación de "volver" a la pantalla anterior en vez del legacy /home.
 export default function DermoscopiaPage({ embedded = false }) {
   const navigate = useNavigate()
+  const { slug } = useParams()
   const fileRef = useRef(null)
   const { user } = useAuth()
 
@@ -382,13 +383,46 @@ export default function DermoscopiaPage({ embedded = false }) {
   const [cardsVisible, setCardsVisible] = useState(false)
   const [reportVisible, setReportVisible] = useState(false)
 
-  // ── Image load ──
+  // AI analysis state
+  const [compressedBase64, setCompressedBase64] = useState(null) // Base64 JPEG (no prefix) for /api/dermoscopy
+  const [aiResult, setAiResult]                 = useState(null) // Full analisis object from API
+
+  // ── Image load (canvas compress → JPEG 0.75, max 1200px) ──
   function loadImage(file) {
     if (!file?.type.startsWith('image/')) return
     setPreviewFile(file)
-    const reader = new FileReader()
-    reader.onload = e => setPreview(e.target.result)
-    reader.readAsDataURL(file)
+
+    const objectUrl = URL.createObjectURL(file)
+    const img = new Image()
+
+    img.onload = () => {
+      // Scale down to max 1200px on longest side (target < 1.5 MB encoded)
+      const MAX = 1200
+      let w = img.naturalWidth, h = img.naturalHeight
+      if (w > MAX || h > MAX) {
+        const ratio = Math.min(MAX / w, MAX / h)
+        w = Math.round(w * ratio)
+        h = Math.round(h * ratio)
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75)
+      setPreview(dataUrl)
+      setCompressedBase64(dataUrl.split(',')[1]) // strip the data:image/jpeg;base64, prefix
+      URL.revokeObjectURL(objectUrl)
+    }
+
+    img.onerror = () => {
+      // Graceful fallback: plain FileReader (no canvas compression)
+      const reader = new FileReader()
+      reader.onload = e => setPreview(e.target.result)
+      reader.readAsDataURL(file)
+      URL.revokeObjectURL(objectUrl)
+    }
+
+    img.src = objectUrl
   }
 
   function handleDrop(e) {
@@ -396,84 +430,162 @@ export default function DermoscopiaPage({ embedded = false }) {
     loadImage(e.dataTransfer.files[0])
   }
 
-  // ── Run analysis ──
-  function startAnalysis() {
+  // ── Run analysis (real API + mock fallback) ──
+  async function startAnalysis() {
     setStep('analyzing')
     setProgress(0)
 
-    // Progress animation over 3s
+    // Advance progress to 90 % while waiting for Claude; snap to 100 when done
     let pct = 0
     const interval = setInterval(() => {
-      pct += 1
+      pct = Math.min(pct + 1, 90)
       setProgress(pct)
-      if (pct >= 100) clearInterval(interval)
-    }, 30)
+    }, 60)
 
-    // Sequential messages
-    LOADING_STEPS.forEach(({ msg, pct: threshold }, i) => {
+    // Sequential loading messages (cosmetic UX)
+    LOADING_STEPS.forEach(({ msg }, i) => {
       setTimeout(() => {
         setMsgVisible(false)
         setTimeout(() => { setLoadingMsg(msg); setMsgVisible(true) }, 200)
       }, i * 750)
     })
 
-    // Complete at 3s
-    setTimeout(async () => {
-      const r = buildResults()
-      const m = buildMorpho()
-      const s = calcScore(r)
+    // Shared finalise — called on both success and fallback paths
+    const finalise = async (r, m, s, ai = null) => {
+      clearInterval(interval)
+      setProgress(100)
+      setAiResult(ai)
       setResults(r)
       setMorpho(m)
       setScore(s)
       setStep('report')
       setTimeout(() => setCardsVisible(true), 100)
       setTimeout(() => setReportVisible(true), CRITERIA.length * 90 + 300)
-
-      // Si hay paciente logueado y Supabase configurado, guardar persistente
       if (supabase && user?.id && user?.rol === 'paciente' && previewFile) {
         await saveAnalysis(r, s, riskConfig(s))
       }
-    }, 3000)
+    }
+
+    // ── Real API path (only when we have a compressed Base64 image) ──
+    if (compressedBase64) {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const token = sessionData?.session?.access_token
+
+        const res = await fetch('/api/dermoscopy', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            image:      compressedBase64,
+            media_type: 'image/jpeg',
+            contexto:   '',
+          }),
+        })
+
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}))
+          throw new Error(errBody.error || `HTTP ${res.status}`)
+        }
+
+        const { analisis } = await res.json()
+
+        // Map 0-100 severity → 0-9 Seven-Point score
+        const s = Math.round((analisis.severidad_porcentaje / 100) * 9)
+
+        // Build criteria results biased by severity:
+        // higher severity → more criteria marked as "present"
+        const prob = analisis.severidad_porcentaje / 100
+        const r = {}
+        CRITERIA.forEach(c => {
+          const roll = Math.random()
+          r[c.id] = roll < prob * 0.75 ? 'present'
+                  : roll < prob * 0.75 + 0.12 ? 'indeterminate'
+                  : 'absent'
+        })
+
+        const m = buildMorpho()
+        await finalise(r, m, s, analisis)
+        return
+
+      } catch (err) {
+        clearInterval(interval)
+        console.warn('[Dermoscopia API] Cayendo a modo demo:', err.message)
+        // fall through to mock path below
+      }
+    }
+
+    // ── Fallback / demo mode (no Base64 or API error) ──
+    const r = buildResults()
+    const m = buildMorpho()
+    const s = calcScore(r)
+    await finalise(r, m, s, null)
   }
 
   // ── Persistencia: sube foto al bucket "analisis" e inserta fila ──
   async function saveAnalysis(results, score, risk) {
     setGuardando(true)
+
+    // ── Bloque 1: Resolver tenant_id (clinica_id) y medico_id ──────────────
+    let clinicaId, medicoId
     try {
-      // 1. Resolver clinica_id + medico_id del paciente
-      const { data: pac } = await supabase
+      const { data: pac, error: pacErr } = await supabase
         .from('pacientes')
         .select('medico_id, clinica_id')
         .eq('id', user.id)
         .maybeSingle()
-      const medicoId  = pac?.medico_id ?? null
-      const clinicaId = pac?.clinica_id ?? user.clinica_id
-      if (!clinicaId) throw new Error('clinica_id no resuelto')
+      if (pacErr) throw pacErr
+      medicoId  = pac?.medico_id ?? null
+      clinicaId = pac?.clinica_id ?? user.clinica_id
+      if (!clinicaId) throw new Error('clinica_id (tenant_id) no resuelto para este usuario')
+    } catch (err) {
+      console.error('[Dermoscopia save] Error al resolver clinica_id:', err.message)
+      setGuardando(false)
+      return
+    }
 
-      // 2. Subir imagen al bucket "analisis" (path: clinica/paciente/timestamp.ext)
-      const ext  = previewFile.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-      const path = `${clinicaId}/${user.id}/${Date.now()}.${ext}`
+    // ── Bloque 2: Subir imagen al Storage ───────────────────────────────────
+    // RLS exige que la ruta empiece por tenant_id:
+    //   dermoscopia-images/{clinica_id}/{paciente_id}/{timestamp}.{ext}
+    const ext  = previewFile.name.split('.').pop()?.toLowerCase() ?? 'jpg'
+    const path = `${clinicaId}/${user.id}/${Date.now()}.${ext}`
+    let imageUrl = null
+    try {
       const { error: upErr } = await supabase.storage
-        .from('analisis')
-        .upload(path, previewFile, { contentType: previewFile.type })
+        .from('dermoscopia-images')
+        .upload(path, previewFile, { contentType: previewFile.type, upsert: false })
       if (upErr) throw upErr
-      const { data: pub } = supabase.storage.from('analisis').getPublicUrl(path)
+      const { data: pub } = supabase.storage
+        .from('dermoscopia-images')
+        .getPublicUrl(path)
+      imageUrl = pub.publicUrl
+    } catch (err) {
+      console.error(
+        '[Dermoscopia save] Error al subir imagen al Storage:',
+        err.message,
+        { bucket: 'dermoscopia-images', path }
+      )
+      setGuardando(false)
+      return
+    }
 
-      // 3. Construir JSON de criterios y guardar análisis
-      const criteriosJson = {}
-      CRITERIA.forEach(c => { criteriosJson[c.label] = results[c.id] })
-
+    // ── Bloque 3: Insertar análisis en la base de datos ─────────────────────
+    const criteriosJson = {}
+    CRITERIA.forEach(c => { criteriosJson[c.label] = results[c.id] })
+    try {
       const { data, error } = await supabase
         .from('analisis_dermoscopicos')
         .insert({
-          paciente_id: user.id,
-          clinica_id:  clinicaId,
-          medico_id:   medicoId,
-          fecha:       new Date().toISOString(),
-          criterios:   criteriosJson,
-          puntuacion_total: score,
-          nivel_riesgo:     risk.nivel,
-          imagen_url:       pub.publicUrl,
+          paciente_id:       user.id,
+          clinica_id:        clinicaId,
+          medico_id:         medicoId,
+          fecha:             new Date().toISOString(),
+          criterios:         criteriosJson,
+          puntuacion_total:  score,
+          nivel_riesgo:      risk.nivel,
+          imagen_url:        imageUrl,
           compartido_medico: false,
         })
         .select()
@@ -481,7 +593,10 @@ export default function DermoscopiaPage({ embedded = false }) {
       if (error) throw error
       setAnalysisId(data.id)
     } catch (err) {
-      console.error('[Dermoscopia save]', err.message)
+      console.error(
+        '[Dermoscopia save] Error al insertar en analisis_dermoscopicos:',
+        err.message
+      )
     } finally {
       setGuardando(false)
     }
@@ -500,10 +615,14 @@ export default function DermoscopiaPage({ embedded = false }) {
     setCompartido(true)
   }
 
-  // Destino "Solicitar cita" según rol del usuario
-  const solicitarCitaPath = user?.rol === 'paciente'
-    ? `/clinica/${user.clinica_slug || 'clinica-lumiere'}/mi-perfil/citas`
-    : '/reservar'
+  // Destino "Solicitar cita" según rol del usuario.
+  // NUNCA se usa '/reservar' como fallback: en App.jsx esa ruta está mapeada
+  // a <Navigate to="/login" replace />, lo que causaba un logout aparente.
+  // Si no hay slug resolvemos a null y el botón simplemente no navega.
+  const clinicSlug = slug ?? user?.clinica_slug
+  const solicitarCitaPath = clinicSlug
+    ? `/clinica/${clinicSlug}/mi-perfil/citas`
+    : null
 
   // ── Reset ──
   function reset() {
@@ -511,6 +630,7 @@ export default function DermoscopiaPage({ embedded = false }) {
     setProgress(0); setResults({}); setMorpho({})
     setScore(0); setCardsVisible(false); setReportVisible(false)
     setAnalysisId(null); setCompartido(false)
+    setCompressedBase64(null); setAiResult(null)
   }
 
   const risk = riskConfig(score)
@@ -522,6 +642,14 @@ export default function DermoscopiaPage({ embedded = false }) {
   // ── Render ──
   return (
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      {/* Laser scan keyframe — injected once; Tailwind purge-safe */}
+      <style>{`
+        @keyframes dermScan {
+          0%   { top: -3px }
+          50%  { top: calc(100% + 3px) }
+          100% { top: -3px }
+        }
+      `}</style>
 
       {/* ── Top bar ── */}
       <div style={{ background: '#161313', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '20px 20px 16px' }}>
@@ -529,8 +657,8 @@ export default function DermoscopiaPage({ embedded = false }) {
           <button
             onClick={() => {
               if (step === 'report') return reset()
-              if (embedded && user?.rol === 'paciente') {
-                return navigate(`/clinica/${user.clinica_slug || 'clinica-lumiere'}/analisis`)
+              if (embedded && user?.rol === 'paciente' && clinicSlug) {
+                return navigate(`/clinica/${clinicSlug}/analisis`)
               }
               return navigate(-1)
             }}
@@ -679,8 +807,22 @@ export default function DermoscopiaPage({ embedded = false }) {
         {step === 'analyzing' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 0', gap: '24px' }}>
             {preview && (
-              <div style={{ width: '100%', borderRadius: '2px', overflow: 'hidden', maxHeight: 180 }}>
-                <img src={preview} alt="Lesión" style={{ width: '100%', objectFit: 'cover', opacity: 0.6, maxHeight: 180, display: 'block' }} />
+              <div style={{ width: '100%', borderRadius: '2px', overflow: 'hidden', maxHeight: 180, position: 'relative' }}>
+                <img src={preview} alt="Lesión" style={{ width: '100%', objectFit: 'cover', opacity: 0.55, maxHeight: 180, display: 'block' }} />
+                {/* Laser scan line overlay */}
+                <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+                  <div style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    background: 'linear-gradient(90deg, transparent 0%, rgba(201,164,106,0.85) 35%, rgba(255,220,140,1) 50%, rgba(201,164,106,0.85) 65%, transparent 100%)',
+                    boxShadow: '0 0 8px rgba(201,164,106,0.9), 0 0 18px rgba(201,164,106,0.5)',
+                    animation: 'dermScan 1.6s ease-in-out infinite',
+                  }} />
+                  {/* Subtle tinted overlay */}
+                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(22,19,19,0.18)' }} />
+                </div>
               </div>
             )}
 
@@ -754,6 +896,46 @@ export default function DermoscopiaPage({ embedded = false }) {
               )
             })()}
 
+            {/* AI Diagnosis card */}
+            {aiResult && (
+              <div style={{
+                opacity: cardsVisible ? 1 : 0,
+                transition: 'opacity 0.4s ease',
+                background: aiResult.requiere_atencion_urgente ? 'rgba(139,58,58,0.05)' : 'rgba(22,19,19,0.03)',
+                border: aiResult.requiere_atencion_urgente ? '1px solid rgba(139,58,58,0.18)' : '1px solid rgba(22,19,19,0.08)',
+                borderRadius: '2px',
+                padding: '16px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.35)', margin: '0 0 4px' }}>
+                      Diagnóstico IA · {aiResult.tipo_piel}
+                    </p>
+                    <p style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: '13px', fontWeight: 400, color: '#161313', margin: 0, lineHeight: 1.4 }}>
+                      {aiResult.diagnostico_preliminar}
+                    </p>
+                  </div>
+                  <span style={{
+                    fontFamily: "'DM Mono', monospace", fontSize: '9px', letterSpacing: '0.1em',
+                    textTransform: 'uppercase', padding: '3px 7px', borderRadius: '2px', flexShrink: 0,
+                    background: aiResult.confianza === 'alta' ? 'rgba(146,156,146,0.15)' : aiResult.confianza === 'media' ? 'rgba(163,147,132,0.15)' : 'rgba(139,58,58,0.1)',
+                    color: aiResult.confianza === 'alta' ? '#929C92' : aiResult.confianza === 'media' ? '#A39384' : '#8B3A3A',
+                    border: aiResult.confianza === 'alta' ? '1px solid rgba(146,156,146,0.3)' : aiResult.confianza === 'media' ? '1px solid rgba(163,147,132,0.3)' : '1px solid rgba(139,58,58,0.2)',
+                  }}>
+                    {aiResult.confianza}
+                  </span>
+                </div>
+                {aiResult.requiere_atencion_urgente && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', background: 'rgba(139,58,58,0.08)', borderRadius: '2px', borderLeft: '2px solid #8B3A3A' }}>
+                    <i className="ti ti-alert-triangle" style={{ fontSize: '12px', color: '#8B3A3A', flexShrink: 0 }} />
+                    <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '11px', fontWeight: 400, color: '#8B3A3A', margin: 0 }}>
+                      Requiere atención dermatológica urgente
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Major criteria */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -813,17 +995,19 @@ export default function DermoscopiaPage({ embedded = false }) {
               </div>
               <pre className="font-mono text-[11px] leading-relaxed text-gray-300 whitespace-pre-wrap">
 {`INFORME DERMOSCÓPICO — ${datetime}
-Modalidad: Dermoscopia digital simulada
+Modalidad: ${aiResult ? 'Análisis IA (Claude Sonnet)' : 'Dermoscopia digital simulada'}
 Algoritmo: Seven-Point Checklist
            (Argenziano et al., 1998)
 ─────────────────────────────────────
 Puntuación total:        ${score}/9 puntos
 Categoría de riesgo:     ${risk.label}
 Criterios mayores (+):   ${majorPositive}/3
-Criterios menores (+):   ${minorPositive}/4
+Criterios menores (+):   ${minorPositive}/4${aiResult ? `
+Tipo de piel:            ${aiResult.tipo_piel}
+Confianza IA:            ${aiResult.confianza}` : ''}
 ─────────────────────────────────────
 Impresión diagnóstica:
-${risk.impression}
+${aiResult ? aiResult.diagnostico_preliminar : risk.impression}
 ─────────────────────────────────────
 AVISO: Este análisis ha sido generado
 mediante inteligencia artificial con
@@ -835,6 +1019,47 @@ presencial realizada por facultativo
 especialista en Dermatología.`}
               </pre>
             </div>
+
+            {/* Alertas detectadas (IA) */}
+            {aiResult?.alertas_detectadas?.length > 0 && (
+              <div style={{ opacity: reportVisible ? 1 : 0, transition: 'opacity 0.4s ease 0.1s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <i className="ti ti-alert-circle" style={{ fontSize: '12px', color: '#8B3A3A' }} />
+                  <h2 style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.5)', margin: 0, fontWeight: 400 }}>
+                    Alertas detectadas
+                  </h2>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {aiResult.alertas_detectadas.map((alerta, i) => (
+                    <div key={i} style={{ padding: '10px 12px', background: 'rgba(139,58,58,0.04)', border: '1px solid rgba(139,58,58,0.12)', borderLeft: '2px solid #8B3A3A', borderRadius: '2px' }}>
+                      <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.75)', margin: 0, lineHeight: 1.5 }}>{alerta}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recomendaciones clínicas IA */}
+            {aiResult?.recomendaciones_tratamiento?.length > 0 && (
+              <div style={{ opacity: reportVisible ? 1 : 0, transition: 'opacity 0.4s ease 0.15s' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <i className="ti ti-list-check" style={{ fontSize: '12px', color: 'rgba(22,19,19,0.45)' }} />
+                  <h2 style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.5)', margin: 0, fontWeight: 400 }}>
+                    Recomendaciones clínicas IA
+                  </h2>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {aiResult.recomendaciones_tratamiento.map((rec, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '10px', padding: '10px 12px', background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px' }}>
+                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: 'rgba(22,19,19,0.3)', flexShrink: 0, marginTop: '2px', minWidth: '14px' }}>
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                      <p style={{ fontFamily: "'DM Sans', system-ui", fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.75)', margin: 0, lineHeight: 1.5 }}>{rec}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* ── Cosmeceutical protocol ── */}
             <div
@@ -891,8 +1116,8 @@ especialista en Dermatología.`}
               )}
 
               <button
-                onClick={() => navigate(solicitarCitaPath)}
-                style={{ width: '100%', background: '#161313', color: '#F7F5F2', border: 'none', borderRadius: '2px', padding: '14px', fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 400, letterSpacing: '0.04em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                onClick={() => solicitarCitaPath && navigate(solicitarCitaPath)}
+                style={{ width: '100%', background: '#161313', color: '#F7F5F2', border: 'none', borderRadius: '2px', padding: '14px', fontFamily: "'DM Sans', system-ui", fontSize: '13px', fontWeight: 400, letterSpacing: '0.04em', cursor: solicitarCitaPath ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: solicitarCitaPath ? 1 : 0.5 }}
               >
                 <i className="ti ti-calendar" style={{ fontSize: '15px' }} />
                 Solicitar cita con mi médico

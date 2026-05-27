@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { CheckCircle2, ArrowRight } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 
 const BRAND = '#C9A46A'  // Veloura gold
 
 export default function PagoExitosoPage() {
   const [searchParams] = useSearchParams()
   const sessionId = searchParams.get('session_id')
+  const { user } = useAuth()
   const [visible, setVisible] = useState(false)
 
   // Trigger entrance animation after mount
@@ -46,7 +48,7 @@ export default function PagoExitosoPage() {
         </p>
 
         <Link
-          to="/clinica/clinica-lumiere/dashboard"
+          to={user?.clinica_slug ? `/clinica/${user.clinica_slug}/dashboard` : '/login'}
           className="inline-flex items-center justify-center gap-2 w-full py-4 rounded-2xl text-white font-semibold text-base transition-all active:scale-95"
           style={{ backgroundColor: BRAND }}
         >

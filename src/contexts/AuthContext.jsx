@@ -48,8 +48,13 @@ export function AuthProvider({ children }) {
         })
         .catch(err => console.error('[AuthContext] getSession error:', err))
         .finally(() => setLoading(false))
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (!session) { setUser(null); return }
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        // Solo limpiamos al usuario en un logout explícito.
+        // TOKEN_REFRESHED, INITIAL_SESSION y otros eventos transitorios NO
+        // deben borrar la sesión: hacerlo causaba un logout aparente si el
+        // token expiraba durante una llamada larga a la IA (dermoscopia).
+        if (event === 'SIGNED_OUT') { setUser(null); return }
+        if (!session) return   // evento sin sesión pero no SIGNED_OUT → ignorar
         setUser(sessionToBase(session))
         enrichFromDB(session.user.id, setUser, session.user.email)
       })
@@ -130,7 +135,7 @@ function sessionToBase(session) {
     email:        session.user.email,
     rol:          meta.rol ?? 'medico',
     clinica_id:   meta.clinica_id ?? null,
-    clinica_slug: meta.clinica_slug ?? 'clinica-lumiere',
+    clinica_slug: meta.clinica_slug ?? null,
     nombre:       session.user.user_metadata?.nombre ?? session.user.email,
     foto:         session.user.user_metadata?.foto ?? null,
   }

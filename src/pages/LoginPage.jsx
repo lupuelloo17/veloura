@@ -73,9 +73,9 @@ export default function LoginPage() {
     setError(null)
     try {
       const user = await login(email.trim(), password)
-      const slug = user.clinica_slug || 'clinica-lumiere'
+      if (!user.clinica_slug) throw new Error('No se encontró la clínica asociada a tu cuenta.')
       const dest = user.rol === 'paciente' ? 'mi-perfil' : 'dashboard'
-      navigate(`/clinica/${slug}/${dest}`, { replace: true })
+      navigate(`/clinica/${user.clinica_slug}/${dest}`, { replace: true })
     } catch (err) {
       setError(err.message)
     } finally {

@@ -64,8 +64,8 @@ function DermoscopiaRedirect() {
   const { user, loading } = useAuth()
   if (loading) return null
   if (user?.rol === 'paciente') {
-    const slug = user.clinica_slug || 'clinica-lumiere'
-    return <Navigate to={`/clinica/${slug}/dermoscopia`} replace />
+    if (!user.clinica_slug) return <Navigate to="/login" replace />
+    return <Navigate to={`/clinica/${user.clinica_slug}/dermoscopia`} replace />
   }
   return <Navigate to="/login" replace />
 }
@@ -88,10 +88,10 @@ function RequireRole({ roles, children }) {
   if (loading) return null
   if (!user) return <Navigate to="/login" replace />
   if (!roles.includes(user.rol)) {
-    const slug = user.clinica_slug || 'clinica-lumiere'
+    if (!user.clinica_slug) return <Navigate to="/login" replace />
     const fallback = user.rol === 'paciente'
-      ? `/clinica/${slug}/mi-perfil`
-      : `/clinica/${slug}/dashboard`
+      ? `/clinica/${user.clinica_slug}/mi-perfil`
+      : `/clinica/${user.clinica_slug}/dashboard`
     return <Navigate to={fallback} replace />
   }
   return children
@@ -101,9 +101,9 @@ function RequireRole({ roles, children }) {
 // envía al usuario a su portal según rol.
 function RoleHomeRedirect() {
   const { user } = useAuth()
-  const slug = user?.clinica_slug || 'clinica-lumiere'
-  const dest = user?.rol === 'paciente' ? 'mi-perfil' : 'dashboard'
-  return <Navigate to={`/clinica/${slug}/${dest}`} replace />
+  if (!user?.clinica_slug) return <Navigate to="/login" replace />
+  const dest = user.rol === 'paciente' ? 'mi-perfil' : 'dashboard'
+  return <Navigate to={`/clinica/${user.clinica_slug}/${dest}`} replace />
 }
 
 function MiEvolucionWrapper() {
