@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { PLANES } from '../config/planes'
@@ -52,11 +52,14 @@ export function ClinicProvider({ children }) {
   const [clinica, setClinica]   = useState(null)
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
+  const loadedSlugRef = useRef(null)
 
   useEffect(() => {
     if (!slug) return
+    // Guard: skip if this slug is already loaded to prevent infinite re-renders
+    if (loadedSlugRef.current === slug) return
     loadClinica(slug)
-  }, [slug])
+  }, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Inject CSS variables whenever clinica changes
   useEffect(() => {
@@ -81,6 +84,15 @@ export function ClinicProvider({ children }) {
     setError(null)
     console.log('[ClinicContext] loading slug:', slugParam)
     try {
+      // Demo slugs (mock-*) resolve immediately from local data — no Supabase call
+      if (slugParam.startsWith('mock-')) {
+        const mock = MOCK_CLINICAS[slugParam]
+        if (!mock) throw new Error(`Clínica demo "${slugParam}" no encontrada`)
+        setClinica(mock)
+        loadedSlugRef.current = slugParam
+        return
+      }
+
       if (supabase) {
         const { data, error: err } = await supabase
           .from('clinicas')
@@ -92,6 +104,7 @@ export function ClinicProvider({ children }) {
 
         if (data) {
           setClinica(data)
+          loadedSlugRef.current = slugParam
           return
         }
 
@@ -103,8 +116,10 @@ export function ClinicProvider({ children }) {
       const mock = MOCK_CLINICAS[slugParam]
       if (!mock) throw new Error(`Clínica "${slugParam}" no encontrada`)
       setClinica(mock)
+      loadedSlugRef.current = slugParam
     } catch (err) {
       setError(err.message)
+      loadedSlugRef.current = null  // Allow retry on next render if errored
     } finally {
       setLoading(false)
     }
@@ -116,7 +131,12 @@ export function ClinicProvider({ children }) {
     return plan?.features?.[key] === true
   }
 
-  function refreshClinica() { if (slug) loadClinica(slug) }
+  function refreshClinica() {
+    if (slug) {
+      loadedSlugRef.current = null  // Reset guard to force a fresh load
+      loadClinica(slug)
+    }
+  }
 
   return (
     <ClinicContext.Provider value={{ clinica, setClinica, plan, loading, error, hasFeature, refreshClinica }}>
