@@ -8,6 +8,7 @@ const ADMIN_RECEPCION_NAV = [
   { label: 'Agenda',        icon: 'ti-calendar',          path: 'agenda'         },
   { label: 'Análisis',      icon: 'ti-microscope',        path: 'analisis'       },
   { label: 'Mensajes',      icon: 'ti-message',           path: 'conversaciones' },
+  { label: 'Equipo',        icon: 'ti-id-badge',          path: 'equipo'         },
   { label: 'Finanzas',      icon: 'ti-chart-bar',         path: 'finanzas'       },
   { label: 'Configuración', icon: 'ti-settings',          path: 'configuracion'  },
 ]
@@ -25,6 +26,8 @@ const BREADCRUMB_MAP = {
   agenda:         'Agenda',
   analisis:       'Análisis',
   conversaciones: 'Mensajes',
+  equipo:         'Equipo',
+  finanzas:       'Finanzas',
   configuracion:  'Configuración',
 }
 
