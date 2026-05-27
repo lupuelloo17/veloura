@@ -616,11 +616,13 @@ export default function DermoscopiaPage({ embedded = false }) {
   }
 
   // Destino "Solicitar cita" según rol del usuario.
+  // Solo pacientes tienen la ruta /mi-perfil/citas — los demás roles no
+  // deben navegar ahí (RequireRole los reboota al dashboard y encadena
+  // cargas de ConversacionesPage con IDs demo que disparan errores 400).
   // NUNCA se usa '/reservar' como fallback: en App.jsx esa ruta está mapeada
   // a <Navigate to="/login" replace />, lo que causaba un logout aparente.
-  // Si no hay slug resolvemos a null y el botón simplemente no navega.
   const clinicSlug = slug ?? user?.clinica_slug
-  const solicitarCitaPath = clinicSlug
+  const solicitarCitaPath = (user?.rol === 'paciente' && clinicSlug)
     ? `/clinica/${clinicSlug}/mi-perfil/citas`
     : null
 

@@ -125,7 +125,9 @@ export default function ConversacionesPage() {
 
   // ── Cargar lista de conversaciones ────────────────────────────────────────
   async function cargarLista() {
-    if (!supabase) {
+    // No disparar contra Supabase con IDs de demo ('mock-garcia', 'mock-lumiere').
+    // user.id no es un UUID válido en modo demo → fallback a datos locales.
+    if (!supabase || !isValidUUID(user?.id)) {
       setConversaciones(MOCK_CONVERSACIONES)
       setCargandoLista(false)
       return
@@ -173,8 +175,9 @@ export default function ConversacionesPage() {
     channelRef.current?.unsubscribe()
     setCargandoChat(true)
     setMensajes([])
-    if (!supabase) {
-      setMensajes(pacienteId === 'p1' ? MOCK_MENSAJES_P1 : pacienteId === 'p3' ? MOCK_MENSAJES_P3 : [])
+    // Igual que cargarLista: si user.id no es UUID real, no tocamos Supabase.
+    if (!supabase || !isValidUUID(user?.id)) {
+      setMensajes(MOCK_DB[pacienteId] ?? [])
       setCargandoChat(false)
       return
     }
