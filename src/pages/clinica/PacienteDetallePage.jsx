@@ -447,26 +447,79 @@ export default function PacienteDetallePage() {
                 {analisis.map(a => {
                   const rs = RIESGO_STYLE[a.nivel] ?? RIESGO_STYLE.bajo
                   return (
-                    <div key={a.id} style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderRadius: '2px', padding: '16px 20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                        <span style={{ fontFamily: DM_MONO, fontSize: '11px', color: 'rgba(22,19,19,0.35)' }}>{a.fecha}</span>
-                        <span style={{ fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.1em', padding: '3px 10px', borderRadius: '2px', border: `1px solid ${rs.border}`, background: rs.bg, color: rs.color }}>
-                          {rs.label}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <div>
-                          <p style={{ fontFamily: FRAUNCES, fontSize: '28px', fontWeight: 300, color: '#161313', margin: 0, lineHeight: 1 }}>{a.puntuacion}</p>
-                          <p style={{ fontFamily: DM_MONO, fontSize: '9px', color: 'rgba(22,19,19,0.3)', margin: '2px 0 0' }}>/ 9 pts</p>
-                        </div>
-                        <div style={{ flex: 1, height: '3px', background: 'rgba(22,19,19,0.08)', borderRadius: '2px' }}>
-                          <div style={{ width: `${(a.puntuacion / 9) * 100}%`, height: '100%', background: rs.color, borderRadius: '2px', transition: 'width 0.3s' }} />
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 400, color: '#161313', margin: 0 }}>{a.criterios_pos}</p>
-                          <p style={{ fontFamily: DM_MONO, fontSize: '9px', color: 'rgba(22,19,19,0.3)', margin: '2px 0 0' }}>criterios +</p>
+                    <div key={a.id} style={{ background: '#FFFFFF', border: '1px solid rgba(22,19,19,0.07)', borderLeft: `3px solid ${rs.color}`, borderRadius: '2px', padding: '16px 20px' }}>
+
+                      {/* Fila superior: fecha + confianza IA + badge riesgo */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <span style={{ fontFamily: DM_MONO, fontSize: '10px', color: 'rgba(22,19,19,0.35)' }}>{a.fecha}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {a.confianza && (
+                            <span style={{ fontFamily: DM_MONO, fontSize: '8px', letterSpacing: '0.08em', color: 'rgba(22,19,19,0.28)', textTransform: 'uppercase' }}>
+                              IA · {a.confianza}
+                            </span>
+                          )}
+                          <span style={{ fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.1em', padding: '3px 10px', borderRadius: '2px', border: `1px solid ${rs.border}`, background: rs.bg, color: rs.color }}>
+                            {rs.label}
+                          </span>
                         </div>
                       </div>
+
+                      {/* Fila media: miniatura + puntuación + criterios */}
+                      <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+
+                        {/* Miniatura dermoscópica */}
+                        <div style={{
+                          width: '56px', height: '56px', borderRadius: '2px', flexShrink: 0,
+                          background: 'rgba(22,19,19,0.04)',
+                          border: '1px solid rgba(22,19,19,0.07)',
+                          overflow: 'hidden',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {a.imagen_url ? (
+                            <img src={a.imagen_url} alt="Dermoscopia" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <i className="ti ti-microscope" style={{ fontSize: '18px', color: 'rgba(22,19,19,0.15)' }} />
+                          )}
+                        </div>
+
+                        {/* Puntuación + barra + criterios */}
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div>
+                              <p style={{ fontFamily: FRAUNCES, fontSize: '28px', fontWeight: 300, color: '#161313', margin: 0, lineHeight: 1 }}>{a.puntuacion}</p>
+                              <p style={{ fontFamily: DM_MONO, fontSize: '9px', color: 'rgba(22,19,19,0.3)', margin: '2px 0 0' }}>/ 9 pts</p>
+                            </div>
+                            <div style={{ flex: 1, height: '3px', background: 'rgba(22,19,19,0.08)', borderRadius: '2px' }}>
+                              <div style={{ width: `${Math.min((a.puntuacion / 9) * 100, 100)}%`, height: '100%', background: rs.color, borderRadius: '2px', transition: 'width 0.3s' }} />
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 400, color: '#161313', margin: 0 }}>{a.criterios_pos}</p>
+                              <p style={{ fontFamily: DM_MONO, fontSize: '9px', color: 'rgba(22,19,19,0.3)', margin: '2px 0 0' }}>criterios +</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Diagnóstico IA */}
+                      {a.diagnostico_preliminar && (
+                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(22,19,19,0.05)' }}>
+                          <p style={{ fontFamily: DM_MONO, fontSize: '8px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.25)', margin: '0 0 4px' }}>
+                            Diagnóstico IA
+                          </p>
+                          <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.55)', lineHeight: 1.55, margin: 0 }}>
+                            {a.diagnostico_preliminar}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Alerta urgente */}
+                      {a.requiere_atencion_urgente && (
+                        <div style={{ marginTop: '10px', padding: '7px 12px', background: 'rgba(139,58,58,0.06)', border: '1px solid rgba(139,58,58,0.15)', borderRadius: '2px' }}>
+                          <p style={{ fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8B3A3A', margin: 0 }}>
+                            ⚠ Requiere atención urgente
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )
                 })}

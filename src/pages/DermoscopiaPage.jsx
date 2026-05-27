@@ -462,7 +462,7 @@ export default function DermoscopiaPage({ embedded = false }) {
       setTimeout(() => setCardsVisible(true), 100)
       setTimeout(() => setReportVisible(true), CRITERIA.length * 90 + 300)
       if (supabase && user?.id && user?.rol === 'paciente' && previewFile) {
-        await saveAnalysis(r, s, riskConfig(s))
+        await saveAnalysis(r, s, riskConfig(s), ai)
       }
     }
 
@@ -525,7 +525,7 @@ export default function DermoscopiaPage({ embedded = false }) {
   }
 
   // ── Persistencia: sube foto al bucket "analisis" e inserta fila ──
-  async function saveAnalysis(results, score, risk) {
+  async function saveAnalysis(results, score, risk, aiData = null) {
     setGuardando(true)
 
     // ── Bloque 1: Resolver tenant_id (clinica_id) y medico_id ──────────────
@@ -587,6 +587,15 @@ export default function DermoscopiaPage({ embedded = false }) {
           nivel_riesgo:      risk.nivel,
           imagen_url:        imageUrl,
           compartido_medico: false,
+          // Campos de IA (solo se persisten si Claude respondió correctamente)
+          ...(aiData ? {
+            diagnostico_preliminar:      aiData.diagnostico_preliminar      ?? null,
+            tipo_piel:                   aiData.tipo_piel                   ?? null,
+            confianza:                   aiData.confianza                   ?? null,
+            requiere_atencion_urgente:   aiData.requiere_atencion_urgente   ?? null,
+            alertas_detectadas:          aiData.alertas_detectadas          ?? null,
+            recomendaciones_tratamiento: aiData.recomendaciones_tratamiento ?? null,
+          } : {}),
         })
         .select()
         .single()
