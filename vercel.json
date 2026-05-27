@@ -1,10 +1,5 @@
 {
-  "functions": {
-    "api/*.js":           { "memory": 256, "maxDuration": 10 },
-    "api/dermoscopy.js":  { "memory": 512, "maxDuration": 30 }
-  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/((?!api/)[^.]*)", "destination": "/" }
   ]
 }
