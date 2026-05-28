@@ -118,8 +118,8 @@ function AvatarCircle({ empleado, size = 48 }) {
   )
 }
 
-function RolBadge({ rol }) {
-  const cfg = ROL_CONFIG[rol] ?? ROL_CONFIG.recepcion
+function RolBadge({ rol, rolConfig }) {
+  const cfg = rolConfig?.[rol] ?? rolConfig?.recepcion ?? { label: rol, color: '#161313', bg: 'rgba(22,19,19,0.08)', border: 'rgba(22,19,19,0.15)' }
   return (
     <span
       style={{
@@ -200,7 +200,7 @@ function StatCard({ icon, label, value, accent }) {
   )
 }
 
-function EmpleadoCard({ empleado, onHorario, onToggleActivo, isMock }) {
+function EmpleadoCard({ empleado, onHorario, onToggleActivo, isMock, rolConfig }) {
   const [toggling, setToggling] = useState(false)
 
   async function handleToggle() {
@@ -257,7 +257,7 @@ function EmpleadoCard({ empleado, onHorario, onToggleActivo, isMock }) {
           >
             {empleado.nombre}
           </span>
-          <RolBadge rol={empleado.rol} />
+          <RolBadge rol={empleado.rol} rolConfig={rolConfig} />
         </div>
         <div
           style={{
@@ -647,6 +647,7 @@ export default function EquipoPage() {
                     onHorario={setDrawerEmpleado}
                     onToggleActivo={handleToggleActivo}
                     isMock={isMock}
+                    rolConfig={ROL_CONFIG}
                   />
                 ))}
               </div>
