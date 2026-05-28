@@ -6,3 +6,5 @@ dist/
 .vercel
 .env*.local
 .claude/
+vite.config.js.timestamp-*
+vite.config.js.timestamp-*
