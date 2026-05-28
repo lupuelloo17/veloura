@@ -1,21 +1,28 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useClinic } from '../../contexts/ClinicContext'
-import { useCitas, ESTADO_STYLE } from '../../contexts/CitasContext'
+import { useCitas } from '../../contexts/CitasContext'
+import { supabase } from '../../lib/supabase'
 import StaffLayout from './StaffLayout'
 import NuevaCitaDrawer from '../../components/NuevaCitaDrawer'
 import CitaDetallePanel from '../../components/CitaDetallePanel'
+import AgendaView from '../../components/agenda/AgendaView'
+
+// ── UUID guard — igual que en EquipoPage / ClinicNav ──────────────────────
+const isValidUUID = id =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id ?? '')
 
 const FRAUNCES = "'Fraunces', Georgia, serif"
 const DM_SANS  = "'DM Sans', system-ui, sans-serif"
 const DM_MONO  = "'DM Mono', monospace"
 
-// ── Constantes de la rejilla ───────────────────────────────────────────────
-const SLOT_H  = 52
-const START_H = 9
-const END_H   = 20
+// ── Mock de especialistas — coherente con EquipoPage MOCK_EQUIPO ──────────
+const MOCK_ESPECIALISTAS = [
+  { id: 'mock-garcia', nombre: 'Dra. María García' },
+  { id: 'mock-ruiz',   nombre: 'Dr. Carlos Ruiz'   },
+]
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Helpers de fecha ──────────────────────────────────────────────────────
 const DIAS = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do']
 
 function getWeekStart(date) {
@@ -38,25 +45,7 @@ function isSameDay(a, b) {
          a.getDate()     === b.getDate()
 }
 
-function timeToTop(date) {
-  const fecha = date instanceof Date ? date : new Date(date)
-  return ((fecha.getHours() - START_H) * 60 + fecha.getMinutes()) / 30 * SLOT_H
-}
-
-function durationToHeight(minutes) {
-  return Math.max((minutes / 30) * SLOT_H, SLOT_H)
-}
-
 const DEMO_TODAY = new Date('2026-05-15')
-
-// ── Colores de estado editorial ────────────────────────────────────────────
-const CITA_STYLE = {
-  pendiente:  { bg: 'rgba(201,164,106,0.12)', border: 'rgba(201,164,106,0.3)', text: '#8B6A3A' },
-  confirmada: { bg: 'rgba(146,156,146,0.12)', border: 'rgba(146,156,146,0.3)', text: '#5A6B5B' },
-  completada: { bg: 'rgba(22,19,19,0.05)',    border: 'rgba(22,19,19,0.12)',   text: 'rgba(22,19,19,0.5)' },
-  cancelada:  { bg: 'rgba(163,147,132,0.08)', border: 'rgba(163,147,132,0.2)', text: '#7A6B5E' },
-  no_asistio: { bg: 'rgba(22,19,19,0.03)',    border: 'rgba(22,19,19,0.08)',   text: 'rgba(22,19,19,0.3)' },
-}
 
 // ── Componente ─────────────────────────────────────────────────────────────
 export default function AgendaPage() {
@@ -64,36 +53,53 @@ export default function AgendaPage() {
   const { clinica } = useClinic()
   const { citas }   = useCitas()
 
-  const [weekStart,    setWeekStart]    = useState(() => getWeekStart(DEMO_TODAY))
-  const [selectedDay,  setSelectedDay]  = useState(() => new Date(DEMO_TODAY))
-  const [showDrawer,   setShowDrawer]   = useState(false)
-  const [selectedCita, setSelectedCita] = useState(null)
+  const [weekStart,     setWeekStart]     = useState(() => getWeekStart(DEMO_TODAY))
+  const [selectedDay,   setSelectedDay]   = useState(() => new Date(DEMO_TODAY))
+  const [showDrawer,    setShowDrawer]    = useState(false)
+  const [selectedCita,  setSelectedCita]  = useState(null)
+  const [especialistas, setEspecialistas] = useState([])
 
+  const isMock = !isValidUUID(clinica?.id)
+
+  // ── Cargar especialistas (médicos activos) ─────────────────────────────
+  useEffect(() => {
+    if (!clinica?.id) return
+
+    async function loadEspecialistas() {
+      if (isMock) {
+        // Pequeño delay para simular latencia en modo demo
+        await new Promise(r => setTimeout(r, 200))
+        setEspecialistas(MOCK_ESPECIALISTAS)
+        return
+      }
+
+      if (!supabase) return
+
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('id, nombre')
+        .eq('clinica_id', clinica.id)
+        .eq('rol', 'medico')
+        .eq('activo', true)
+        .order('nombre')
+
+      if (error) {
+        console.error('[AgendaPage] loadEspecialistas error:', error)
+        // Fallback silencioso: la agenda muestra sin columnas en vez de romperse
+        setEspecialistas([])
+      } else {
+        setEspecialistas(data ?? [])
+      }
+    }
+
+    loadEspecialistas()
+  }, [clinica?.id, isMock])
+
+  // ── Semana visible ──────────────────────────────────────────────────────
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
     [weekStart]
   )
-
-  const citasDelDia = useMemo(() =>
-    citas
-      .filter(c => isSameDay(c.fecha instanceof Date ? c.fecha : new Date(c.fecha), selectedDay))
-      .sort((a, b) => {
-        const fa = a.fecha instanceof Date ? a.fecha : new Date(a.fecha)
-        const fb = b.fecha instanceof Date ? b.fecha : new Date(b.fecha)
-        return fa - fb
-      }),
-    [citas, selectedDay]
-  )
-
-  const timeLabels = useMemo(() => {
-    const labels = []
-    for (let h = START_H; h <= END_H; h++) {
-      labels.push({ h, label: `${String(h).padStart(2, '0')}:00` })
-    }
-    return labels
-  }, [])
-
-  const totalH = (END_H - START_H) * SLOT_H * 2
 
   const weekRangeLabel = (() => {
     const start = weekDays[0]
@@ -107,12 +113,23 @@ export default function AgendaPage() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
         {/* ── HEADER ──────────────────────────────────────── */}
-        <div style={{ padding: '24px 40px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+        <div style={{
+          padding: '24px 40px 0',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          flexShrink: 0,
+        }}>
           <div>
-            <p style={{ fontFamily: DM_MONO, fontSize: '10px', color: 'rgba(22,19,19,0.3)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: 0 }}>
+            <p style={{
+              fontFamily: DM_MONO, fontSize: '10px',
+              color: 'rgba(22,19,19,0.3)', textTransform: 'uppercase',
+              letterSpacing: '0.14em', margin: 0,
+            }}>
               Agenda semanal
             </p>
-            <h1 style={{ fontFamily: FRAUNCES, fontSize: '28px', fontWeight: 300, color: '#161313', margin: '4px 0 0' }}>
+            <h1 style={{
+              fontFamily: FRAUNCES, fontSize: '28px', fontWeight: 300,
+              color: '#161313', margin: '4px 0 0',
+            }}>
               Agenda
             </h1>
           </div>
@@ -132,7 +149,10 @@ export default function AgendaPage() {
         </div>
 
         {/* ── NAVEGACIÓN SEMANAL ──────────────────────────── */}
-        <div style={{ padding: '20px 40px 0', display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+        <div style={{
+          padding: '20px 40px 0',
+          display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0,
+        }}>
 
           {/* Botón anterior */}
           <button
@@ -148,7 +168,10 @@ export default function AgendaPage() {
           </button>
 
           {/* Rango */}
-          <span style={{ flex: 1, textAlign: 'center', fontFamily: DM_MONO, fontSize: '11px', color: 'rgba(22,19,19,0.4)', letterSpacing: '0.06em' }}>
+          <span style={{
+            flex: 1, textAlign: 'center', fontFamily: DM_MONO,
+            fontSize: '11px', color: 'rgba(22,19,19,0.4)', letterSpacing: '0.06em',
+          }}>
             {weekRangeLabel}
           </span>
 
@@ -218,112 +241,32 @@ export default function AgendaPage() {
         </div>
 
         {/* ── SUB-HEADER ──────────────────────────────────── */}
-        <div style={{ padding: '16px 40px', borderBottom: '1px solid rgba(22,19,19,0.06)', flexShrink: 0 }}>
-          <p style={{ fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300, color: 'rgba(22,19,19,0.4)', margin: 0, textTransform: 'capitalize' }}>
-            {selectedDay.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        <div style={{
+          padding: '16px 40px',
+          borderBottom: '1px solid rgba(22,19,19,0.06)',
+          flexShrink: 0,
+        }}>
+          <p style={{
+            fontFamily: DM_SANS, fontSize: '13px', fontWeight: 300,
+            color: 'rgba(22,19,19,0.4)', margin: 0, textTransform: 'capitalize',
+          }}>
+            {selectedDay.toLocaleDateString('es-ES', {
+              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+            })}
           </p>
         </div>
 
-        {/* ── REJILLA DE TIEMPO ───────────────────────────── */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+        {/* ── AGENDA VIEW (multi-columna) ──────────────────── */}
+        <AgendaView
+          citas={citas}
+          especialistas={especialistas}
+          selectedDay={selectedDay}
+          onCitaClick={setSelectedCita}
+        />
 
-          {/* Columna de horas */}
-          <div style={{ width: '64px', flexShrink: 0, borderRight: '1px solid rgba(22,19,19,0.06)', position: 'relative', paddingTop: '8px' }}>
-            {timeLabels.map(({ h, label }) => (
-              <div
-                key={h}
-                style={{
-                  position: 'absolute', left: 0, right: 0,
-                  top: (h - START_H) * SLOT_H * 2,
-                  height: SLOT_H * 2,
-                  display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
-                  paddingRight: '12px', paddingTop: '4px',
-                }}
-              >
-                <span style={{ fontFamily: DM_MONO, fontSize: '10px', color: 'rgba(22,19,19,0.25)', letterSpacing: '0.06em' }}>
-                  {label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Área de citas */}
-          <div style={{ flex: 1, position: 'relative', overflowY: 'auto' }}>
-            <div style={{ position: 'relative', height: totalH + 'px' }}>
-
-              {/* Líneas de cuadrícula */}
-              {timeLabels.map(({ h }) => (
-                <div key={`full-${h}`}>
-                  <div style={{
-                    position: 'absolute', left: 0, right: 0,
-                    top: (h - START_H) * SLOT_H * 2,
-                    height: SLOT_H + 'px',
-                    borderTop: '1px solid rgba(22,19,19,0.07)',
-                  }} />
-                  {h < END_H && (
-                    <div style={{
-                      position: 'absolute', left: 0, right: 0,
-                      top: (h - START_H) * SLOT_H * 2 + SLOT_H,
-                      height: SLOT_H + 'px',
-                      borderTop: '1px solid rgba(22,19,19,0.03)',
-                    }} />
-                  )}
-                </div>
-              ))}
-
-              {/* Estado vacío */}
-              {citasDelDia.length === 0 && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <i className="ti ti-calendar-off" style={{ fontSize: '28px', color: 'rgba(22,19,19,0.12)' }} />
-                  <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 300, color: 'rgba(22,19,19,0.3)', margin: 0 }}>
-                    Sin citas este día
-                  </p>
-                </div>
-              )}
-
-              {/* Bloques de cita */}
-              {citasDelDia.map(cita => {
-                const s      = CITA_STYLE[cita.estado] ?? CITA_STYLE.pendiente
-                const top    = timeToTop(cita.fecha)
-                const height = Math.max(durationToHeight(cita.duracion_minutos), 36)
-                const fecha  = cita.fecha instanceof Date ? cita.fecha : new Date(cita.fecha)
-                const horaStr = `${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`
-
-                return (
-                  <div
-                    key={cita.id}
-                    onClick={() => setSelectedCita(cita)}
-                    style={{
-                      position: 'absolute', left: '8px', right: '8px',
-                      top: top + 'px', height: height + 'px',
-                      borderRadius: '2px', padding: '8px 10px',
-                      cursor: 'pointer', overflow: 'hidden',
-                      border: `1px solid ${s.border}`,
-                      background: s.bg,
-                    }}
-                  >
-                    <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 400, color: s.text, lineHeight: 1.3, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {cita.paciente_nombre}
-                    </p>
-                    {height > 52 && (
-                      <p style={{ fontFamily: DM_SANS, fontSize: '11px', fontWeight: 300, color: s.text, opacity: 0.7, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {cita.tratamiento}
-                      </p>
-                    )}
-                    {height > 52 && (
-                      <p style={{ fontFamily: DM_MONO, fontSize: '10px', color: s.text, opacity: 0.5, margin: '4px 0 0' }}>
-                        {horaStr}
-                      </p>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* ── DRAWERS / PANELS ────────────────────────────── */}
+      {/* ── DRAWERS / PANELS ────────────────────────────────── */}
       {showDrawer && (
         <NuevaCitaDrawer
           onClose={() => setShowDrawer(false)}
