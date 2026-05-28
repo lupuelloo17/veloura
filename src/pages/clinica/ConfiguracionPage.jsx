@@ -331,19 +331,45 @@ function SecEquipo({ clinica, showToast }) {
     setSaving(true)
     if (modal.mode === 'add') {
       if (supabase && clinica?.id && !clinica._isMock) {
-        const payload = {
-          nombre:       form.nombre,
-          email:        form.email       || null,
-          especialidad: form.especialidad || null,
-          foto:         form.foto        || null,
-          rol:          'medico',
-          activo:       true,
-          clinica_id:   clinica.id,
+        // ── Flujo real: la tabla usuarios.id es FK → auth.users(id), por lo que
+        //    no podemos hacer un INSERT directo sin un auth user previo.
+        //    La Edge Function invite-staff lo hace en dos pasos con service_role:
+        //      1. crea el auth user (inviteUserByEmail o createUser placeholder)
+        //      2. inserta en public.usuarios con el UUID devuelto
+        const { data: fnData, error: fnError } = await supabase.functions.invoke(
+          'invite-staff',
+          {
+            body: {
+              nombre:       form.nombre,
+              email:        form.email       || null,
+              especialidad: form.especialidad || null,
+              foto:         form.foto        || null,
+              rol:          'medico',
+              clinica_id:   clinica.id,
+            },
+          }
+        )
+
+        if (fnError) {
+          showToast('Error al añadir médico: ' + fnError.message, 'error')
+          setSaving(false)
+          return
         }
-        const { data, error } = await supabase.from('usuarios').insert([payload]).select().single()
-        if (error) { showToast('Error al añadir médico: ' + error.message, 'error'); setSaving(false); return }
-        if (data) setMedicos(prev => [...prev, data])
+
+        // La respuesta puede traer un error interno aunque HTTP sea 200
+        if (fnData?.error) {
+          showToast('Error: ' + fnData.error, 'error')
+          setSaving(false)
+          return
+        }
+
+        if (fnData?.data) setMedicos(prev => [...prev, fnData.data])
+
+        if (fnData?.invited && form.email) {
+          showToast(`Invitación enviada a ${form.email}`, 'success')
+        }
       } else {
+        // ── Modo mock (sin Supabase) ────────────────────────────────────
         setMedicos(prev => [...prev, { ...form, id: 'm' + Date.now(), activo: true, rol: 'medico' }])
       }
     } else {
