@@ -293,7 +293,7 @@ function SecIdentidad({ clinica, onSave }) {
 }
 
 // ── SECCIÓN 2: EQUIPO ────────────────────────────────────────────
-const EMPTY_MEDICO = { nombre: '', especialidad: '', colegiado: '', email: '', telefono: '', foto: '' }
+const EMPTY_MEDICO = { nombre: '', especialidad: '', email: '', foto: '' }
 
 function SecEquipo({ clinica, showToast }) {
   const [medicos,       setMedicos]       = useState([])
@@ -305,36 +305,57 @@ function SecEquipo({ clinica, showToast }) {
 
   useEffect(() => {
     if (supabase && clinica?.id && !clinica._isMock) {
-      supabase.from('medicos').select('*').eq('clinica_id', clinica.id)
-        .then(({ data }) => { if (data?.length) setMedicos(data) })
+      supabase.from('usuarios')
+        .select('id, nombre, email, rol, foto, activo, especialidad')
+        .eq('clinica_id', clinica.id)
+        .eq('rol', 'medico')
+        .then(({ data, error }) => {
+          if (error) console.error('[SecEquipo] load error:', error.message)
+          if (data?.length) setMedicos(data)
+        })
     } else {
       setMedicos(MOCK_MEDICOS)
     }
   }, [clinica?.id])
 
   function openAdd()   { setForm(EMPTY_MEDICO); setModal({ mode: 'add' }) }
-  function openEdit(m) { setForm({ nombre: m.nombre, especialidad: m.especialidad ?? '', colegiado: m.colegiado ?? '', email: m.email ?? '', telefono: m.telefono ?? '', foto: m.foto ?? '' }); setModal({ mode: 'edit', id: m.id }) }
+  function openEdit(m) { setForm({ nombre: m.nombre, especialidad: m.especialidad ?? '', email: m.email ?? '', foto: m.foto ?? '' }); setModal({ mode: 'edit', id: m.id }) }
 
   async function toggleActivo(m) {
     const updated = { ...m, activo: !m.activo }
     setMedicos(prev => prev.map(x => x.id === m.id ? updated : x))
-    if (supabase && !clinica._isMock) await supabase.from('medicos').update({ activo: !m.activo }).eq('id', m.id)
+    if (supabase && !clinica._isMock) await supabase.from('usuarios').update({ activo: !m.activo }).eq('id', m.id)
   }
 
   async function handleSave() {
     setSaving(true)
     if (modal.mode === 'add') {
       if (supabase && clinica?.id && !clinica._isMock) {
-        const { data, error } = await supabase.from('medicos').insert([{ ...form, clinica_id: clinica.id, activo: true }]).select().single()
+        const payload = {
+          nombre:       form.nombre,
+          email:        form.email       || null,
+          especialidad: form.especialidad || null,
+          foto:         form.foto        || null,
+          rol:          'medico',
+          activo:       true,
+          clinica_id:   clinica.id,
+        }
+        const { data, error } = await supabase.from('usuarios').insert([payload]).select().single()
         if (error) { showToast('Error al añadir médico: ' + error.message, 'error'); setSaving(false); return }
         if (data) setMedicos(prev => [...prev, data])
       } else {
-        setMedicos(prev => [...prev, { ...form, id: 'm' + Date.now(), activo: true }])
+        setMedicos(prev => [...prev, { ...form, id: 'm' + Date.now(), activo: true, rol: 'medico' }])
       }
     } else {
-      setMedicos(prev => prev.map(m => m.id === modal.id ? { ...m, ...form } : m))
+      const updatedFields = {
+        nombre:       form.nombre,
+        email:        form.email       || null,
+        especialidad: form.especialidad || null,
+        foto:         form.foto        || null,
+      }
+      setMedicos(prev => prev.map(m => m.id === modal.id ? { ...m, ...updatedFields } : m))
       if (supabase && !clinica._isMock) {
-        const { error } = await supabase.from('medicos').update(form).eq('id', modal.id)
+        const { error } = await supabase.from('usuarios').update(updatedFields).eq('id', modal.id)
         if (error) { showToast('Error al guardar: ' + error.message, 'error'); setSaving(false); return }
       }
     }
@@ -347,9 +368,7 @@ function SecEquipo({ clinica, showToast }) {
   const MEDICO_FIELDS = [
     ['Nombre completo',    'nombre'],
     ['Especialidad',       'especialidad'],
-    ['Nº de colegiado',    'colegiado'],
     ['Email',              'email'],
-    ['Teléfono directo',   'telefono'],
     ['URL foto de perfil', 'foto'],
   ]
 
