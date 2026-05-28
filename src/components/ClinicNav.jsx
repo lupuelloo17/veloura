@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useClinic } from '../contexts/ClinicContext'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { useVertical } from '../hooks/useVertical'
 
 // Misma regex que usan useChat, useEvolution, MiPerfilPage, etc.
 // Impide lanzar consultas a Supabase con IDs de demo ('mock-garcia', 'mock-lumiere').
@@ -31,6 +32,8 @@ export default function ClinicNav() {
   const isAdmin    = user?.rol === 'admin'
   const isMedico   = user?.rol === 'medico'
   const isPaciente = user?.rol === 'paciente'
+
+  const v = useVertical()
 
   // Badge de mensajes no leídos
   const [unread, setUnread] = useState(0)
@@ -88,26 +91,26 @@ export default function ClinicNav() {
       ]
     : isMedico
     ? [
-        { label: 'Dashboard', icon: 'dashboard',     path: `/clinica/${slug}/dashboard` },
-        { label: 'Pacientes', icon: 'pacientes',     path: `/clinica/${slug}/pacientes` },
-        { label: 'Análisis',  icon: 'analisis',      path: `/clinica/${slug}/analisis`  },
-        { label: 'Agenda',    icon: 'agenda',        path: `/clinica/${slug}/agenda`    },
-        { label: 'Chat',      icon: 'chat',          path: `/clinica/${slug}/conversaciones`, badge: unread },
+        { label: 'Dashboard',    icon: 'dashboard',     path: `/clinica/${slug}/dashboard` },
+        { label: v.navPacientes, icon: 'pacientes',     path: `/clinica/${slug}/pacientes` },
+        { label: v.navAnalisis,  icon: 'analisis',      path: `/clinica/${slug}/analisis`  },
+        { label: 'Agenda',       icon: 'agenda',        path: `/clinica/${slug}/agenda`    },
+        { label: 'Chat',         icon: 'chat',          path: `/clinica/${slug}/conversaciones`, badge: unread },
       ]
     : isAdmin
     ? [
-        { label: 'Dashboard', icon: 'dashboard',     path: `/clinica/${slug}/dashboard` },
-        { label: 'Pacientes', icon: 'pacientes',     path: `/clinica/${slug}/pacientes` },
-        { label: 'Análisis',  icon: 'analisis',      path: `/clinica/${slug}/analisis`  },
-        { label: 'Chat',      icon: 'chat',          path: `/clinica/${slug}/conversaciones`, badge: unread },
-        { label: 'Config',    icon: 'configuracion', path: `/clinica/${slug}/configuracion` },
+        { label: 'Dashboard',    icon: 'dashboard',     path: `/clinica/${slug}/dashboard` },
+        { label: v.navPacientes, icon: 'pacientes',     path: `/clinica/${slug}/pacientes` },
+        { label: v.navAnalisis,  icon: 'analisis',      path: `/clinica/${slug}/analisis`  },
+        { label: 'Chat',         icon: 'chat',          path: `/clinica/${slug}/conversaciones`, badge: unread },
+        { label: 'Config',       icon: 'configuracion', path: `/clinica/${slug}/configuracion` },
       ]
     : [
-        { label: 'Dashboard', icon: 'dashboard',     path: `/clinica/${slug}/dashboard` },
-        { label: 'Pacientes', icon: 'pacientes',     path: `/clinica/${slug}/pacientes` },
-        { label: 'Análisis',  icon: 'analisis',      path: `/clinica/${slug}/analisis`  },
-        { label: 'Agenda',    icon: 'agenda',        path: `/clinica/${slug}/agenda`    },
-        { label: 'Chat',      icon: 'chat',          path: `/clinica/${slug}/conversaciones`, badge: unread },
+        { label: 'Dashboard',    icon: 'dashboard',     path: `/clinica/${slug}/dashboard` },
+        { label: v.navPacientes, icon: 'pacientes',     path: `/clinica/${slug}/pacientes` },
+        { label: v.navAnalisis,  icon: 'analisis',      path: `/clinica/${slug}/analisis`  },
+        { label: 'Agenda',       icon: 'agenda',        path: `/clinica/${slug}/agenda`    },
+        { label: 'Chat',         icon: 'chat',          path: `/clinica/${slug}/conversaciones`, badge: unread },
       ]
 
   return (

@@ -5,16 +5,20 @@ import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import StaffLayout from './StaffLayout'
 import HorarioDrawer from '../../components/HorarioDrawer'
+import { useVertical } from '../../hooks/useVertical'
 
 /* ─── UUID guard ─────────────────────────────────────────────────────────── */
 const isValidUUID = id =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id ?? '')
 
 /* ─── Role config ────────────────────────────────────────────────────────── */
-const ROL_CONFIG = {
-  admin:     { label: 'Admin',      color: '#161313', bg: 'rgba(22,19,19,0.08)',     border: 'rgba(22,19,19,0.15)'     },
-  medico:    { label: 'Médico',     color: '#3d6b4f', bg: 'rgba(61,107,79,0.10)',    border: 'rgba(61,107,79,0.20)'    },
-  recepcion: { label: 'Recepción',  color: '#7a5c3e', bg: 'rgba(163,147,132,0.12)', border: 'rgba(163,147,132,0.25)'  },
+// Function form so labels react to the active vertical
+function getRolConfig(v) {
+  return {
+    admin:     { label: v.admin,      color: '#161313', bg: 'rgba(22,19,19,0.08)',     border: 'rgba(22,19,19,0.15)'     },
+    medico:    { label: v.medico,     color: '#3d6b4f', bg: 'rgba(61,107,79,0.10)',    border: 'rgba(61,107,79,0.20)'    },
+    recepcion: { label: v.recepcion,  color: '#7a5c3e', bg: 'rgba(163,147,132,0.12)', border: 'rgba(163,147,132,0.25)'  },
+  }
 }
 
 /* ─── Mock data ──────────────────────────────────────────────────────────── */
@@ -353,6 +357,8 @@ function EmpleadoCard({ empleado, onHorario, onToggleActivo, isMock }) {
 export default function EquipoPage() {
   const { clinica } = useClinic()
   const { user } = useAuth()
+  const v = useVertical()
+  const ROL_CONFIG = getRolConfig(v)
 
   const [equipo, setEquipo]       = useState([])
   const [loading, setLoading]     = useState(true)
@@ -518,8 +524,8 @@ export default function EquipoPage() {
             }}
           >
             <StatCard icon="ti ti-users" label="Total empleados" value={stats.total} />
-            <StatCard icon="ti ti-stethoscope" label="Médicos" value={stats.medicos} accent="rgba(61,107,79,0.08)" />
-            <StatCard icon="ti ti-headset" label="Recepción" value={stats.recepcion} accent="rgba(163,147,132,0.12)" />
+            <StatCard icon="ti ti-stethoscope" label={v.medicos} value={stats.medicos} accent="rgba(61,107,79,0.08)" />
+            <StatCard icon="ti ti-headset" label={v.recepcion} value={stats.recepcion} accent="rgba(163,147,132,0.12)" />
             <StatCard icon="ti ti-circle-check" label="Activos" value={stats.activos} accent="rgba(22,19,19,0.05)" />
           </div>
         )}
