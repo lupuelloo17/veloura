@@ -22,24 +22,33 @@ const TRATAMIENTOS_OPCIONES = [
   'Radiofrecuencia', 'Mesoterapia', 'Láser CO2', 'Hilos Tensores',
   'Bioestimulación', 'Micropigmentación', 'Otro',
 ]
+const ZONAS_OPCIONES = [
+  'Frente', 'Entrecejo', 'Contorno de ojos', 'Mejilla izquierda',
+  'Mejilla derecha', 'Nariz', 'Labios', 'Mentón', 'Cuello',
+  'Escote', 'Manos', 'Zona perioral', 'Óvalo facial', 'Otra',
+]
 const MOCK_FOTOS = [
   {
     id: 'm1', tipo: 'antes', tratamiento: 'Toxina Botulínica',
+    zona_corporal: 'Frente',
     fecha: new Date(Date.now() - 40 * 86400000).toISOString(), notas: 'Zona de frente y entrecejo',
     foto_url: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face',
   },
   {
     id: 'm2', tipo: 'despues', tratamiento: 'Toxina Botulínica',
+    zona_corporal: 'Frente',
     fecha: new Date(Date.now() - 10 * 86400000).toISOString(), notas: 'Resultado a las 4 semanas',
     foto_url: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&h=400&fit=crop&crop=face',
   },
   {
     id: 'm3', tipo: 'antes', tratamiento: 'Ácido Hialurónico',
+    zona_corporal: 'Labios',
     fecha: new Date(Date.now() - 60 * 86400000).toISOString(), notas: '',
     foto_url: 'https://images.unsplash.com/photo-1526510747491-58f928ec870f?w=400&h=400&fit=crop&crop=face',
   },
   {
-    id: 'm4', tipo: 'progreso', tratamiento: 'Ácido Hialurónico',
+    id: 'm4', tipo: 'despues', tratamiento: 'Ácido Hialurónico',
+    zona_corporal: 'Labios',
     fecha: new Date(Date.now() - 30 * 86400000).toISOString(), notas: '3 semanas post-tratamiento',
     foto_url: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=400&fit=crop&crop=face',
   },
@@ -59,7 +68,8 @@ export default function EvolucionPage({ pacienteIdProp, readOnly = false }) {
 
   // pacienteIdProp: cuando lo usa el médico desde PacienteDetallePage
   const pacienteId = pacienteIdProp ?? user?.id
-  const clinicaId  = user?.clinica_id
+  // clinicaId: preferir clinica.id (del contexto) sobre el claim JWT del usuario
+  const clinicaId  = clinica?.id ?? user?.clinica_id
 
   const [fotos,        setFotos]        = useState([])
   const [cargando,     setCargando]     = useState(true)
@@ -70,6 +80,7 @@ export default function EvolucionPage({ pacienteIdProp, readOnly = false }) {
   const [preview,      setPreview]      = useState(null)
   const [tipoNueva,    setTipoNueva]    = useState('antes')
   const [tratNueva,    setTratNueva]    = useState('')
+  const [zonaNueva,    setZonaNueva]    = useState('')
   const [notasNueva,   setNotasNueva]   = useState('')
   const [fotoModal,    setFotoModal]    = useState(null)
   const [toast,        setToast]        = useState(null)
@@ -139,13 +150,14 @@ export default function EvolucionPage({ pacienteIdProp, readOnly = false }) {
         const { data: nueva, error: dbErr } = await supabase
           .from('evoluciones')
           .insert({
-            paciente_id: pacienteId,
-            clinica_id:  clinicaId,
-            medico_id:   readOnly ? user?.id : null,
-            tipo:        tipoNueva,
-            foto_url:    fotoUrl,
-            tratamiento: tratNueva,
-            notas:       notasNueva.trim() || null,
+            paciente_id:   pacienteId,
+            clinica_id:    clinicaId,
+            medico_id:     user?.id ?? null,
+            tipo:          tipoNueva,
+            foto_url:      fotoUrl,
+            tratamiento:   tratNueva   || null,
+            zona_corporal: zonaNueva   || null,
+            notas:         notasNueva.trim() || null,
           })
           .select()
           .single()
@@ -154,7 +166,8 @@ export default function EvolucionPage({ pacienteIdProp, readOnly = false }) {
       } else {
         const nueva = {
           id: `mock-${Date.now()}`, tipo: tipoNueva,
-          tratamiento: tratNueva, notas: notasNueva,
+          tratamiento: tratNueva, zona_corporal: zonaNueva,
+          notas: notasNueva,
           fecha: new Date().toISOString(), foto_url: fotoUrl,
         }
         setFotos(prev => [nueva, ...prev])
@@ -164,6 +177,7 @@ export default function EvolucionPage({ pacienteIdProp, readOnly = false }) {
       setArchivo(null)
       setPreview(null)
       setTratNueva('')
+      setZonaNueva('')
       setNotasNueva('')
       mostrarToast('Foto guardada ✓')
     } catch (err) {
@@ -188,22 +202,28 @@ export default function EvolucionPage({ pacienteIdProp, readOnly = false }) {
     mostrarToast('Foto eliminada')
   }
 
-  // Agrupar por tratamiento
+  // Agrupar por zona_corporal (primario) — dentro de cada zona se muestran
+  // todas las fotos en orden cronológico, con el comparador disponible si hay
+  // al menos una 'antes' y una 'despues' en esa zona.
   const grupos = useMemo(() => {
     const map = {}
     for (const f of fotos) {
-      const key = f.tratamiento || 'Sin tratamiento'
+      const key = f.zona_corporal || f.tratamiento || 'Sin zona'
       if (!map[key]) map[key] = []
       map[key].push(f)
     }
-    return Object.entries(map)
+    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b, 'es'))
   }, [fotos])
 
-  // Par antes/después para el modal
+  // Par antes/después para el comparador interactivo:
+  // busca por misma zona_corporal (o tratamiento como fallback)
   const parModal = useMemo(() => {
     if (!fotoModal) return null
-    const same = fotos.filter(f => f.tratamiento === fotoModal.tratamiento)
-    const antes  = same.find(f => f.tipo === 'antes')
+    const zona = fotoModal.zona_corporal || fotoModal.tratamiento
+    const same = fotos.filter(f =>
+      (f.zona_corporal || f.tratamiento) === zona
+    )
+    const antes   = same.find(f => f.tipo === 'antes')
     const despues = same.find(f => f.tipo === 'despues')
     if (antes && despues) return { antes, despues }
     return null
@@ -311,9 +331,24 @@ export default function EvolucionPage({ pacienteIdProp, readOnly = false }) {
                 </div>
               </div>
 
+              {/* Zona corporal — clave para el comparador Antes/Después */}
+              <div>
+                <label className="text-gray-600 text-xs font-medium block mb-1">
+                  Zona corporal <span style={{ color: brand }}>*</span>
+                </label>
+                <select
+                  value={zonaNueva}
+                  onChange={e => setZonaNueva(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-[#C8A882]"
+                >
+                  <option value="">— Selecciona zona —</option>
+                  {ZONAS_OPCIONES.map(z => <option key={z} value={z}>{z}</option>)}
+                </select>
+              </div>
+
               {/* Tratamiento */}
               <div>
-                <label className="text-gray-600 text-xs font-medium block mb-1">Tratamiento *</label>
+                <label className="text-gray-600 text-xs font-medium block mb-1">Tratamiento (opcional)</label>
                 <select
                   value={tratNueva}
                   onChange={e => setTratNueva(e.target.value)}
@@ -331,14 +366,14 @@ export default function EvolucionPage({ pacienteIdProp, readOnly = false }) {
                   value={notasNueva}
                   onChange={e => setNotasNueva(e.target.value)}
                   rows={2}
-                  placeholder="Zona tratada, observaciones clínicas…"
+                  placeholder="Observaciones clínicas, contexto del tratamiento…"
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none focus:border-[#C8A882] resize-none"
                 />
               </div>
 
               <button
                 onClick={handleGuardar}
-                disabled={subiendo || !tratNueva || !archivo}
+                disabled={subiendo || !zonaNueva || !archivo}
                 className="w-full py-3.5 rounded-2xl text-white font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-40"
                 style={{ backgroundColor: brand }}
               >
@@ -386,22 +421,31 @@ export default function EvolucionPage({ pacienteIdProp, readOnly = false }) {
             </p>
           </div>
         ) : (
-          grupos.map(([tratamiento, items]) => {
+          grupos.map(([zona, items]) => {
             const hasPar = items.some(f => f.tipo === 'antes') &&
                            items.some(f => f.tipo === 'despues')
+            // Tratamientos únicos dentro de esta zona para subtítulo
+            const tratsUnicos = [...new Set(items.map(f => f.tratamiento).filter(Boolean))]
             return (
-              <div key={tratamiento}>
+              <div key={zona}>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <p className="text-gray-900 font-semibold text-sm">{tratamiento}</p>
-                    <span className="text-gray-400 text-xs">· {items.length} {items.length === 1 ? 'foto' : 'fotos'}</span>
+                  <div>
+                    <p className="text-gray-900 font-semibold text-sm">{zona}</p>
+                    {tratsUnicos.length > 0 && (
+                      <p className="text-gray-400 text-xs mt-0.5">
+                        {tratsUnicos.join(' · ')}
+                      </p>
+                    )}
                   </div>
-                  {hasPar && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                          style={{ backgroundColor: brand + '20', color: brand }}>
-                      Comparador disponible
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-400 text-xs">{items.length} {items.length === 1 ? 'foto' : 'fotos'}</span>
+                    {hasPar && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                            style={{ backgroundColor: brand + '20', color: brand }}>
+                        ⟺ Comparar
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="grid grid-cols-3 gap-1.5">
                   {items.map(foto => {
@@ -443,9 +487,14 @@ export default function EvolucionPage({ pacienteIdProp, readOnly = false }) {
           {/* Header modal */}
           <div className="flex items-center justify-between px-4 pt-5 pb-3 flex-shrink-0">
             <div>
-              <p className="text-white font-semibold text-sm">{fotoModal.tratamiento}</p>
+              <p className="text-white font-semibold text-sm">
+                {fotoModal.zona_corporal || fotoModal.tratamiento || 'Sin zona'}
+              </p>
               <p className="text-white/50 text-xs">
                 {TIPO_LABELS[fotoModal.tipo]} · {fmtFecha(fotoModal.fecha)}
+                {fotoModal.tratamiento && fotoModal.zona_corporal
+                  ? ` · ${fotoModal.tratamiento}`
+                  : ''}
               </p>
             </div>
             <button
