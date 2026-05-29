@@ -336,6 +336,9 @@ function SecEquipo({ clinica, showToast }) {
         //    La Edge Function invite-staff lo hace en dos pasos con service_role:
         //      1. crea el auth user (inviteUserByEmail o createUser placeholder)
         //      2. inserta en public.usuarios con el UUID devuelto
+        // Asegurar que la sesión esté activa antes de llamar a la Edge Function
+        await supabase.auth.getSession()
+
         const { data: fnData, error: fnError } = await supabase.functions.invoke(
           'invite-staff',
           {
@@ -351,7 +354,10 @@ function SecEquipo({ clinica, showToast }) {
         )
 
         if (fnError) {
-          showToast('Error al añadir médico: ' + fnError.message, 'error')
+          // fnData puede contener el cuerpo de la respuesta aunque haya error HTTP
+          const detail = fnData?.error ?? fnError.message
+          console.error('[SecEquipo] invite-staff error:', fnError, fnData)
+          showToast('Error al añadir médico: ' + detail, 'error')
           setSaving(false)
           return
         }
