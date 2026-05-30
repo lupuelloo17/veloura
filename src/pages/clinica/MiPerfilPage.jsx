@@ -4,8 +4,7 @@ import { useAuth }   from '../../contexts/AuthContext'
 import { useClinic } from '../../contexts/ClinicContext'
 import { supabase }  from '../../lib/supabase'
 import ClinicLayout  from './ClinicLayout'
-import EscribirClinicaDrawer   from '../../components/EscribirClinicaDrawer'
-import SolicitarCitaDrawer     from '../../components/SolicitarCitaDrawer'
+import SolicitarCitaDrawer from '../../components/SolicitarCitaDrawer'
 
 const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 
@@ -35,7 +34,6 @@ export default function MiPerfilPage() {
   const [paciente,      setPaciente]      = useState(null)
   const [proximaCita,   setProximaCita]   = useState(null)
   const [cargando,      setCargando]      = useState(true)
-  const [escribirOpen,  setEscribirOpen]  = useState(false)
   const [solicitarOpen, setSolicitarOpen] = useState(false)
 
   useEffect(() => {
@@ -203,7 +201,7 @@ export default function MiPerfilPage() {
       {/* ── Contenido (fondo crema) ──────────────────────────── */}
       <div style={{
         background:    'var(--vl-page)',
-        padding:       '20px 16px 88px',
+        padding:       '20px 16px 24px',
         display:       'flex',
         flexDirection: 'column',
         gap:           '12px',
@@ -217,11 +215,9 @@ export default function MiPerfilPage() {
         />
 
         {/* Accesos rápidos — navegan a sus tabs propias */}
-        <AccesosRapidos slug={slug} navigate={navigate} onEscribir={() => setEscribirOpen(true)} />
+        <AccesosRapidos slug={slug} navigate={navigate} />
 
       </div>
-
-      {escribirOpen  && <EscribirClinicaDrawer onClose={() => setEscribirOpen(false)} />}
       {solicitarOpen && <SolicitarCitaDrawer   onClose={() => setSolicitarOpen(false)} onGuardado={() => { setSolicitarOpen(false); window.location.reload() }} />}
     </ClinicLayout>
   )
@@ -502,7 +498,7 @@ const ACCESOS = [
   },
 ]
 
-function AccesosRapidos({ slug, navigate, onEscribir }) {
+function AccesosRapidos({ slug, navigate }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       <p className="vl-section-label" style={{ marginBottom: '4px' }}>Accesos rápidos</p>
@@ -513,17 +509,17 @@ function AccesosRapidos({ slug, navigate, onEscribir }) {
             key={tab}
             onClick={() => navigate(`/clinica/${slug}/mi-perfil/${tab}`)}
             style={{
-              background:   '#FFFFFF',
-              border:       '1px solid var(--vl-page-border)',
-              borderRadius: '2px',
-              padding:      '16px',
-              display:      'flex',
-              flexDirection:'column',
-              alignItems:   'flex-start',
-              gap:          '10px',
-              cursor:       'pointer',
-              textAlign:    'left',
-              transition:   'var(--vl-transition)',
+              background:    '#FFFFFF',
+              border:        '1px solid var(--vl-page-border)',
+              borderRadius:  '2px',
+              padding:       '16px',
+              display:       'flex',
+              flexDirection: 'column',
+              alignItems:    'flex-start',
+              gap:           '10px',
+              cursor:        'pointer',
+              textAlign:     'left',
+              transition:    'var(--vl-transition)',
             }}
           >
             <div style={{ color: 'var(--vl-sage-mid)' }}>{icon}</div>
@@ -545,54 +541,6 @@ function AccesosRapidos({ slug, navigate, onEscribir }) {
           </button>
         ))}
       </div>
-
-      {/* Escribir a la clínica */}
-      <button
-        onClick={onEscribir}
-        style={{
-          width:        '100%',
-          background:   '#FFFFFF',
-          border:       '1px solid var(--vl-page-border)',
-          borderRadius: '2px',
-          padding:      '16px',
-          display:      'flex',
-          alignItems:   'center',
-          gap:          '14px',
-          cursor:       'pointer',
-          textAlign:    'left',
-          transition:   'var(--vl-transition)',
-        }}
-      >
-        <div style={{
-          width:36, height:36, borderRadius:'2px',
-          border:'1px solid var(--vl-page-border)',
-          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
-        }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-               stroke="var(--vl-sage-mid)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-            <polyline points="22,6 12,13 2,6" />
-          </svg>
-        </div>
-        <div style={{ flex: 1 }}>
-          <p style={{
-            margin:0, fontFamily:'var(--vl-font-body)',
-            fontSize:'13px', fontWeight:400, color:'var(--vl-carbon)',
-          }}>
-            Escribir a tu clínica
-          </p>
-          <p style={{
-            margin:'2px 0 0', fontFamily:'var(--vl-font-body)',
-            fontSize:'11px', fontWeight:300, color:'var(--vl-sage-mid)',
-          }}>
-            Mensaje directo por email
-          </p>
-        </div>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-             stroke="var(--vl-page-border)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-      </button>
     </div>
   )
 }
