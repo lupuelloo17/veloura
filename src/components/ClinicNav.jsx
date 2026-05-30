@@ -161,7 +161,7 @@ export default function ClinicNav() {
                 className={`ti ${ICON_MAP[icon]}`}
                 style={{
                   fontSize: '22px',
-                  color: activeFixed ? '#161313' : 'rgba(22,19,19,0.28)',
+                  color: activeFixed ? 'var(--color-brand, #161313)' : 'rgba(22,19,19,0.28)',
                   display: 'block',
                   lineHeight: 1,
                 }}
@@ -207,7 +207,7 @@ export default function ClinicNav() {
                 width: '3px',
                 height: '3px',
                 borderRadius: '50%',
-                background: '#929C92',
+                background: 'var(--color-brand, #929C92)',
               }} />
             )}
           </button>

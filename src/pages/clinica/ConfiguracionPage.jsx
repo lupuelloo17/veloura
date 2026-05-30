@@ -383,7 +383,7 @@ function SecIdentidad({ clinica, onSave }) {
         onClick={handleSave}
         disabled={saving}
         style={{
-          background: '#161313', color: '#F7F5F2', border: 'none',
+          background: 'var(--color-brand, #161313)', color: '#F7F5F2', border: 'none',
           borderRadius: '2px', padding: '12px 24px',
           fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400,
           letterSpacing: '0.12em', textTransform: 'uppercase',
@@ -621,7 +621,7 @@ function SecEquipo({ clinica, showToast }) {
               <button onClick={() => setModal(null)} style={{ flex: 1, padding: '11px', background: 'transparent', border: '1px solid rgba(22,19,19,0.1)', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.5)', cursor: 'pointer' }}>
                 Cancelar
               </button>
-              <button onClick={handleSave} disabled={saving || !form.nombre} style={{ flex: 1, padding: '11px', background: '#161313', border: 'none', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#F7F5F2', cursor: saving || !form.nombre ? 'not-allowed' : 'pointer', opacity: saving || !form.nombre ? 0.5 : 1 }}>
+              <button onClick={handleSave} disabled={saving || !form.nombre} style={{ flex: 1, padding: '11px', background: 'var(--color-brand, #161313)', border: 'none', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#F7F5F2', cursor: saving || !form.nombre ? 'not-allowed' : 'pointer', opacity: saving || !form.nombre ? 0.5 : 1 }}>
                 {saving ? 'Guardando…' : 'Guardar'}
               </button>
             </div>
@@ -791,7 +791,7 @@ function SecCatalogo({ clinica, showToast }) {
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button onClick={() => setModal(null)} style={{ flex: 1, padding: '11px', background: 'transparent', border: '1px solid rgba(22,19,19,0.1)', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.5)', cursor: 'pointer' }}>Cancelar</button>
-              <button onClick={handleSave} disabled={saving || !form.nombre} style={{ flex: 1, padding: '11px', background: '#161313', border: 'none', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#F7F5F2', cursor: saving || !form.nombre ? 'not-allowed' : 'pointer', opacity: saving || !form.nombre ? 0.5 : 1 }}>
+              <button onClick={handleSave} disabled={saving || !form.nombre} style={{ flex: 1, padding: '11px', background: 'var(--color-brand, #161313)', border: 'none', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#F7F5F2', cursor: saving || !form.nombre ? 'not-allowed' : 'pointer', opacity: saving || !form.nombre ? 0.5 : 1 }}>
                 {saving ? 'Guardando…' : 'Guardar'}
               </button>
             </div>
@@ -868,7 +868,7 @@ function SecNotificaciones({ clinica, onSave }) {
       <button
         onClick={handleSave}
         disabled={saving}
-        style={{ marginTop: '24px', background: '#161313', color: '#F7F5F2', border: 'none', borderRadius: '2px', padding: '12px 24px', fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}
+        style={{ marginTop: '24px', background: 'var(--color-brand, #161313)', color: '#F7F5F2', border: 'none', borderRadius: '2px', padding: '12px 24px', fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400, letterSpacing: '0.12em', textTransform: 'uppercase', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }}
       >
         {saving ? 'Guardando…' : 'Guardar cambios'}
       </button>
@@ -965,7 +965,7 @@ function SecSuscripcion({ clinica, plan }) {
           )}
           <Link
             to="/precios"
-            style={{ padding: '12px', background: '#161313', border: 'none', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#F7F5F2', cursor: 'pointer', textDecoration: 'none', textAlign: 'center' }}
+            style={{ padding: '12px', background: 'var(--color-brand, #161313)', border: 'none', borderRadius: '2px', fontFamily: DM_SANS, fontSize: '11px', fontWeight: 400, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#F7F5F2', cursor: 'pointer', textDecoration: 'none', textAlign: 'center' }}
           >
             {isMock ? 'Ver planes y activar suscripción' : 'Cambiar de plan'}
           </Link>
@@ -1055,7 +1055,7 @@ export default function ConfiguracionPage() {
                 padding: '10px 20px', background: 'none', border: 'none',
                 cursor: 'pointer', fontFamily: DM_SANS, fontSize: '13px',
                 letterSpacing: '0.02em', transition: 'all 0.15s',
-                borderBottom: `2px solid ${tab === t.id ? '#161313' : 'transparent'}`,
+                borderBottom: `2px solid ${tab === t.id ? 'var(--color-brand, #161313)' : 'transparent'}`,
                 color: tab === t.id ? '#161313' : 'rgba(22,19,19,0.35)',
                 fontWeight: tab === t.id ? 400 : 300,
                 marginBottom: '-1px',
