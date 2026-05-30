@@ -636,7 +636,7 @@ export default function SolicitarCitaDrawer({ onClose, onGuardado }) {
                   </>
                 )}
 
-                {/* Notas */}
+                {/* Notas — solo cuando hay slot seleccionado */}
                 {slotSelec && (
                   <div style={{ marginBottom:8 }}>
                     <p style={{ margin:'0 0 8px', fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(22,19,19,0.3)' }}>
@@ -656,13 +656,77 @@ export default function SolicitarCitaDrawer({ onClose, onGuardado }) {
                     />
                   </div>
                 )}
+
+                {/* ── Botón Confirmar STICKY ─────────────────────────────────────────
+                    Siempre visible en Paso 3. Sticky bottom dentro del scroll, con
+                    fondo blanco y sombra para separarse del contenido al hacer scroll.
+                    disabled (gris) hasta que se seleccione un slot; enabled (negro) después.
+                ─────────────────────────────────────────────────────────────────── */}
+                <div style={{
+                  position: 'sticky',
+                  bottom: 0,
+                  background: 'linear-gradient(to bottom, transparent 0%, #FFFFFF 30%)',
+                  paddingTop: 16,
+                  paddingBottom: 8,
+                  marginTop: 8,
+                }}>
+                  {error && (
+                    <div style={{ padding:'10px 0 10px', marginBottom:4 }}>
+                      <p style={{ margin:0, fontFamily:"'DM Sans',system-ui", fontSize:'12px', fontWeight:300, color:'#A03020' }}>{error}</p>
+                    </div>
+                  )}
+                  <button
+                    onClick={handleConfirmar}
+                    disabled={!slotSelec || enviando}
+                    style={{
+                      width: '100%',
+                      padding: '14px',
+                      borderRadius: 2,
+                      border: 'none',
+                      fontFamily: "'DM Sans',system-ui",
+                      fontSize: '12px',
+                      fontWeight: 400,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      cursor: slotSelec && !enviando ? 'pointer' : 'not-allowed',
+                      // Estado habilitado: negro premium / deshabilitado: gris claro con texto legible
+                      background: slotSelec && !enviando
+                        ? '#161313'
+                        : 'rgba(22,19,19,0.08)',
+                      color: slotSelec && !enviando
+                        ? '#C9D3CA'
+                        : 'rgba(22,19,19,0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      transition: 'background 0.2s, color 0.2s',
+                    }}
+                  >
+                    {enviando && (
+                      <span style={{
+                        width: 12, height: 12, borderRadius: '50%',
+                        border: '1.5px solid currentColor',
+                        borderTopColor: 'transparent',
+                        animation: 'vlSpin 0.7s linear infinite',
+                        display: 'inline-block',
+                      }}/>
+                    )}
+                    {enviando
+                      ? 'Confirmando…'
+                      : slotSelec
+                        ? `Confirmar — ${slotSelec}`
+                        : 'Selecciona una hora'}
+                  </button>
+                </div>
+
               </div>
             )
           )}
         </div>
 
-        {/* Error */}
-        {error && (
+        {/* Error pasos 1 y 2 (paso 3 tiene su error inline en el sticky) */}
+        {error && paso < 3 && (
           <div style={{ padding:'10px 20px', background:'rgba(180,60,40,0.06)', borderTop:'1px solid rgba(180,60,40,0.1)' }}>
             <p style={{ margin:0, fontFamily:"'DM Sans',system-ui", fontSize:'12px', fontWeight:300, color:'#A03020' }}>{error}</p>
           </div>
@@ -688,28 +752,9 @@ export default function SolicitarCitaDrawer({ onClose, onGuardado }) {
               </button>
             )}
 
-            {/* Confirmar — solo en paso 3, cuando hay slot seleccionado */}
-            {paso===3 && (
-              <button
-                onClick={handleConfirmar}
-                disabled={!slotSelec || enviando}
-                style={{
-                  flex:2, padding:'13px', borderRadius:2, border:'none',
-                  fontFamily:"'DM Sans',system-ui", fontSize:'11px', fontWeight:400,
-                  letterSpacing:'0.1em', textTransform:'uppercase',
-                  background: slotSelec && !enviando ? '#161313' : 'rgba(22,19,19,0.25)',
-                  color: '#C9D3CA',
-                  cursor: slotSelec && !enviando ? 'pointer' : 'not-allowed',
-                  display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-                  transition:'background 0.15s',
-                }}
-              >
-                {enviando && (
-                  <span style={{ width:12, height:12, borderRadius:'50%', border:'1.5px solid currentColor', borderTopColor:'transparent', animation:'vlSpin 0.7s linear infinite', display:'inline-block' }}/>
-                )}
-                {enviando ? 'Confirmando…' : 'Confirmar cita'}
-              </button>
-            )}
+            {/* En paso 3 el botón Confirmar vive sticky dentro del scroll.
+                Este flex spacer mantiene el footer balanceado junto al botón Atrás. */}
+            {paso===3 && <div style={{ flex:2 }} />}
 
             {/* En pasos 1 y 2, indicar al usuario qué hacer */}
             {paso < 3 && (
