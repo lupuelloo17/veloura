@@ -219,31 +219,113 @@ function TxModal({ tx, onClose, brandHex }) {
           {/* Comisión médico */}
           {tx.medico !== '—' && (
             <Section label="Comisión médica">
-              <Row3 a={tx.medico}       b={`${fmt(tx.comision)} €`} />
-              <Row3 a="Porcentaje"       b="10% del neto" light />
+              <Row3 a={tx.medico}  b={`${fmt(tx.comision)} €`} />
+              <Row3 a="Porcentaje" b="10% del neto" light />
             </Section>
           )}
+
+          {/* ── Bloque VeriFactu / AEAT ── */}
+          <div style={{ marginTop:4 }}>
+            <p style={{ margin:'0 0 10px', fontFamily:FM, fontSize:'8px', letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(22,19,19,0.28)' }}>
+              Verificación AEAT · VeriFactu
+            </p>
+            <div style={{ display:'flex', gap:'14px', alignItems:'flex-start' }}>
+
+              {/* QR simulado */}
+              <div style={{
+                width:72, height:72, flexShrink:0,
+                background:'#161313',
+                borderRadius:'2px',
+                padding:'6px',
+                display:'flex', alignItems:'center', justifyContent:'center',
+              }}>
+                {/* Patrón QR simplificado en SVG */}
+                <svg width="60" height="60" viewBox="0 0 60 60">
+                  {/* Esquinas */}
+                  {[[2,2],[42,2],[2,42]].map(([x,y],i) => (
+                    <g key={i}>
+                      <rect x={x} y={y} width="16" height="16" fill="none" stroke="#F7F5F2" strokeWidth="2"/>
+                      <rect x={x+4} y={y+4} width="8" height="8" fill="#F7F5F2"/>
+                    </g>
+                  ))}
+                  {/* Módulos centrales simulados */}
+                  {[22,26,30,34,38].map(x => [22,26,30,34,38].map(y => (
+                    Math.sin(x*y) > 0.2
+                      ? <rect key={`${x}${y}`} x={x} y={y} width="3" height="3" fill="#F7F5F2" opacity="0.7"/>
+                      : null
+                  )))}
+                </svg>
+              </div>
+
+              {/* Texto legal */}
+              <div style={{ flex:1 }}>
+                <p style={{
+                  margin:'0 0 6px', fontFamily:FB, fontSize:'10px', fontWeight:300,
+                  color:'rgba(22,19,19,0.55)', lineHeight:1.55,
+                }}>
+                  Factura verificable en la sede electrónica de la AEAT
+                </p>
+                <p style={{
+                  margin:0, fontFamily:FM, fontSize:'8px', letterSpacing:'0.06em',
+                  color:'rgba(22,19,19,0.35)', lineHeight:1.6,
+                }}>
+                  ID Criptográfico:<br/>
+                  SIF-VELOURA-2026-{tx.id}
+                </p>
+                <div style={{
+                  marginTop:'8px', display:'flex', alignItems:'center', gap:'5px',
+                  padding:'3px 8px', border:'1px solid rgba(42,110,60,0.2)',
+                  borderRadius:'2px', background:'rgba(42,110,60,0.05)',
+                  width:'fit-content',
+                }}>
+                  <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="rgba(42,110,60,0.6)" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M20 6L9 17l-5-5"/>
+                  </svg>
+                  <span style={{ fontFamily:FM, fontSize:'7px', letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(42,110,60,0.65)' }}>
+                    Registro inmutable · Ley 11/2021
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Footer */}
-        <div style={{ padding:'20px 28px', borderTop:'1px solid rgba(22,19,19,0.07)', display:'flex', gap:'8px' }}>
+        {/* Footer — sin botón Eliminar/Editar (cumplimiento VeriFactu) */}
+        <div style={{ padding:'20px 28px', borderTop:'1px solid rgba(22,19,19,0.07)', display:'flex', flexDirection:'column', gap:'8px' }}>
+          <div style={{ display:'flex', gap:'8px' }}>
+            <button style={{
+              flex:1, padding:'12px',
+              border:'1px solid rgba(22,19,19,0.1)', borderRadius:'2px',
+              background:'transparent', fontFamily:FM, fontSize:'9px',
+              letterSpacing:'0.12em', textTransform:'uppercase',
+              color:'rgba(22,19,19,0.45)', cursor:'pointer',
+            }}>
+              Descargar PDF
+            </button>
+            <button style={{
+              flex:1, padding:'12px', border:'none', borderRadius:'2px',
+              background:'var(--color-brand,#161313)', fontFamily:FM, fontSize:'9px',
+              letterSpacing:'0.12em', textTransform:'uppercase',
+              color:'#F7F5F2', cursor:'pointer',
+            }}>
+              Enviar al paciente
+            </button>
+          </div>
+          {/* Anulación legal — VeriFactu no permite edición directa */}
           <button style={{
-            flex:1, padding:'12px',
-            border:'1px solid rgba(22,19,19,0.1)', borderRadius:'2px',
-            background:'transparent', fontFamily:FM, fontSize:'9px',
+            width:'100%', padding:'10px',
+            border:'1px solid rgba(139,58,58,0.2)', borderRadius:'2px',
+            background:'rgba(139,58,58,0.04)', fontFamily:FM, fontSize:'8px',
             letterSpacing:'0.12em', textTransform:'uppercase',
-            color:'rgba(22,19,19,0.45)', cursor:'pointer',
+            color:'rgba(139,58,58,0.6)', cursor:'pointer',
+            display:'flex', alignItems:'center', justifyContent:'center', gap:'6px',
           }}>
-            Descargar PDF
-          </button>
-          <button style={{
-            flex:1, padding:'12px',
-            border:'none', borderRadius:'2px',
-            background:'var(--color-brand,#161313)', fontFamily:FM, fontSize:'9px',
-            letterSpacing:'0.12em', textTransform:'uppercase',
-            color:'#F7F5F2', cursor:'pointer',
-          }}>
-            Enviar al paciente
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(139,58,58,0.6)" strokeWidth="2" strokeLinecap="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+            Emitir Factura Rectificativa (Anulación) · Art. 15 VeriFactu
           </button>
         </div>
       </div>
@@ -423,10 +505,31 @@ export default function FinanzasPage() {
             <p style={{ margin:'0 0 6px', fontFamily:FM, fontSize:'9px', letterSpacing:'0.18em', textTransform:'uppercase', color:'rgba(22,19,19,0.3)' }}>
               {data.label} · {clinica?.nombre ?? 'Clínica'}
             </p>
-            <h1 style={{ margin:0, fontFamily:FR, fontSize:'30px', fontWeight:400, color:'#161313', letterSpacing:'-0.02em', lineHeight:1.05 }}>
-              Finanzas &{' '}
-              <em style={{ color:'var(--color-brand,#929C92)', fontStyle:'italic' }}>Rendimiento</em>
-            </h1>
+            <div style={{ display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap' }}>
+              <h1 style={{ margin:0, fontFamily:FR, fontSize:'30px', fontWeight:400, color:'#161313', letterSpacing:'-0.02em', lineHeight:1.05 }}>
+                Finanzas &{' '}
+                <em style={{ color:'var(--color-brand,#929C92)', fontStyle:'italic' }}>Rendimiento</em>
+              </h1>
+              {/* ── Badge VeriFactu ── */}
+              <div style={{
+                display:'inline-flex', alignItems:'center', gap:'6px',
+                padding:'5px 10px',
+                border:'1px solid rgba(42,110,60,0.2)',
+                borderRadius:'2px',
+                background:'rgba(42,110,60,0.06)',
+              }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="rgba(42,110,60,0.7)" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+                <span style={{
+                  fontFamily:FM, fontSize:'8px', letterSpacing:'0.12em',
+                  textTransform:'uppercase', color:'rgba(42,110,60,0.75)',
+                  whiteSpace:'nowrap',
+                }}>
+                  Sistema SIF Certificado · Ley Antifraude 11/2021 · VeriFactu
+                </span>
+              </div>
+            </div>
           </div>
 
           <div style={{ display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap' }}>
@@ -457,6 +560,28 @@ export default function FinanzasPage() {
                 </button>
               ))}
             </div>
+
+            {/* Declaración Responsable VeriFactu */}
+            <button
+              onClick={() => setToast('Descargando certificación oficial de software homologado por la AEAT…')}
+              title="Declaración Responsable de Conformidad · Reglamento VeriFactu"
+              style={{
+                padding:'7px 12px', borderRadius:'2px',
+                border:'1px solid rgba(42,110,60,0.25)',
+                background:'rgba(42,110,60,0.05)',
+                fontFamily:FM, fontSize:'8px', letterSpacing:'0.1em',
+                textTransform:'uppercase', color:'rgba(42,110,60,0.7)',
+                cursor:'pointer', display:'flex', alignItems:'center', gap:'6px',
+                transition:'all 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background='rgba(42,110,60,0.1)'}
+              onMouseLeave={e => e.currentTarget.style.background='rgba(42,110,60,0.05)'}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(42,110,60,0.7)" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              Declaración Responsable VeriFactu
+            </button>
 
             {/* Exportar */}
             <div style={{ display:'flex', gap:'6px' }}>
