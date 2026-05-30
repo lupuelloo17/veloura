@@ -173,99 +173,140 @@ export default function PacientesPage() {
           )}
 
           {!cargando && filtered.length > 0 && (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(22,19,19,0.06)', background: 'rgba(22,19,19,0.01)' }}>
-                  {['Paciente', 'Riesgo', 'Última visita', 'Visitas', ''].map(col => (
-                    <th key={col} style={{
-                      fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.12em',
-                      textTransform: 'uppercase', color: 'rgba(22,19,19,0.3)',
-                      padding: '10px 20px', textAlign: 'left', fontWeight: 400,
-                    }}>
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
+            <>
+              {/* ── Desktop: tabla clásica ── */}
+              <table className="vl-patient-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid rgba(22,19,19,0.06)', background: 'rgba(22,19,19,0.01)' }}>
+                    {['Paciente', 'Riesgo', 'Última visita', 'Visitas', ''].map(col => (
+                      <th key={col} style={{
+                        fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.12em',
+                        textTransform: 'uppercase', color: 'rgba(22,19,19,0.3)',
+                        padding: '10px 20px', textAlign: 'left', fontWeight: 400,
+                      }}>
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(p => {
+                    const rs      = RIESGO_STYLE[p.riesgo] ?? RIESGO_STYLE.bajo
+                    const inicial = `${p.nombre?.[0] ?? ''}${p.apellido?.[0] ?? ''}`.toUpperCase()
+                    return (
+                      <tr
+                        key={p.id}
+                        onClick={() => navigate(`/clinica/${slug}/paciente/${p.id}`)}
+                        style={{ borderBottom: '1px solid rgba(22,19,19,0.04)', cursor: 'pointer' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(22,19,19,0.015)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <td style={{ padding: '14px 20px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {p.foto_perfil ? (
+                              <img src={p.foto_perfil} alt={p.nombre}
+                                   style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}/>
+                            ) : (
+                              <div style={{ width:'32px', height:'32px', borderRadius:'50%', flexShrink:0,
+                                background:'rgba(22,19,19,0.06)', border:'1px solid rgba(22,19,19,0.08)',
+                                display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                <span style={{ fontFamily:FRAUNCES, fontSize:'13px', color:'rgba(22,19,19,0.4)' }}>{inicial}</span>
+                              </div>
+                            )}
+                            <div>
+                              <p style={{ fontFamily:DM_SANS, fontSize:'14px', fontWeight:400, color:'#161313', margin:0 }}>
+                                {p.nombre} {p.apellido}
+                              </p>
+                              {p.email && <p style={{ fontFamily:DM_SANS, fontSize:'12px', fontWeight:300, color:'rgba(22,19,19,0.35)', margin:'1px 0 0' }}>{p.email}</p>}
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding:'14px 20px' }}>
+                          <span style={{ fontFamily:DM_MONO, fontSize:'9px', letterSpacing:'0.1em',
+                            textTransform:'uppercase', padding:'3px 8px', borderRadius:'2px',
+                            border:`1px solid ${rs.border}`, background:rs.bg, color:rs.color }}>
+                            {p.riesgo ?? 'bajo'}
+                          </span>
+                        </td>
+                        <td style={{ padding:'14px 20px' }}>
+                          <span style={{ fontFamily:DM_MONO, fontSize:'12px', color:'rgba(22,19,19,0.45)' }}>
+                            {!p.ultima_visita || isNaN(new Date(p.ultima_visita)) ? '—' : formatFecha(p.ultima_visita)}
+                          </span>
+                        </td>
+                        <td style={{ padding:'14px 20px' }}>
+                          <span style={{ fontFamily:DM_MONO, fontSize:'13px', color:'#161313' }}>{p.total_visitas ?? '0'}</span>
+                        </td>
+                        <td style={{ padding:'14px 20px' }}>
+                          <span style={{ fontFamily:DM_MONO, fontSize:'14px', color:'rgba(22,19,19,0.2)' }}>→</span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+
+              {/* ── Mobile: tarjetas apiladas ── */}
+              <div className="vl-patient-cards" style={{ display:'none', flexDirection:'column', gap:'8px', padding:'0 16px 16px' }}>
                 {filtered.map(p => {
                   const rs      = RIESGO_STYLE[p.riesgo] ?? RIESGO_STYLE.bajo
                   const inicial = `${p.nombre?.[0] ?? ''}${p.apellido?.[0] ?? ''}`.toUpperCase()
                   return (
-                    <tr
+                    <button
                       key={p.id}
                       onClick={() => navigate(`/clinica/${slug}/paciente/${p.id}`)}
-                      style={{ borderBottom: '1px solid rgba(22,19,19,0.04)', cursor: 'pointer' }}
-                      onMouseEnter={e => e.currentTarget.style.background = 'rgba(22,19,19,0.015)'}
-                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      style={{
+                        width:'100%', textAlign:'left', border:'1px solid rgba(22,19,19,0.08)',
+                        borderRadius:'2px', padding:'14px 16px', background:'#FFFFFF',
+                        cursor:'pointer', display:'flex', alignItems:'center', gap:'14px',
+                        transition:'background 0.1s',
+                      }}
                     >
-                      {/* Paciente */}
-                      <td style={{ padding: '14px 20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          {p.foto_perfil ? (
-                            <img
-                              src={p.foto_perfil}
-                              alt={p.nombre}
-                              style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-                            />
-                          ) : (
-                            <div style={{
-                              width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-                              background: 'rgba(22,19,19,0.06)', border: '1px solid rgba(22,19,19,0.08)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                              <span style={{ fontFamily: FRAUNCES, fontSize: '13px', color: 'rgba(22,19,19,0.4)' }}>
-                                {inicial}
-                              </span>
-                            </div>
-                          )}
-                          <div>
-                            <p style={{ fontFamily: DM_SANS, fontSize: '14px', fontWeight: 400, color: '#161313', margin: 0 }}>
-                              {p.nombre} {p.apellido}
-                            </p>
-                            {p.email && (
-                              <p style={{ fontFamily: DM_SANS, fontSize: '12px', fontWeight: 300, color: 'rgba(22,19,19,0.35)', margin: '1px 0 0' }}>
-                                {p.email}
-                              </p>
-                            )}
-                          </div>
+                      {/* Avatar */}
+                      {p.foto_perfil ? (
+                        <img src={p.foto_perfil} alt={p.nombre}
+                             style={{ width:40, height:40, borderRadius:'50%', objectFit:'cover', flexShrink:0 }}/>
+                      ) : (
+                        <div style={{ width:40, height:40, borderRadius:'50%', flexShrink:0,
+                          background:'rgba(22,19,19,0.06)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                          <span style={{ fontFamily:FRAUNCES, fontSize:'16px', color:'rgba(22,19,19,0.4)' }}>{inicial}</span>
                         </div>
-                      </td>
-
-                      {/* Riesgo */}
-                      <td style={{ padding: '14px 20px' }}>
-                        <span style={{
-                          fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.1em',
-                          textTransform: 'uppercase', padding: '3px 8px', borderRadius: '2px',
-                          border: `1px solid ${rs.border}`, background: rs.bg, color: rs.color,
-                        }}>
-                          {p.riesgo ?? 'bajo'}
-                        </span>
-                      </td>
-
-                      {/* Última visita */}
-                      <td style={{ padding: '14px 20px' }}>
-                        <span style={{ fontFamily: DM_MONO, fontSize: '12px', color: 'rgba(22,19,19,0.45)' }}>
-                          {!p.ultima_visita || isNaN(new Date(p.ultima_visita)) ? '—' : formatFecha(p.ultima_visita)}
-                        </span>
-                      </td>
-
-                      {/* Visitas */}
-                      <td style={{ padding: '14px 20px' }}>
-                        <span style={{ fontFamily: DM_MONO, fontSize: '13px', color: '#161313' }}>
-                          {p.total_visitas ?? '0'}
-                        </span>
-                      </td>
-
-                      {/* Flecha */}
-                      <td style={{ padding: '14px 20px' }}>
-                        <span style={{ fontFamily: DM_MONO, fontSize: '14px', color: 'rgba(22,19,19,0.2)' }}>→</span>
-                      </td>
-                    </tr>
+                      )}
+                      {/* Info */}
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <p style={{ fontFamily:DM_SANS, fontSize:'14px', fontWeight:400, color:'#161313', margin:'0 0 3px',
+                          whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                          {p.nombre} {p.apellido}
+                        </p>
+                        <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                          <span style={{ fontFamily:DM_MONO, fontSize:'9px', letterSpacing:'0.1em',
+                            textTransform:'uppercase', padding:'2px 7px', borderRadius:'2px',
+                            border:`1px solid ${rs.border}`, background:rs.bg, color:rs.color }}>
+                            {p.riesgo ?? 'bajo'}
+                          </span>
+                          {p.ultima_visita && !isNaN(new Date(p.ultima_visita)) && (
+                            <span style={{ fontFamily:DM_MONO, fontSize:'10px', color:'rgba(22,19,19,0.35)' }}>
+                              {formatFecha(p.ultima_visita)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                           stroke="rgba(22,19,19,0.2)" strokeWidth="2" strokeLinecap="round">
+                        <polyline points="9 18 15 12 9 6"/>
+                      </svg>
+                    </button>
                   )
                 })}
-              </tbody>
-            </table>
+              </div>
+
+              {/* CSS que alterna tabla/tarjetas según viewport */}
+              <style>{`
+                @media (max-width: 767px) {
+                  .vl-patient-table { display: none !important; }
+                  .vl-patient-cards { display: flex !important; }
+                }
+              `}</style>
+            </>
           )}
         </div>
       </div>

@@ -117,14 +117,17 @@ export default function ClinicNav() {
     <nav style={{
       position: 'fixed',
       bottom: 0,
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '100%',
-      maxWidth: '448px',
+      left: 0,
+      right: 0,
       zIndex: 9999,
-      background: '#FFFFFF',
-      borderTop: '1px solid rgba(22,19,19,0.06)',
-      padding: '6px 0 env(safe-area-inset-bottom, 10px)',
+      /* Fondo: blanco sólido con desenfoque sutil */
+      background: 'rgba(255,255,255,0.96)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      borderTop: '1px solid rgba(22,19,19,0.07)',
+      /* Safe area para iPhone X+ */
+      paddingBottom: 'env(safe-area-inset-bottom, 8px)',
+      paddingTop: '4px',
       display: 'flex',
     }}>
       {TABS.map(({ label, icon, path, hash: tabHash, badge }) => {

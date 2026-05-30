@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
 
   return (
     <StaffLayout>
-      <div style={{ padding: '32px 40px', minHeight: '100%' }}>
+      <div className="vl-dashboard-wrap" style={{ padding: '24px 20px', minHeight: '100%' }}>
 
         {/* ── HEADER ──────────────────────────────────────── */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' }}>
@@ -177,7 +177,7 @@ export default function AdminDashboardPage() {
         )}
 
         {/* ── KPI GRID ────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '40px' }}>
+        <div className="vl-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginBottom: '40px' }}>
           {KPI_CARDS.map(kpi => (
             <div key={kpi.label} style={{ ...card, padding: '24px' }}>
               <div style={{ fontFamily: DM_MONO, fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.35)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -195,7 +195,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* ── GRID INFERIOR ───────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px', marginBottom: '24px' }}>
+        <div className="vl-two-col" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '24px', marginBottom: '24px' }}>
 
           {/* Tabla médicos */}
           <div style={card}>
@@ -404,6 +404,18 @@ export default function AdminDashboardPage() {
         </div>
 
       </div>
+
+      {/* ── CSS responsivo dashboard ── */}
+      <style>{`
+        @media (max-width: 767px) {
+          .vl-dashboard-wrap { padding: 16px 12px !important; }
+          .vl-kpi-grid  { grid-template-columns: repeat(2,1fr) !important; gap: 10px !important; margin-bottom: 20px !important; }
+          .vl-two-col   { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 420px) {
+          .vl-kpi-grid { grid-template-columns: 1fr 1fr !important; }
+        }
+      `}</style>
     </StaffLayout>
   )
 }

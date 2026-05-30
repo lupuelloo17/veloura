@@ -211,8 +211,12 @@ function PatientShell({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-blush-50 flex items-start justify-center py-6 px-4">
-      <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl overflow-hidden min-h-[780px] flex flex-col">
+    /*
+     * Mobile: full-width, sin márgenes, sin bordes redondeados.
+     * Desktop (md+): phone frame centrado como demo/preview.
+     */
+    <div className="min-h-screen bg-white md:bg-blush-50 flex items-start justify-center md:py-6 md:px-4">
+      <div className="w-full md:max-w-sm bg-white md:rounded-3xl md:shadow-xl overflow-hidden min-h-screen md:min-h-[780px] flex flex-col">
         <DemoBanner />
         {children}
       </div>
