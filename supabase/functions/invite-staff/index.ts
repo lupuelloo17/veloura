@@ -26,22 +26,26 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // ── CORS ──────────────────────────────────────────────────────────────────
-const CORS = {
+// Cabeceras estándar de Supabase — necesarias para que el navegador permita
+// peticiones cross-origin desde Vercel (u otro dominio de frontend).
+const corsHeaders = {
   'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Helper: envuelve cualquier respuesta JSON con los corsHeaders + Content-Type
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS, 'Content-Type': 'application/json' },
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
 
 // ── Handler ───────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
-  // Pre-flight CORS
+  // Pre-flight CORS — el navegador envía OPTIONS antes de la petición real;
+  // si no respondemos aquí con los corsHeaders, bloquea la llamada.
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: CORS })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {

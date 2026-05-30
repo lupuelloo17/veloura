@@ -64,12 +64,12 @@ export default function AgendaPage() {
   // ── Cargar especialistas (médicos activos) ─────────────────────────────
   useEffect(() => {
     if (!clinica?.id) return
+    let cancelled = false
 
-    async function loadEspecialistas() {
+    async function fetchEspecialistas() {
       if (isMock) {
-        // Pequeño delay para simular latencia en modo demo
         await new Promise(r => setTimeout(r, 200))
-        setEspecialistas(MOCK_ESPECIALISTAS)
+        if (!cancelled) setEspecialistas(MOCK_ESPECIALISTAS)
         return
       }
 
@@ -83,6 +83,8 @@ export default function AgendaPage() {
         .eq('activo', true)
         .order('nombre')
 
+      if (cancelled) return
+
       if (error) {
         console.error('[AgendaPage] loadEspecialistas error:', error)
         // Fallback silencioso: la agenda muestra sin columnas en vez de romperse
@@ -92,7 +94,31 @@ export default function AgendaPage() {
       }
     }
 
-    loadEspecialistas()
+    fetchEspecialistas()
+
+    // ── Realtime: actualiza columnas al agregar/activar/desactivar médicos ─
+    if (!isMock && supabase) {
+      const channel = supabase
+        .channel(`especialistas-${clinica.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event:  '*',
+            schema: 'public',
+            table:  'usuarios',
+            filter: `clinica_id=eq.${clinica.id}`,
+          },
+          () => { if (!cancelled) fetchEspecialistas() }
+        )
+        .subscribe()
+
+      return () => {
+        cancelled = true
+        supabase.removeChannel(channel)
+      }
+    }
+
+    return () => { cancelled = true }
   }, [clinica?.id, isMock])
 
   // ── Semana visible ──────────────────────────────────────────────────────

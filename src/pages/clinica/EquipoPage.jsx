@@ -372,13 +372,12 @@ export default function EquipoPage() {
   /* ── Load team ─────────────────────────────────────────────────────────── */
   useEffect(() => {
     if (!clinica?.id) return
+    let cancelled = false
 
-    async function loadEquipo() {
-      setLoading(true)
-      setError(null)
-
+    async function fetchEquipo() {
       if (isMock) {
         await new Promise(r => setTimeout(r, 350))
+        if (cancelled) return
         setEquipo(MOCK_EQUIPO)
         setLoading(false)
         return
@@ -392,17 +391,47 @@ export default function EquipoPage() {
         .order('rol')
         .order('nombre')
 
+      if (cancelled) return
+
       if (dbErr) {
         console.error('[EquipoPage] loadEquipo error:', dbErr)
         setError('No se pudo cargar el equipo. Por favor, intenta de nuevo.')
         setEquipo([])
       } else {
         setEquipo(data ?? [])
+        setError(null)
       }
       setLoading(false)
     }
 
-    loadEquipo()
+    // Carga inicial
+    setLoading(true)
+    setError(null)
+    fetchEquipo()
+
+    // ── Realtime: refleja INSERT / UPDATE / DELETE inmediatamente ──────────
+    if (!isMock && supabase) {
+      const channel = supabase
+        .channel(`equipo-${clinica.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event:  '*',
+            schema: 'public',
+            table:  'usuarios',
+            filter: `clinica_id=eq.${clinica.id}`,
+          },
+          () => { if (!cancelled) fetchEquipo() }
+        )
+        .subscribe()
+
+      return () => {
+        cancelled = true
+        supabase.removeChannel(channel)
+      }
+    }
+
+    return () => { cancelled = true }
   }, [clinica?.id, isMock])
 
   /* ── Toggle activo ─────────────────────────────────────────────────────── */
