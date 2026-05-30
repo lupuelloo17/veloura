@@ -218,7 +218,16 @@ export default function MiPerfilPage() {
         <AccesosRapidos slug={slug} navigate={navigate} />
 
       </div>
-      {solicitarOpen && <SolicitarCitaDrawer   onClose={() => setSolicitarOpen(false)} onGuardado={() => { setSolicitarOpen(false); window.location.reload() }} />}
+      {solicitarOpen && (
+        <SolicitarCitaDrawer
+          onClose={() => setSolicitarOpen(false)}
+          onGuardado={(nuevaCita) => {
+            setSolicitarOpen(false)
+            // Refresca la tarjeta "Próxima Cita" sin recargar la página
+            if (nuevaCita?.fecha) setProximaCita(nuevaCita)
+          }}
+        />
+      )}
     </ClinicLayout>
   )
 }
