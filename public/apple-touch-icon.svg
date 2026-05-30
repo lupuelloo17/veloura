@@ -1,16 +1,15 @@
-<!--
-  Veloura apple-touch-icon — 180×180
-  Fondo Carbon (#161313), Monograma Cream centrado.
-  Padding de zona de seguridad ≈ 18px (≈10% del lado).
--->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Veloura">
-  <!-- Fondo Carbon con esquinas redondeadas iOS -->
-  <rect width="180" height="180" rx="38" fill="#161313"/>
-  <!-- Monograma Cream escalado y centrado: viewBox original -18.5 42 152.4 176 -->
-  <!-- Escala: ancho destino = 180-36=144, ratio = 144/152.4 = 0.9449 -->
-  <!-- offset X: 18 - (-18.5 * 0.9449) = 18 + 17.5 = 35.5; offset Y: 18 - (42 * 0.9449) = 18-39.7=-21.7 → ajustar centrado vertical -->
-  <g transform="translate(35.5, 8) scale(0.9449)">
-    <path fill="#F7F5F2" d="M84 60.50L84 60.50Q84 60 84.50 60L84.50 60L115.40 60Q115.90 60 115.90 60.50L115.90 60.50Q115.90 60.80 115.30 61L115.30 61L109.80 62.60Q107.20 63.50 105.35 65.90Q103.50 68.30 102 73L102 73L64.30 191.10Q63.80 192.90 63.80 195.50L63.80 195.50L63.80 199Q63.80 200 62.90 200L62.90 200L52.10 200Q51.30 200 51.30 199L51.30 199L51.30 195.50Q51.30 193.70 50.40 191.10L50.40 191.10L9.30 65.70Q8.30 62.80 6.80 62.40L6.80 62.40L0.30 61Q-0.50 60.80-0.50 60.50L-0.50 60.50Q-0.50 60 0.10 60L0.10 60L39.20 60Q39.70 60 39.70 60.50L39.70 60.50Q39.70 60.80 38.90 61L38.90 61L25.90 62.30Q22.60 62.90 23.70 66.40L23.70 66.40L63.50 189.10L100.50 73.10Q101.90 68.80 100.55 66.10Q99.20 63.40 93.10 62.20L93.10 62.20L84.70 61Q84 60.80 84 60.50Z"/>
-    <circle cx="57.7" cy="144" r="4.4" fill="#C9D3CA"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180" role="img" aria-label="Veloura">
+  <!-- Fondo Cream — iOS añade sus propias esquinas redondeadas -->
+  <rect width="180" height="180" fill="#F7F5F2"/>
+  <!--
+    SVG anidado con el viewBox nativo del monograma.
+    El navegador/iOS escala automáticamente para llenar 126×126 (padding 27px).
+    preserveAspectRatio centra la 'V' sin distorsión.
+  -->
+  <svg x="27" y="27" width="126" height="126"
+       viewBox="-18.5 42 152.4 176"
+       preserveAspectRatio="xMidYMid meet">
+    <path fill="#161313" d="M84 60.50L84 60.50Q84 60 84.50 60L84.50 60L115.40 60Q115.90 60 115.90 60.50L115.90 60.50Q115.90 60.80 115.30 61L115.30 61L109.80 62.60Q107.20 63.50 105.35 65.90Q103.50 68.30 102 73L102 73L64.30 191.10Q63.80 192.90 63.80 195.50L63.80 195.50L63.80 199Q63.80 200 62.90 200L62.90 200L52.10 200Q51.30 200 51.30 199L51.30 199L51.30 195.50Q51.30 193.70 50.40 191.10L50.40 191.10L9.30 65.70Q8.30 62.80 6.80 62.40L6.80 62.40L0.30 61Q-0.50 60.80-0.50 60.50L-0.50 60.50Q-0.50 60 0.10 60L0.10 60L39.20 60Q39.70 60 39.70 60.50L39.70 60.50Q39.70 60.80 38.90 61L38.90 61L25.90 62.30Q22.60 62.90 23.70 66.40L23.70 66.40L63.50 189.10L100.50 73.10Q101.90 68.80 100.55 66.10Q99.20 63.40 93.10 62.20L93.10 62.20L84.70 61Q84 60.80 84 60.50Z"/>
+    <circle fill="#929C92" cx="57.7" cy="144" r="4.4"/>
+  </svg>
 </svg>
