@@ -260,19 +260,123 @@ function SecIdentidad({ clinica, onSave }) {
         </div>
       </div>
 
-      {/* Color */}
-      <div style={{ marginBottom: '28px' }}>
-        <FieldLabel>Color corporativo</FieldLabel>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <input
-            type="color"
-            value={color}
-            onChange={e => { setColor(e.target.value); setDirty(true) }}
-            style={{ width: '40px', height: '28px', border: '1px solid rgba(22,19,19,0.1)', borderRadius: '2px', cursor: 'pointer', padding: '2px' }}
-          />
-          <span style={{ fontFamily: DM_MONO, fontSize: '12px', color: 'rgba(22,19,19,0.5)' }}>{color}</span>
-        </div>
-      </div>
+      {/* Color corporativo — swatch cliqueable + input nativo oculto */}
+      {(() => {
+        const colorInputRef = { current: null }
+
+        function handleColorChange(hex) {
+          setColor(hex)
+          setDirty(true)
+          // Aplicar en tiempo real sin guardar — el admin ve el cambio al instante
+          document.documentElement.style.setProperty('--color-brand', hex)
+          document.documentElement.style.setProperty('--color-brand-light', hex + '22')
+        }
+
+        // Colores de muestra rápidos
+        const PRESETS = [
+          '#929C92', '#C8A882', '#1B3A6B', '#A0522D',
+          '#6B4F8C', '#2E7D5A', '#B85C5C', '#161313',
+        ]
+
+        return (
+          <div style={{ marginBottom: '28px' }}>
+            <FieldLabel>Color corporativo</FieldLabel>
+
+            {/* Swatch principal + HEX */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+
+              {/* Botón swatch — abre el color picker nativo al hacer clic */}
+              <button
+                type="button"
+                onClick={() => colorInputRef.current?.click()}
+                title="Elegir color"
+                style={{
+                  width: '52px', height: '52px',
+                  borderRadius: '4px',
+                  background: color,
+                  border: '2px solid rgba(22,19,19,0.12)',
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  boxShadow: `0 4px 16px ${color}55, inset 0 1px 0 rgba(255,255,255,0.15)`,
+                  transition: 'box-shadow 0.2s, transform 0.1s',
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.06)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+              >
+                {/* Icono de pipeta superpuesto */}
+                <svg
+                  width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="rgba(255,255,255,0.7)" strokeWidth="1.8"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  style={{ position: 'absolute', bottom: 4, right: 4 }}
+                >
+                  <path d="M12 2l4 4-9 9-4-4 9-9z"/>
+                  <path d="M3 21l3-3"/>
+                </svg>
+              </button>
+
+              {/* Input nativo oculto — activado por el swatch */}
+              <input
+                ref={el => { colorInputRef.current = el }}
+                type="color"
+                value={color}
+                onChange={e => handleColorChange(e.target.value)}
+                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 0, height: 0 }}
+              />
+
+              {/* HEX editable */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <input
+                  type="text"
+                  value={color.toUpperCase()}
+                  maxLength={7}
+                  onChange={e => {
+                    const v = e.target.value
+                    if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) handleColorChange(v)
+                  }}
+                  style={{
+                    fontFamily: DM_MONO, fontSize: '14px', fontWeight: 400,
+                    color: '#161313', letterSpacing: '0.1em',
+                    border: '1px solid rgba(22,19,19,0.08)',
+                    borderRadius: '2px', padding: '8px 12px',
+                    background: '#F7F5F2', outline: 'none',
+                    width: '110px',
+                  }}
+                  onFocus={e => e.target.style.borderColor = 'rgba(22,19,19,0.2)'}
+                  onBlur={e  => e.target.style.borderColor = 'rgba(22,19,19,0.08)'}
+                />
+                <span style={{ fontFamily: DM_MONO, fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(22,19,19,0.3)' }}>
+                  Código HEX · Haz clic en el cuadro para elegir
+                </span>
+              </div>
+            </div>
+
+            {/* Paleta de colores de muestra */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {PRESETS.map(p => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => handleColorChange(p)}
+                  title={p}
+                  style={{
+                    width: '24px', height: '24px', borderRadius: '50%',
+                    background: p, border: 'none', cursor: 'pointer',
+                    outline: color === p ? '2px solid #161313' : '2px solid transparent',
+                    outlineOffset: '2px',
+                    transition: 'outline 0.12s, transform 0.1s',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.2)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Botón */}
       <button
