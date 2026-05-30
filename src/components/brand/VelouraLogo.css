@@ -1,0 +1,89 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   VelouraLogo.css  —  Sistema de marca Veloura
+   ──────────────────────────────────────────────────────────────────────────
+   Zona de seguridad (X):
+     X = altura renderizada del logo × 0.25
+     Aplicar como padding interno en cualquier contenedor que aloje el logo.
+     CSS custom property --vl-logo-safe-zone está disponible en todos los
+     contenedores con clase .vl-logo-wrap.
+
+   Inversión automática:
+     .vl-section-light  → Carbon (#161313) — sobre fondos claros
+     .vl-section-dark   → Cream  (#F7F5F2) — sobre fondos oscuros
+     Sin clase → hereda color del contexto via currentColor
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Token de la zona de seguridad ──────────────────────────────────────── */
+.vl-logo-wrap {
+  --vl-logo-safe-zone: calc(var(--vl-logo-height, 24px) * 0.25);
+  display: inline-flex;
+  align-items: center;
+  /* La zona de seguridad se aplica como padding al contenedor padre.
+     El componente en sí no añade padding para no romper alineaciones:
+     usar .vl-logo-safe cuando se quiere protección automática. */
+}
+
+/* Clase de ayuda: aplica la zona de seguridad como padding en todos los lados */
+.vl-logo-safe {
+  padding: var(--vl-logo-safe-zone, 6px);
+}
+
+/* ── Inversion automática por contexto ─────────────────────────────────── */
+
+/* Contexto CLARO — logo en Carbon */
+.vl-section-light .vl-logo-auto,
+.vl-section-light .vl-logo-auto svg {
+  color: #161313;
+  --vl-logo-dot: #929C92;
+}
+
+/* Contexto OSCURO — logo en Cream */
+.vl-section-dark .vl-logo-auto,
+.vl-section-dark .vl-logo-auto svg {
+  color: #F7F5F2;
+  --vl-logo-dot: #C9D3CA;
+}
+
+/* ── Variantes explícitas (sin depender del contexto) ──────────────────── */
+.vl-logo-carbon svg {
+  color: #161313;
+  --vl-logo-dot: #929C92;
+}
+
+.vl-logo-cream svg {
+  color: #F7F5F2;
+  --vl-logo-dot: #C9D3CA;
+}
+
+/* ── SVG base ───────────────────────────────────────────────────────────── */
+.vl-logo-wrap svg {
+  display: block;
+  width: auto;
+  height: var(--vl-logo-height, 24px);
+  /* Transición suave al cambiar entre temas */
+  transition: color 0.2s ease;
+}
+
+/* ── Accesibilidad: no decorativo cuando lleva aria-label ──────────────── */
+.vl-logo-wrap svg[aria-label] {
+  /* el role="img" + aria-label del SVG ya cubre accesibilidad */
+}
+
+/* ── Splash / loading screen ────────────────────────────────────────────── */
+.vl-splash {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #161313;
+  /* El contenedor .vl-section-dark activa la versión Cream automáticamente */
+}
+
+.vl-splash .vl-logo-wrap {
+  --vl-logo-height: 32px;
+  animation: vl-logo-appear 0.8s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes vl-logo-appear {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

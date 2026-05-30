@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
+import VelouraLogo from '../components/brand/VelouraLogo'
 
 export default function WelcomePage() {
   const navigate = useNavigate()
@@ -14,12 +15,9 @@ export default function WelcomePage() {
           <div className="absolute -bottom-20 -left-20 w-56 h-56 bg-blush-50 rounded-full opacity-60" />
         </div>
 
-        {/* Logo mark */}
-        <div className="relative z-10 mb-8">
-          <div className="w-24 h-24 bg-blush-50 rounded-3xl flex items-center justify-center mx-auto shadow-sm border border-blush-100">
-            {/* Logo placeholder — replace with <img src="/logo.svg" /> */}
-            <span className="text-5xl">🌸</span>
-          </div>
+        {/* Monograma Veloura — zona de seguridad aplicada, contexto claro */}
+        <div className="relative z-10 mb-8 vl-section-light">
+          <VelouraLogo variant="monogram" theme="auto" height="64px" safe />
         </div>
 
         {/* Brand name */}

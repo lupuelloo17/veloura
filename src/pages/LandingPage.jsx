@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import VelouraLogo from '../components/brand/VelouraLogo'
 
 const C = {
   carbon:  '#161313',
@@ -162,8 +163,8 @@ export default function LandingPage() {
         backdropFilter: scrolled || menuOpen ? 'blur(12px)' : 'none',
       }}>
         <div style={{ maxWidth: '1200px', margin: 'auto', padding: `0 ${px}`, height: '64px', display: 'flex', alignItems: 'center' }}>
-          <Link to="/" style={{ fontFamily: FRAUNCES, fontSize: '22px', fontWeight: 300, color: C.cream, textDecoration: 'none', letterSpacing: '-0.02em' }}>
-            Veloura
+          <Link to="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+            <VelouraLogo variant="wordmark" theme="cream" height="22px" safe />
           </Link>
 
           {!isMobile && (
@@ -469,7 +470,7 @@ export default function LandingPage() {
             marginBottom: '64px',
           }}>
             <div style={{ gridColumn: isMobile ? '1 / -1' : 'auto' }}>
-              <p style={{ fontFamily: FRAUNCES, fontWeight: 300, fontSize: '20px', color: C.cream, margin: 0 }}>Veloura</p>
+              <VelouraLogo variant="wordmark" theme="cream" height="20px" safe />
               <p style={{ fontFamily: DM_SANS, fontWeight: 300, fontSize: '13px', color: 'rgba(247,245,242,0.3)', lineHeight: 1.7, marginTop: '12px', maxWidth: '280px' }}>
                 La plataforma SaaS que está transformando la gestión de clínicas de medicina estética en España y Latinoamérica.
               </p>

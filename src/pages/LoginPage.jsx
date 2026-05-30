@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import VelouraLogo from '../components/brand/VelouraLogo'
 
 function useInstallBanner() {
   const [show, setShow] = useState(false)
@@ -149,15 +150,14 @@ export default function LoginPage() {
         padding: '48px 28px 24px',
       }}>
 
-        {/* Wordmark */}
-        <p style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
-          fontSize: '28px', fontWeight: 300,
-          color: '#F7F5F2', letterSpacing: '-0.02em',
-          marginBottom: '4px', textAlign: 'center', margin: '0 0 4px',
-        }}>
-          Veloura
-        </p>
+        {/* Wordmark oficial — Cream sobre fondo oscuro, zona de seguridad aplicada */}
+        <VelouraLogo
+          variant="wordmark"
+          theme="cream"
+          height="28px"
+          safe
+          style={{ marginBottom: '4px' }}
+        />
 
         {/* Eyebrow */}
         <p style={{
