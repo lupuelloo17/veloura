@@ -17,7 +17,7 @@ export function useEvolution(pacienteId, clinicaId) {
     try {
       const { data, error: fetchErr } = await supabase
         .from('evoluciones')
-        .select('id, fase, zona_corporal, notas, sesion_numero, foto_url, creado_en')
+        .select('id, tipo, zona_corporal, notas, sesion_numero, foto_url, creado_en')
         .eq('paciente_id', pacienteId)
         .eq('clinica_id',  clinicaId)
         .order('creado_en', { ascending: false })
@@ -46,7 +46,10 @@ export function useEvolution(pacienteId, clinicaId) {
     if (!supabase || !pacienteId || !clinicaId || !isValidUUID(pacienteId) || !isValidUUID(clinicaId)) throw new Error('Sin conexión')
 
     const ext  = archivo.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-    const path = `${pacienteId}/${sesion_numero}-${fase}-${Date.now()}.${ext}`
+    // Path: {clinicaId}/{pacienteId}/{filename}
+    // La policy RLS del bucket 'evoluciones' comprueba que el primer segmento
+    // del path coincida con el clinica_id del JWT del usuario.
+    const path = `${clinicaId}/${pacienteId}/${sesion_numero}-${fase}-${Date.now()}.${ext}`
 
     const { error: upErr } = await supabase.storage
       .from('evoluciones')
@@ -55,11 +58,13 @@ export function useEvolution(pacienteId, clinicaId) {
 
     const { data: pub } = supabase.storage.from('evoluciones').getPublicUrl(path)
 
+    // La columna en la tabla es 'tipo' (enum: 'antes','despues','progreso')
+    // El componente usa 'fase' como nombre interno — lo mapeamos aquí.
     const { error: dbErr } = await supabase.from('evoluciones').insert({
       paciente_id:    pacienteId,
       clinica_id:     clinicaId,
       foto_url:       pub.publicUrl,
-      fase,
+      tipo:           fase,
       zona_corporal,
       notas,
       sesion_numero,

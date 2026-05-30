@@ -35,9 +35,10 @@ export default function MiEvolucionPage() {
   const fotosActivas = sesionSeleccionada !== null ? (fotosPorSesion[sesionSeleccionada] ?? []) : []
   const totalFotos = Object.values(fotosPorSesion).reduce((acc, arr) => acc + arr.length, 0)
 
-  const fotoAntes     = fotosActivas.find(f => f.fase === 'antes')
-  const fotoDespues   = fotosActivas.find(f => f.fase === 'despues')
-  const fotosProgreso = fotosActivas.filter(f => f.fase === 'progreso')
+  // La columna en DB es 'tipo' — el SELECT la devuelve como f.tipo
+  const fotoAntes     = fotosActivas.find(f => f.tipo === 'antes')
+  const fotoDespues   = fotosActivas.find(f => f.tipo === 'despues')
+  const fotosProgreso = fotosActivas.filter(f => f.tipo === 'progreso')
 
   const tabs = ['Comparador', 'Galería', 'Subir foto']
 
@@ -293,7 +294,7 @@ export default function MiEvolucionPage() {
                     fotos.map(f => ({ ...f, sesNum: Number(sesNum) }))
                   )
                   .map(f => {
-                    const faseLabel = FASE_LABEL[f.fase] ?? 'Progreso'
+                    const faseLabel = FASE_LABEL[f.tipo] ?? 'Progreso'
                     return (
                       <div key={f.id} style={{
                         background: 'var(--vl-white)',
@@ -301,7 +302,7 @@ export default function MiEvolucionPage() {
                         borderRadius: '2px', overflow: 'hidden',
                       }}>
                         <div style={{ aspectRatio: '1', overflow: 'hidden' }}>
-                          <img src={f.foto_url} alt={f.fase} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          <img src={f.foto_url} alt={f.tipo} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                         </div>
                         <div style={{ padding: '8px 10px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
