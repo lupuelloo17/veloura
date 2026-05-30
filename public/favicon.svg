@@ -1,37 +1,9 @@
-<!--
-  Veloura favicon — Monograma Cream sobre fondo Carbon
-  Visible en tabs claras Y oscuras. Esquinas redondeadas para macOS/iOS.
-  Usa prefers-color-scheme para invertir en tabs light: Carbon sobre Cream.
-  viewBox cuadrado 200×200 con el monograma centrado internamente.
--->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Veloura">
-  <defs>
-    <style>
-      /* Por defecto: fondo Carbon + 'V' Cream — legible en tabs oscuras */
-      .bg  { fill: #161313 }
-      .fg  { fill: #F7F5F2 }
-      .dot { fill: #C9D3CA }
-      /* En contextos light (tab clara del navegador) invertimos */
-      @media (prefers-color-scheme: light) {
-        .bg  { fill: #F7F5F2 }
-        .fg  { fill: #161313 }
-        .dot { fill: #929C92 }
-      }
-    </style>
-  </defs>
-
-  <!-- Fondo con esquinas redondeadas estilo iOS/macOS -->
-  <rect class="bg" width="200" height="200" rx="42"/>
-
-  <!--
-    Monograma centrado:
-    viewBox original del monograma: -18.5 42 152.4 176
-    Queremos que ocupe ~140px dentro de 200px → escala = 140/152.4 = 0.919
-    offset X = (200 - 140)/2 - (-18.5 * 0.919) = 30 + 17 = 47
-    offset Y = (200 - 161.7)/2 - (42 * 0.919) = 19.15 - 38.6 = -19.5 → ajustar a 14
-  -->
+  <!-- Fondo Cream — contrasta contra tabs azules, grises y oscuras de cualquier navegador -->
+  <rect width="200" height="200" rx="42" fill="#F7F5F2"/>
+  <!-- Monograma Carbon centrado, escala 0.919 sobre viewBox original -18.5 42 152.4 176 -->
   <g transform="translate(47, 14) scale(0.919)">
-    <path class="fg" d="M84 60.50L84 60.50Q84 60 84.50 60L84.50 60L115.40 60Q115.90 60 115.90 60.50L115.90 60.50Q115.90 60.80 115.30 61L115.30 61L109.80 62.60Q107.20 63.50 105.35 65.90Q103.50 68.30 102 73L102 73L64.30 191.10Q63.80 192.90 63.80 195.50L63.80 195.50L63.80 199Q63.80 200 62.90 200L62.90 200L52.10 200Q51.30 200 51.30 199L51.30 199L51.30 195.50Q51.30 193.70 50.40 191.10L50.40 191.10L9.30 65.70Q8.30 62.80 6.80 62.40L6.80 62.40L0.30 61Q-0.50 60.80-0.50 60.50L-0.50 60.50Q-0.50 60 0.10 60L0.10 60L39.20 60Q39.70 60 39.70 60.50L39.70 60.50Q39.70 60.80 38.90 61L38.90 61L25.90 62.30Q22.60 62.90 23.70 66.40L23.70 66.40L63.50 189.10L100.50 73.10Q101.90 68.80 100.55 66.10Q99.20 63.40 93.10 62.20L93.10 62.20L84.70 61Q84 60.80 84 60.50Z"/>
-    <circle class="dot" cx="57.7" cy="144" r="4.4"/>
+    <path fill="#161313" d="M84 60.50L84 60.50Q84 60 84.50 60L84.50 60L115.40 60Q115.90 60 115.90 60.50L115.90 60.50Q115.90 60.80 115.30 61L115.30 61L109.80 62.60Q107.20 63.50 105.35 65.90Q103.50 68.30 102 73L102 73L64.30 191.10Q63.80 192.90 63.80 195.50L63.80 195.50L63.80 199Q63.80 200 62.90 200L62.90 200L52.10 200Q51.30 200 51.30 199L51.30 199L51.30 195.50Q51.30 193.70 50.40 191.10L50.40 191.10L9.30 65.70Q8.30 62.80 6.80 62.40L6.80 62.40L0.30 61Q-0.50 60.80-0.50 60.50L-0.50 60.50Q-0.50 60 0.10 60L0.10 60L39.20 60Q39.70 60 39.70 60.50L39.70 60.50Q39.70 60.80 38.90 61L38.90 61L25.90 62.30Q22.60 62.90 23.70 66.40L23.70 66.40L63.50 189.10L100.50 73.10Q101.90 68.80 100.55 66.10Q99.20 63.40 93.10 62.20L93.10 62.20L84.70 61Q84 60.80 84 60.50Z"/>
+    <circle fill="#929C92" cx="57.7" cy="144" r="4.4"/>
   </g>
 </svg>
