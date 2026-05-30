@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useAuth }   from '../../contexts/AuthContext'
 import { useClinic } from '../../contexts/ClinicContext'
 import { supabase }  from '../../lib/supabase'
 import ClinicLayout  from './ClinicLayout'
-import EscribirClinicaDrawer from '../../components/EscribirClinicaDrawer'
+import EscribirClinicaDrawer   from '../../components/EscribirClinicaDrawer'
+import SolicitarCitaDrawer     from '../../components/SolicitarCitaDrawer'
 
 const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 
@@ -31,13 +32,11 @@ export default function MiPerfilPage() {
   const { user, logout } = useAuth()
   const { clinica } = useClinic()
 
-  const [paciente,    setPaciente]    = useState(null)
-  const [proximaCita, setProximaCita] = useState(null)
-  const [sesiones,    setSesiones]    = useState([])
-  const [analisis,    setAnalisis]    = useState([])
-  const [protocolo,   setProtocolo]   = useState(null)
-  const [cargando,    setCargando]    = useState(true)
-  const [escribirOpen, setEscribirOpen] = useState(false)
+  const [paciente,      setPaciente]      = useState(null)
+  const [proximaCita,   setProximaCita]   = useState(null)
+  const [cargando,      setCargando]      = useState(true)
+  const [escribirOpen,  setEscribirOpen]  = useState(false)
+  const [solicitarOpen, setSolicitarOpen] = useState(false)
 
   useEffect(() => {
     if (hash === '#datos') {
@@ -61,30 +60,18 @@ export default function MiPerfilPage() {
         return
       }
 
-      const [pacRes, citaRes, sesRes, anaRes, protRes] = await Promise.all([
+      const [pacRes, citaRes] = await Promise.all([
         supabase.from('pacientes').select('*').eq('id', user.id).maybeSingle(),
         supabase.from('citas').select('*').eq('paciente_id', user.id)
           .gt('fecha', new Date().toISOString()).order('fecha', { ascending: true }).limit(1),
-        supabase.from('sesiones').select('*').eq('paciente_id', user.id)
-          .order('fecha', { ascending: false }),
-        supabase.from('analisis_dermoscopicos').select('*').eq('paciente_id', user.id)
-          .order('fecha', { ascending: false }),
-        supabase.from('protocolos').select('*').eq('paciente_id', user.id)
-          .eq('activo', true).order('creado_en', { ascending: false }).limit(1),
       ])
 
       if (cancelled) return
       if (pacRes.error)  console.warn('[mi-perfil] paciente:', pacRes.error.message)
       if (citaRes.error) console.warn('[mi-perfil] citas:',    citaRes.error.message)
-      if (sesRes.error)  console.warn('[mi-perfil] sesiones:', sesRes.error.message)
-      if (anaRes.error)  console.warn('[mi-perfil] analisis:', anaRes.error.message)
-      if (protRes.error) console.warn('[mi-perfil] protocolos:', protRes.error.message)
 
       setPaciente(pacRes.data)
       setProximaCita((citaRes.data || [])[0] ?? null)
-      setSesiones(sesRes.data || [])
-      setAnalisis(anaRes.data || [])
-      setProtocolo((protRes.data || [])[0] ?? null)
       setCargando(false)
     }
     load()
@@ -96,16 +83,6 @@ export default function MiPerfilPage() {
     : user?.nombre || 'Mi perfil'
 
   const foto = paciente?.foto_perfil ?? paciente?.foto ?? user?.foto
-
-  const fotosEvolucion = useMemo(() => {
-    const items = []
-    for (const s of sesiones) {
-      const fechaTxt = dateOnly(s.fecha)
-      ;(s.fotos_antes ?? []).forEach(url => items.push({ url, tipo: 'antes', fecha: fechaTxt, sesion: s.tratamiento || s.tipo_tratamiento }))
-      ;(s.fotos_despues ?? []).forEach(url => items.push({ url, tipo: 'después', fecha: fechaTxt, sesion: s.tratamiento || s.tipo_tratamiento }))
-    }
-    return items
-  }, [sesiones])
 
   async function handleLogout() {
     await logout()
@@ -223,7 +200,7 @@ export default function MiPerfilPage() {
         )}
       </div>
 
-      {/* ── Secciones (fondo crema) ─────────────────────────── */}
+      {/* ── Contenido (fondo crema) ──────────────────────────── */}
       <div style={{
         background:    'var(--vl-page)',
         padding:       '20px 16px 88px',
@@ -232,66 +209,20 @@ export default function MiPerfilPage() {
         gap:           '12px',
       }}>
 
-        <SeccionMiCita   slug={slug} cita={proximaCita} />
-        <SeccionEvolucion fotosEvolucion={fotosEvolucion} />
-        <SeccionAnalisis  slug={slug} analisis={analisis} navigate={navigate} />
-        <SeccionProtocolo protocolo={protocolo} setProtocolo={setProtocolo} />
+        {/* Próxima cita — única sección de datos en Inicio */}
+        <SeccionMiCita
+          slug={slug}
+          cita={proximaCita}
+          onSolicitar={() => setSolicitarOpen(true)}
+        />
 
-        {/* Escribir a la clínica */}
-        <button
-          onClick={() => setEscribirOpen(true)}
-          style={{
-            width:         '100%',
-            background:    '#FFFFFF',
-            border:        '1px solid var(--vl-page-border)',
-            borderRadius:  '2px',
-            padding:       '16px',
-            display:       'flex',
-            alignItems:    'center',
-            gap:           '14px',
-            cursor:        'pointer',
-            textAlign:     'left',
-            transition:    'var(--vl-transition)',
-          }}
-        >
-          <div style={{
-            width:          36,
-            height:         36,
-            borderRadius:   '2px',
-            border:         '1px solid var(--vl-page-border)',
-            display:        'flex',
-            alignItems:     'center',
-            justifyContent: 'center',
-            flexShrink:     0,
-          }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                 stroke="var(--vl-sage-mid)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{
-              margin: 0, fontFamily: 'var(--vl-font-body)',
-              fontSize: '13px', fontWeight: 400, color: 'var(--vl-carbon)',
-            }}>
-              Escribir a tu clínica
-            </p>
-            <p style={{
-              margin: '2px 0 0', fontFamily: 'var(--vl-font-body)',
-              fontSize: '11px', fontWeight: 300, color: 'var(--vl-sage-mid)',
-            }}>
-              Mensaje directo por email
-            </p>
-          </div>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-               stroke="var(--vl-page-border)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
+        {/* Accesos rápidos — navegan a sus tabs propias */}
+        <AccesosRapidos slug={slug} navigate={navigate} onEscribir={() => setEscribirOpen(true)} />
 
       </div>
 
-      {escribirOpen && <EscribirClinicaDrawer onClose={() => setEscribirOpen(false)} />}
+      {escribirOpen  && <EscribirClinicaDrawer onClose={() => setEscribirOpen(false)} />}
+      {solicitarOpen && <SolicitarCitaDrawer   onClose={() => setSolicitarOpen(false)} onGuardado={() => { setSolicitarOpen(false); window.location.reload() }} />}
     </ClinicLayout>
   )
 }
@@ -407,7 +338,7 @@ function AvatarEditable({ foto, nombre, paciente, setPaciente }) {
 // ═══════════════════════════════════════════════════════════════════
 //  SECCIÓN: Mi próxima cita
 // ═══════════════════════════════════════════════════════════════════
-function SeccionMiCita({ slug, cita }) {
+function SeccionMiCita({ slug, cita, onSolicitar }) {
   if (!cita) {
     return (
       <VlCard>
@@ -421,7 +352,7 @@ function SeccionMiCita({ slug, cita }) {
         <button
           className="vl-btn-primary"
           style={{ width: '100%' }}
-          onClick={() => alert('Para solicitar una cita, contacta con tu clínica.\n(Pronto disponible desde aquí)')}
+          onClick={onSolicitar}
         >
           Solicitar cita
         </button>
@@ -518,365 +449,151 @@ function SeccionMiCita({ slug, cita }) {
 
 
 // ═══════════════════════════════════════════════════════════════════
-//  SECCIÓN: Mi evolución
+//  ACCESOS RÁPIDOS — grid de 4 cards que navegan a sus tabs propias
 // ═══════════════════════════════════════════════════════════════════
-function SeccionEvolucion({ fotosEvolucion }) {
+const ACCESOS = [
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 9h18M9 21V9" />
+      </svg>
+    ),
+    label:    'Evolución',
+    sublabel: 'Fotos antes y después',
+    tab:      'evolucion',
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+        <rect x="9" y="3" width="6" height="4" rx="1" />
+        <path d="M9 12h6M9 16h4" />
+      </svg>
+    ),
+    label:    'Rutina',
+    sublabel: 'Protocolo y productos',
+    tab:      'rutina',
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+    label:    'Chat',
+    sublabel: 'Habla con tu médico',
+    tab:      'chat',
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    ),
+    label:    'Mis datos',
+    sublabel: 'Perfil y preferencias',
+    tab:      'datos',
+  },
+]
+
+function AccesosRapidos({ slug, navigate, onEscribir }) {
   return (
-    <VlCard>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-        <p className="vl-section-label" style={{ margin: 0 }}>Mi evolución</p>
-        <button
-          className="vl-btn-secondary"
-          style={{ padding: '6px 12px', fontSize: '10px' }}
-          onClick={() => alert('Próximamente: subir foto desde la cámara.')}
-        >
-          + Foto
-        </button>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <p className="vl-section-label" style={{ marginBottom: '4px' }}>Accesos rápidos</p>
 
-      {fotosEvolucion.length === 0 ? (
-        <p style={{
-          margin: 0, fontFamily: 'var(--vl-font-body)',
-          fontSize: '13px', fontWeight: 300, color: 'var(--vl-sage-mid)', lineHeight: 1.6,
-        }}>
-          Cuando comiences un tratamiento, tu médico subirá fotos de antes y después para que veas tu progreso.
-        </p>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px' }}>
-          {fotosEvolucion.slice(0, 9).map((f, i) => (
-            <div key={i} style={{
-              position: 'relative', aspectRatio: '1', borderRadius: '2px',
-              overflow: 'hidden', background: 'var(--vl-page-dark)',
-            }}>
-              <img src={f.url} alt={f.tipo}
-                   style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                   loading="lazy" />
-              <span style={{
-                position: 'absolute', top: '4px', left: '4px',
-                background: 'rgba(22,19,19,0.65)', color: 'var(--vl-sage)',
-                fontSize: '8px', fontWeight: 300, letterSpacing: '0.08em',
-                textTransform: 'uppercase', padding: '2px 6px',
-              }}>
-                {f.tipo}
-              </span>
-              <span style={{
-                position: 'absolute', bottom: '4px', right: '4px',
-                background: 'rgba(22,19,19,0.55)', color: 'rgba(247,245,242,0.7)',
-                fontSize: '8px', fontWeight: 300, padding: '1px 4px',
-              }}>
-                {f.fecha}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </VlCard>
-  )
-}
-
-
-// ═══════════════════════════════════════════════════════════════════
-//  SECCIÓN: Mis análisis
-// ═══════════════════════════════════════════════════════════════════
-const RIESGO_STYLE = {
-  bajo:     { color: 'var(--vl-sage-mid)',  label: 'Bajo' },
-  moderado: { color: '#D4A94A',             label: 'Moderado' },
-  alto:     { color: 'var(--vl-taupe)',     label: 'Alto' },
-}
-
-function SeccionAnalisis({ slug, analisis, navigate }) {
-  return (
-    <VlCard>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-        <p className="vl-section-label" style={{ margin: 0 }}>Mis análisis</p>
-        <button
-          className="vl-btn-secondary"
-          style={{ padding: '6px 12px', fontSize: '10px' }}
-          onClick={() => navigate(`/clinica/${slug}/analisis`)}
-        >
-          + Nuevo
-        </button>
-      </div>
-
-      {analisis.length === 0 ? (
-        <p style={{
-          margin: 0, fontFamily: 'var(--vl-font-body)',
-          fontSize: '13px', fontWeight: 300, color: 'var(--vl-sage-mid)', lineHeight: 1.6,
-        }}>
-          Cuando completes un análisis, aparecerá aquí con tu puntuación y nivel de riesgo.
-        </p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {analisis.slice(0, 5).map((a, idx) => {
-            const nivel = (a.nivel_riesgo ?? a.nivel ?? 'bajo').toLowerCase()
-            const rs    = RIESGO_STYLE[nivel] ?? RIESGO_STYLE.bajo
-            const punt  = a.puntuacion_total ?? a.puntuacion ?? 0
-            return (
-              <button
-                key={a.id}
-                onClick={() => alert(`Ver informe completo del análisis ${a.id}\n(Próximamente)`)}
-                style={{
-                  width:         '100%',
-                  background:    'transparent',
-                  border:        'none',
-                  borderTop:     idx > 0 ? '1px solid var(--vl-page-border)' : 'none',
-                  padding:       '12px 0',
-                  display:       'flex',
-                  alignItems:    'center',
-                  gap:           '12px',
-                  cursor:        'pointer',
-                  textAlign:     'left',
-                }}
-              >
-                {a.imagen_url ? (
-                  <img src={a.imagen_url} alt=""
-                       style={{ width: 40, height: 40, borderRadius: '2px', objectFit: 'cover', flexShrink: 0 }} />
-                ) : (
-                  <div style={{
-                    width: 40, height: 40, borderRadius: '2px',
-                    border: '1px solid var(--vl-page-border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                         stroke="var(--vl-sage-mid)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                  </div>
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{
-                    margin: '0 0 2px', fontFamily: 'var(--vl-font-body)',
-                    fontSize: '12px', fontWeight: 400, color: 'var(--vl-carbon)',
-                  }}>
-                    {dateOnly(a.fecha)}
-                  </p>
-                  <p style={{
-                    margin: 0, fontFamily: 'var(--vl-font-body)',
-                    fontSize: '11px', fontWeight: 300, color: 'var(--vl-sage-mid)',
-                  }}>
-                    Puntuación <strong style={{ color: 'var(--vl-carbon)' }}>{punt}/9</strong>
-                  </p>
-                </div>
-                <span style={{
-                  fontFamily:    'var(--vl-font-body)',
-                  fontSize:      '10px',
-                  fontWeight:    300,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color:         rs.color,
-                  flexShrink:    0,
-                }}>
-                  {rs.label}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-    </VlCard>
-  )
-}
-
-
-// ═══════════════════════════════════════════════════════════════════
-//  SECCIÓN: Mi protocolo activo
-// ═══════════════════════════════════════════════════════════════════
-function SeccionProtocolo({ protocolo, setProtocolo }) {
-  if (!protocolo) {
-    return (
-      <VlCard>
-        <p className="vl-section-label" style={{ marginBottom: '12px' }}>Mi protocolo</p>
-        <p style={{
-          margin: 0, fontFamily: 'var(--vl-font-body)',
-          fontSize: '13px', fontWeight: 300, color: 'var(--vl-sage-mid)', lineHeight: 1.6,
-        }}>
-          Tu médico aún no te ha asignado un protocolo. Cuando lo haga, verás aquí los pasos a seguir y los productos recomendados.
-        </p>
-      </VlCard>
-    )
-  }
-
-  const pasos    = Array.isArray(protocolo.pasos)    ? protocolo.pasos    : []
-  const productos = Array.isArray(protocolo.productos) ? protocolo.productos : []
-  const completados = pasos.filter(p => p.completado).length
-  const progreso    = pasos.length > 0 ? Math.round((completados / pasos.length) * 100) : 0
-
-  async function togglePaso(idx) {
-    const nuevos = pasos.map((p, i) =>
-      i === idx
-        ? { ...p, completado: !p.completado, fecha_completado: !p.completado ? new Date().toISOString() : null }
-        : p
-    )
-    setProtocolo({ ...protocolo, pasos: nuevos })
-    if (supabase) {
-      await supabase.from('protocolos').update({ pasos: nuevos, actualizado_en: new Date().toISOString() }).eq('id', protocolo.id)
-    }
-  }
-
-  return (
-    <VlCard>
-      <p className="vl-section-label" style={{ marginBottom: '4px' }}>
-        {protocolo.nombre || 'Mi protocolo'}
-      </p>
-      {protocolo.descripcion && (
-        <p style={{
-          margin: '0 0 14px', fontFamily: 'var(--vl-font-body)',
-          fontSize: '13px', fontWeight: 300, color: 'var(--vl-sage-mid)', lineHeight: 1.6,
-        }}>
-          {protocolo.descripcion}
-        </p>
-      )}
-
-      {/* Barra de progreso */}
-      <div style={{ marginBottom: '14px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <span style={{
-            fontFamily: 'var(--vl-font-body)', fontSize: '10px', fontWeight: 300,
-            letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--vl-sage-mid)',
-          }}>
-            Progreso semanal
-          </span>
-          <span style={{
-            fontFamily: 'var(--vl-font-body)', fontSize: '10px', fontWeight: 400,
-            color: 'var(--vl-carbon)',
-          }}>
-            {completados}/{pasos.length}
-          </span>
-        </div>
-        <div className="vl-progress-bar-dark">
-          <div className="vl-progress-fill-dark" style={{ width: `${progreso}%` }} />
-        </div>
-      </div>
-
-      {/* Pasos */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: productos.length > 0 ? '16px' : '0' }}>
-        {pasos.map((p, i) => (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+        {ACCESOS.map(({ icon, label, sublabel, tab }) => (
           <button
-            key={p.id ?? i}
-            onClick={() => togglePaso(i)}
+            key={tab}
+            onClick={() => navigate(`/clinica/${slug}/mi-perfil/${tab}`)}
             style={{
-              width:       '100%',
-              background:  'transparent',
-              border:      'none',
-              padding:     '8px 0',
-              display:     'flex',
-              alignItems:  'flex-start',
-              gap:         '12px',
-              cursor:      'pointer',
-              textAlign:   'left',
-              borderBottom: i < pasos.length - 1 ? '1px solid var(--vl-page-border)' : 'none',
+              background:   '#FFFFFF',
+              border:       '1px solid var(--vl-page-border)',
+              borderRadius: '2px',
+              padding:      '16px',
+              display:      'flex',
+              flexDirection:'column',
+              alignItems:   'flex-start',
+              gap:          '10px',
+              cursor:       'pointer',
+              textAlign:    'left',
+              transition:   'var(--vl-transition)',
             }}
           >
-            {/* Checkbox editorial */}
-            <div style={{
-              flexShrink:     0,
-              marginTop:      '2px',
-              width:          '14px',
-              height:         '14px',
-              borderRadius:   '2px',
-              border:         `1px solid ${p.completado ? 'var(--vl-carbon)' : 'var(--vl-page-border)'}`,
-              background:     p.completado ? 'var(--vl-carbon)' : 'transparent',
-              display:        'flex',
-              alignItems:     'center',
-              justifyContent: 'center',
-              transition:     'var(--vl-transition)',
-            }}>
-              {p.completado && (
-                <svg width="8" height="8" viewBox="0 0 12 12" fill="none"
-                     stroke="var(--vl-sage)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="2 6 5 9 10 3" />
-                </svg>
-              )}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ color: 'var(--vl-sage-mid)' }}>{icon}</div>
+            <div>
+              <p style={{
+                margin: '0 0 2px', fontFamily: 'var(--vl-font-body)',
+                fontSize: '13px', fontWeight: 400, color: 'var(--vl-carbon)',
+              }}>
+                {label}
+              </p>
               <p style={{
                 margin: 0, fontFamily: 'var(--vl-font-body)',
-                fontSize: '13px', fontWeight: 300, lineHeight: 1.5,
-                color: p.completado ? 'var(--vl-sage-mid)' : 'var(--vl-carbon)',
-                textDecoration: p.completado ? 'line-through' : 'none',
+                fontSize: '10px', fontWeight: 300, color: 'var(--vl-sage-mid)',
+                letterSpacing: '0.02em',
               }}>
-                {p.texto}
+                {sublabel}
               </p>
-              {p.frecuencia && (
-                <p style={{
-                  margin: '2px 0 0', fontFamily: 'var(--vl-font-body)',
-                  fontSize: '10px', fontWeight: 300, color: 'rgba(22,19,19,0.35)',
-                  letterSpacing: '0.06em',
-                }}>
-                  {p.frecuencia}
-                </p>
-              )}
             </div>
           </button>
         ))}
       </div>
 
-      {/* Productos recomendados */}
-      {productos.length > 0 && (
-        <div>
-          <p className="vl-section-label" style={{ marginBottom: '10px' }}>Productos</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {productos.map((prod, i) => (
-              <div key={i} style={{
-                display:      'flex',
-                alignItems:   'center',
-                gap:          '12px',
-                padding:      '12px',
-                border:       '1px solid var(--vl-page-border)',
-                borderRadius: '2px',
-                background:   '#FFFFFF',
-              }}>
-                {prod.foto_url ? (
-                  <img src={prod.foto_url} alt={prod.nombre}
-                       style={{ width: 44, height: 44, borderRadius: '2px', objectFit: 'cover', flexShrink: 0 }} />
-                ) : (
-                  <div style={{
-                    width: 44, height: 44, borderRadius: '2px',
-                    border: '1px solid var(--vl-page-border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                         stroke="var(--vl-page-border)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 8v4M12 16h.01" />
-                    </svg>
-                  </div>
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {prod.marca && (
-                    <p style={{
-                      margin: '0 0 2px', fontFamily: 'var(--vl-font-body)',
-                      fontSize: '9px', fontWeight: 300, letterSpacing: '0.15em',
-                      textTransform: 'uppercase', color: 'var(--vl-sage-mid)',
-                    }}>
-                      {prod.marca}
-                    </p>
-                  )}
-                  <p style={{
-                    margin: 0, fontFamily: 'var(--vl-font-body)',
-                    fontSize: '12px', fontWeight: 400, color: 'var(--vl-carbon)',
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>
-                    {prod.nombre}
-                  </p>
-                  {prod.descripcion && (
-                    <p style={{
-                      margin: '2px 0 0', fontFamily: 'var(--vl-font-body)',
-                      fontSize: '11px', fontWeight: 300, color: 'var(--vl-sage-mid)',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>
-                      {prod.descripcion}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Escribir a la clínica */}
+      <button
+        onClick={onEscribir}
+        style={{
+          width:        '100%',
+          background:   '#FFFFFF',
+          border:       '1px solid var(--vl-page-border)',
+          borderRadius: '2px',
+          padding:      '16px',
+          display:      'flex',
+          alignItems:   'center',
+          gap:          '14px',
+          cursor:       'pointer',
+          textAlign:    'left',
+          transition:   'var(--vl-transition)',
+        }}
+      >
+        <div style={{
+          width:36, height:36, borderRadius:'2px',
+          border:'1px solid var(--vl-page-border)',
+          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="var(--vl-sage-mid)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+            <polyline points="22,6 12,13 2,6" />
+          </svg>
         </div>
-      )}
-    </VlCard>
+        <div style={{ flex: 1 }}>
+          <p style={{
+            margin:0, fontFamily:'var(--vl-font-body)',
+            fontSize:'13px', fontWeight:400, color:'var(--vl-carbon)',
+          }}>
+            Escribir a tu clínica
+          </p>
+          <p style={{
+            margin:'2px 0 0', fontFamily:'var(--vl-font-body)',
+            fontSize:'11px', fontWeight:300, color:'var(--vl-sage-mid)',
+          }}>
+            Mensaje directo por email
+          </p>
+        </div>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+             stroke="var(--vl-page-border)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+    </div>
   )
 }
 
