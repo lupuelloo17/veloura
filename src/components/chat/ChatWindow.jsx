@@ -2,6 +2,18 @@ import { useRef, useEffect } from 'react'
 import MessageBubble from './MessageBubble'
 import ChatInput     from './ChatInput'
 
+/** Estado de conexión del médico basado en ultima_conexion */
+function estadoConexion(ultimaConexion) {
+  if (!ultimaConexion) return null
+  const diff = (Date.now() - new Date(ultimaConexion).getTime()) / 1000
+  if (diff < 300)   return { texto: 'En línea',                          online: true  }
+  if (diff < 3600)  return { texto: `Hace ${Math.round(diff / 60)} min`, online: false }
+  if (diff < 86400) return { texto: `Hace ${Math.round(diff / 3600)} h`, online: false }
+  const d = new Date(ultimaConexion)
+  const mes = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][d.getMonth()]
+  return { texto: `${d.getDate()} ${mes}`, online: false }
+}
+
 function iniciales(nombre = '') {
   return nombre
     .split(' ')
@@ -38,6 +50,7 @@ function agruparPorFecha(mensajes) {
 export default function ChatWindow({
   mensajes,
   medico,
+  medicoUltimaConexion,
   pacienteId,
   sending,
   error,
@@ -88,7 +101,7 @@ export default function ChatWindow({
           </div>
         )}
 
-        <div style={{ minWidth: 0 }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <p style={{
             margin: 0,
             fontFamily: 'var(--vl-font-body)',
@@ -102,19 +115,32 @@ export default function ChatWindow({
           }}>
             {medico?.nombre ?? '—'}
           </p>
-          {medico?.especialidad && (
-            <p style={{
-              margin: '2px 0 0',
-              fontFamily: 'var(--vl-font-body)',
-              fontSize: '10px',
-              fontWeight: 300,
-              color: 'rgba(255,255,255,0.3)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-            }}>
-              {medico.especialidad}
-            </p>
-          )}
+
+          {/* Estado de última conexión */}
+          {(() => {
+            const estado = estadoConexion(medicoUltimaConexion)
+            if (!estado) return medico?.especialidad ? (
+              <p style={{ margin: '2px 0 0', fontFamily: 'var(--vl-font-body)', fontSize: '10px', fontWeight: 300, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                {medico.especialidad}
+              </p>
+            ) : null
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                  background: estado.online ? '#5cb85c' : 'rgba(255,255,255,0.25)',
+                  boxShadow: estado.online ? '0 0 0 2px rgba(92,184,92,0.3)' : 'none',
+                }} />
+                <span style={{
+                  fontFamily: 'var(--vl-font-body)', fontSize: '10px', fontWeight: 300,
+                  color: estado.online ? 'rgba(92,184,92,0.9)' : 'rgba(255,255,255,0.3)',
+                  letterSpacing: '0.04em',
+                }}>
+                  {estado.texto}
+                </span>
+              </div>
+            )
+          })()}
         </div>
       </div>
 

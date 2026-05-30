@@ -1,7 +1,11 @@
+import { useEffect } from 'react'
 import { useAuth }   from '../../contexts/AuthContext'
 import { useClinic } from '../../contexts/ClinicContext'
 import { useChat }   from '../../hooks/useChat'
+import { supabase }  from '../../lib/supabase'
 import ChatWindow    from '../../components/chat/ChatWindow'
+
+const isUUID = s => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s ?? '')
 
 export default function MisMensajesPage() {
   const { user }    = useAuth()
@@ -10,12 +14,25 @@ export default function MisMensajesPage() {
   const {
     mensajes,
     medico,
+    medicoUltimaConexion,
     pacienteId,
     sending,
     error,
     loading,
     enviarMensaje,
   } = useChat(user?.email, clinica?.id)
+
+  // ── Actualizar ultima_conexion del paciente al abrir el chat ──
+  useEffect(() => {
+    if (!supabase || !isUUID(user?.id)) return
+    supabase
+      .from('usuarios')
+      .update({ ultima_conexion: new Date().toISOString() })
+      .eq('id', user.id)
+      .then(({ error: e }) => {
+        if (e) console.warn('[Chat] No se pudo actualizar ultima_conexion:', e.message)
+      })
+  }, [user?.id])
 
   // ── Loading ──────────────────────────────────────────────────
   if (loading) {
@@ -66,6 +83,7 @@ export default function MisMensajesPage() {
       <ChatWindow
         mensajes={mensajes}
         medico={medico}
+        medicoUltimaConexion={medicoUltimaConexion}
         pacienteId={pacienteId}
         sending={sending}
         error={error}

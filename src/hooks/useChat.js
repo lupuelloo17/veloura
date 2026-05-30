@@ -4,13 +4,14 @@ import { supabase } from '../lib/supabase'
 const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 
 export function useChat(userEmail, clinicaId) {
-  const [mensajes,   setMensajes]   = useState([])
-  const [medico,     setMedico]     = useState(null)
-  const [pacienteId, setPacienteId] = useState(null)
-  const [medicoId,   setMedicoId]   = useState(null)
-  const [loading,    setLoading]    = useState(true)
-  const [sending,    setSending]    = useState(false)
-  const [error,      setError]      = useState(null)
+  const [mensajes,            setMensajes]            = useState([])
+  const [medico,              setMedico]              = useState(null)
+  const [medicoUltimaConexion, setMedicoUltimaConexion] = useState(null)
+  const [pacienteId,          setPacienteId]          = useState(null)
+  const [medicoId,            setMedicoId]            = useState(null)
+  const [loading,             setLoading]             = useState(true)
+  const [sending,             setSending]             = useState(false)
+  const [error,               setError]               = useState(null)
 
   const canalRef = useRef(null)
 
@@ -103,20 +104,32 @@ export function useChat(userEmail, clinicaId) {
       const pId = pacienteData.id
       const mId = pacienteData.medico_id
 
-      // 2. Obtener médico via email (medico_id apunta a usuarios.id, no a medicos.id)
+      // 2. Obtener médico: primero de usuarios (para ultima_conexion), luego
+      //    de medicos (para nombre/foto/especialidad si existe)
       const { data: usuarioMedico } = await supabase
         .from('usuarios')
-        .select('email')
+        .select('email, nombre, foto, especialidad, ultima_conexion')
         .eq('id', mId)
         .single()
 
-      if (usuarioMedico?.email) {
+      if (usuarioMedico) {
+        if (!cancelled) setMedicoUltimaConexion(usuarioMedico.ultima_conexion ?? null)
+
+        // Intentar enriquecer con tabla medicos (legacy) si existe
         const { data: medicoData } = await supabase
           .from('medicos')
           .select('id, nombre, foto, especialidad')
           .eq('email', usuarioMedico.email)
-          .single()
-        if (!cancelled) setMedico(medicoData ?? null)
+          .maybeSingle()
+
+        if (!cancelled) {
+          setMedico(medicoData ?? {
+            id:           mId,
+            nombre:       usuarioMedico.nombre,
+            foto:         usuarioMedico.foto,
+            especialidad: usuarioMedico.especialidad,
+          })
+        }
       }
 
       if (!cancelled) {
@@ -205,6 +218,7 @@ export function useChat(userEmail, clinicaId) {
   return {
     mensajes,
     medico,
+    medicoUltimaConexion,
     pacienteId,
     medicoId,
     loading,

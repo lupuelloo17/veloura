@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useAuth }   from '../../contexts/AuthContext'
-import { useClinic } from '../../contexts/ClinicContext'
-import { supabase }  from '../../lib/supabase'
+import { useAuth }      from '../../contexts/AuthContext'
+import { useClinic }    from '../../contexts/ClinicContext'
+import { supabase }     from '../../lib/supabase'
+import ClubEliteCard    from '../../components/ClubEliteCard'
 
 const TIPOS_PIEL = ['Seca', 'Grasa', 'Mixta', 'Normal', 'Sensible']
 
@@ -361,6 +362,20 @@ export default function MisDatosPage() {
           </>
         )}
       </div>
+      {/* ── Club Elite ───────────────────────────────────────── */}
+      <div style={{ padding: '28px 24px 0' }}>
+        <p style={{
+          margin: '0 0 12px',
+          fontFamily: 'var(--vl-font-body)',
+          fontSize: '10px', fontWeight: 300,
+          letterSpacing: '0.15em', textTransform: 'uppercase',
+          color: 'var(--vl-sage-mid)',
+        }}>
+          Membresía
+        </p>
+        <ClubEliteCard clinicaNombre={clinica?.nombre} />
+      </div>
+
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
