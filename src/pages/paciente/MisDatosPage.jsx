@@ -119,12 +119,8 @@ export default function MisDatosPage() {
   }
 
   return (
-    <div style={{
-      background:    'var(--vl-page)',
-      minHeight:     '100vh',
-      paddingBottom: '104px',
-      fontFamily:    'var(--vl-font-body)',
-    }}>
+    // Sin minHeight ni overflow propios — el ClinicLayout scroll container lo gestiona
+    <div style={{ background: 'var(--vl-page)', fontFamily: 'var(--vl-font-body)' }}>
 
       {/* ── Encabezado ───────────────────────────────────────── */}
       <div style={{ padding: '32px 24px 0' }}>
@@ -145,6 +141,11 @@ export default function MisDatosPage() {
         </h1>
       </div>
 
+      {/* ── Club Elite — visible de inmediato, no requiere scroll ── */}
+      <div style={{ padding: '20px 24px 0' }}>
+        <ClubEliteCard clinicaNombre={clinica?.nombre} />
+      </div>
+
       {/* ── Feedback ─────────────────────────────────────────── */}
       {msgOk && (
         <div style={{ margin: '16px 24px 0', borderLeft: '2px solid var(--vl-sage-mid)', paddingLeft: '12px' }}>
@@ -162,7 +163,7 @@ export default function MisDatosPage() {
       )}
 
       {/* ── Contenido ────────────────────────────────────────── */}
-      <div style={{ padding: '28px 24px 0', display: 'flex', flexDirection: 'column', gap: '0' }}>
+      <div style={{ padding: '24px 24px 0', display: 'flex', flexDirection: 'column', gap: '0' }}>
 
         {!editando ? (
           /* ── Vista lectura ──── */
@@ -362,20 +363,8 @@ export default function MisDatosPage() {
           </>
         )}
       </div>
-      {/* ── Club Elite ───────────────────────────────────────── */}
-      <div style={{ padding: '28px 24px 0' }}>
-        <p style={{
-          margin: '0 0 12px',
-          fontFamily: 'var(--vl-font-body)',
-          fontSize: '10px', fontWeight: 300,
-          letterSpacing: '0.15em', textTransform: 'uppercase',
-          color: 'var(--vl-sage-mid)',
-        }}>
-          Membresía
-        </p>
-        <ClubEliteCard clinicaNombre={clinica?.nombre} />
-      </div>
 
+      <div style={{ height: 24 }} /> {/* espacio inferior */}
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
