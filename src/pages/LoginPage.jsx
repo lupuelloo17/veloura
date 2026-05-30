@@ -136,7 +136,8 @@ export default function LoginPage() {
   const active = !!(email && password)
 
   return (
-    <div style={{
+    // vl-section-dark → VelouraLogo theme="auto" activará Cream automáticamente
+    <div className="vl-section-dark" style={{
       display: 'flex', flexDirection: 'column', flex: 1,
       minHeight: '780px',
       background: '#161313',

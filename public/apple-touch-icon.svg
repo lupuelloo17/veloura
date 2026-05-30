@@ -1,25 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Veloura icon">
-  <defs>
-    <linearGradient id="ai-gold" x1="0.3" y1="0" x2="0.7" y2="1">
-      <stop offset="0%"   stop-color="#E8C98C"/>
-      <stop offset="40%"  stop-color="#D4B17C"/>
-      <stop offset="100%" stop-color="#A88451"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Fondo beige cálido con bordes redondeados (iOS app icon style) -->
-  <rect x="0" y="0" width="180" height="180" rx="40" ry="40" fill="#F7F3EE"/>
-
-  <!-- Isotipo Veloura escalado y centrado (escala 0.24 del original 600x700) -->
-  <g transform="translate(15 0) scale(0.24)">
-    <path d="M 130 220 Q 145 215, 165 222 Q 195 245, 220 290 Q 260 360, 295 440 Q 305 460, 312 478 L 298 480 Q 280 440, 255 390 Q 220 320, 185 270 Q 165 245, 145 232 Q 135 225, 130 220 Z" fill="url(#ai-gold)"/>
-    <path d="M 145 210 Q 138 200, 135 188 Q 140 192, 148 200 Q 152 205, 155 213 Z" fill="url(#ai-gold)"/>
-    <path d="M 355 130 Q 390 110, 425 115 Q 460 122, 475 145 Q 478 155, 472 168 Q 460 188, 440 210 L 418 205 Q 405 195, 395 188 Q 395 175, 388 165 Q 378 153, 365 145 Q 358 140, 355 130 Z" fill="url(#ai-gold)"/>
-    <path d="M 415 165 Q 460 162, 490 200 Q 498 220, 490 250 Q 478 285, 460 310 Q 442 335, 420 350 L 412 290 Q 425 270, 432 250 Q 438 230, 432 210 Q 425 195, 415 185 Z" fill="url(#ai-gold)"/>
-    <path d="M 410 280 Q 415 305, 410 330 L 405 380 Q 402 410, 395 432 L 380 432 Q 388 405, 392 375 L 395 320 Q 398 297, 405 282 Z" fill="url(#ai-gold)"/>
-    <path d="M 375 230 Q 376 250, 374 268 L 374 280 Q 380 286, 388 290 Q 395 295, 392 302 L 386 306 Q 380 308, 378 314 L 378 322 Q 380 326, 384 328 L 388 330 Q 386 336, 382 340 L 376 348 Q 374 354, 376 360 Q 380 366, 386 372 Q 388 380, 384 385 L 378 388 L 376 400 Q 374 412, 366 418 Q 358 424, 348 422 L 340 420 Q 334 414, 334 405 L 334 380 Q 332 365, 334 348 Q 336 325, 342 305 Q 348 280, 358 258 Q 366 240, 375 230 Z" fill="url(#ai-gold)"/>
-    <path d="M 415 340 Q 425 380, 430 420 Q 432 460, 425 495 Q 415 530, 395 555 Q 380 575, 360 590 L 345 580 Q 365 562, 380 540 Q 395 515, 402 488 Q 410 455, 408 422 Q 405 390, 398 360 Z" fill="url(#ai-gold)"/>
-    <path d="M 312 478 Q 320 482, 330 480 Q 345 478, 355 478 L 360 580 Q 350 588, 340 592 Q 325 596, 315 590 L 308 580 Q 305 540, 308 500 Z" fill="url(#ai-gold)" opacity="0.92"/>
-    <path d="M 360 580 Q 380 595, 400 612 Q 392 615, 380 610 Q 368 600, 360 588 Z" fill="url(#ai-gold)"/>
+<!--
+  Veloura apple-touch-icon — 180×180
+  Fondo Carbon (#161313), Monograma Cream centrado.
+  Padding de zona de seguridad ≈ 18px (≈10% del lado).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Veloura">
+  <!-- Fondo Carbon con esquinas redondeadas iOS -->
+  <rect width="180" height="180" rx="38" fill="#161313"/>
+  <!-- Monograma Cream escalado y centrado: viewBox original -18.5 42 152.4 176 -->
+  <!-- Escala: ancho destino = 180-36=144, ratio = 144/152.4 = 0.9449 -->
+  <!-- offset X: 18 - (-18.5 * 0.9449) = 18 + 17.5 = 35.5; offset Y: 18 - (42 * 0.9449) = 18-39.7=-21.7 → ajustar centrado vertical -->
+  <g transform="translate(35.5, 8) scale(0.9449)">
+    <path fill="#F7F5F2" d="M84 60.50L84 60.50Q84 60 84.50 60L84.50 60L115.40 60Q115.90 60 115.90 60.50L115.90 60.50Q115.90 60.80 115.30 61L115.30 61L109.80 62.60Q107.20 63.50 105.35 65.90Q103.50 68.30 102 73L102 73L64.30 191.10Q63.80 192.90 63.80 195.50L63.80 195.50L63.80 199Q63.80 200 62.90 200L62.90 200L52.10 200Q51.30 200 51.30 199L51.30 199L51.30 195.50Q51.30 193.70 50.40 191.10L50.40 191.10L9.30 65.70Q8.30 62.80 6.80 62.40L6.80 62.40L0.30 61Q-0.50 60.80-0.50 60.50L-0.50 60.50Q-0.50 60 0.10 60L0.10 60L39.20 60Q39.70 60 39.70 60.50L39.70 60.50Q39.70 60.80 38.90 61L38.90 61L25.90 62.30Q22.60 62.90 23.70 66.40L23.70 66.40L63.50 189.10L100.50 73.10Q101.90 68.80 100.55 66.10Q99.20 63.40 93.10 62.20L93.10 62.20L84.70 61Q84 60.80 84 60.50Z"/>
+    <circle cx="57.7" cy="144" r="4.4" fill="#C9D3CA"/>
   </g>
 </svg>

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import VelouraLogo from './components/brand/VelouraLogo'
 
 // Auth
 import { AuthProvider, useAuth } from './contexts/AuthContext'
@@ -176,6 +177,39 @@ function ClinicRoutes() {
 
 // ── Shell wrappers ────────────────────────────────────────────
 function PatientShell({ children }) {
+  const { loading } = useAuth()
+
+  // ── Splash de carga: Monograma Cream centrado en fondo Carbon ──
+  // Se muestra mientras AuthContext verifica la sesión.
+  // Coincide con la pantalla de inicio de la PWA (background_color: #161313).
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: '#161313',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '0',
+      }}>
+        <VelouraLogo
+          variant="monogram"
+          theme="cream"
+          height="56px"
+          safe
+          style={{ animation: 'vl-splash-in 0.7s cubic-bezier(0.16,1,0.3,1) both' }}
+        />
+        <style>{`
+          @keyframes vl-splash-in {
+            from { opacity:0; transform:translateY(8px) }
+            to   { opacity:1; transform:translateY(0) }
+          }
+        `}</style>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-blush-50 flex items-start justify-center py-6 px-4">
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl overflow-hidden min-h-[780px] flex flex-col">
