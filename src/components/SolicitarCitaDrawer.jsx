@@ -1,14 +1,12 @@
 // ══════════════════════════════════════════════════════════════════════════
-//  SolicitarCitaDrawer.jsx
-//  Motor de reservas online — wizard de 3 pasos para el portal del paciente
+//  SolicitarCitaDrawer.jsx  —  Motor de reservas online (3 pasos)
 //
-//  Paso 1 → Tratamiento   (catálogo de tratamientos de la clínica)
-//  Paso 2 → Médico        (usuarios con rol='medico' de la clínica)
-//  Paso 3 → Fecha y hora  (horarios_empleados × citas ocupadas → slots libres)
-//  ─────────────────────────────────────────────────────────────────────────
-//  Al confirmar:
-//    INSERT en citas (medico_usuario_id, paciente_id, tratamiento, fecha…)
-//    → callback onGuardado(cita) → refresca "Próxima Cita" en el Inicio
+//  Paso 1 → Tratamiento   clic en card → avanza automáticamente al Paso 2
+//  Paso 2 → Médico        clic en card → avanza automáticamente al Paso 3
+//  Paso 3 → Fecha + hora  selecciona día → selecciona slot → "Confirmar"
+//
+//  UX: no hay botón "Continuar" en pasos 1 y 2 — el clic en la selección
+//  es suficiente. Esto elimina el problema de "botón invisible".
 // ══════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useState, useCallback } from 'react'
@@ -18,48 +16,54 @@ import { supabase }  from '../lib/supabase'
 import { TRATAMIENTOS as FALLBACK_TRATS } from '../contexts/CitasContext'
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-const isUUID = s => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s ?? '')
+const isUUID = s =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s ?? '')
 
-/** JS Date.getDay() (0=dom) → dia_semana en horarios_empleados (0=lun) */
+/** JS Date.getDay() (0=dom) → dia_semana en horarios_empleados (0=lun…6=dom) */
 function jsDayToHorario(jsDay) { return jsDay === 0 ? 6 : jsDay - 1 }
 
-/** 'HH:MM:SS' → minutos desde medianoche */
-function timeToMin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m }
-
-/** minutos → 'HH:MM' */
-function minToTime(m) {
-  return `${String(Math.floor(m / 60)).padStart(2,'0')}:${String(m % 60).padStart(2,'0')}`
+/** 'HH:MM' o 'HH:MM:SS' → minutos desde medianoche */
+function timeToMin(t) {
+  const [h, m] = (t ?? '00:00').split(':').map(Number)
+  return h * 60 + m
 }
 
-/** Date → 'YYYY-MM-DD' local */
+/** minutos → 'HH:MM' */
+function minToTime(total) {
+  return `${String(Math.floor(total / 60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`
+}
+
+/** Date → string 'YYYY-MM-DD' en hora local */
 function toLocalDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
-/** Generar slots libres dado el horario del médico y las citas ocupadas */
+/** Genera slots libres a partir del horario y las citas ya ocupadas */
 function calcularSlots(horario, citasOcupadas, duracion) {
   const inicio = timeToMin(horario.hora_inicio)
   const fin    = timeToMin(horario.hora_fin)
   const paso   = Math.max(15, duracion)
   const slots  = []
   for (let t = inicio; t + duracion <= fin; t += paso) {
-    const tFin   = t + duracion
+    const tFin    = t + duracion
     const ocupado = citasOcupadas.some(c => {
-      const cIni = timeToMin(c.hora)
-      const cFin = cIni + (c.duracion_minutos ?? 30)
-      return t < cFin && tFin > cIni
+      const ci = timeToMin(c.hora)
+      const cf = ci + (c.duracion_minutos ?? 30)
+      return t < cf && tFin > ci
     })
     if (!ocupado) slots.push(minToTime(t))
   }
   return slots
 }
 
-/** Próximos maxDias días en que diasConHorario tiene ese dia_semana */
-function proximosDiasConHorario(diasConHorario, maxDias = 21) {
+/** Devuelve los próximos días que tienen día_semana en diasConHorario */
+function proximosDiasDisponibles(diasConHorario, max = 21) {
   const result = []
-  const hoy = new Date(); hoy.setHours(0,0,0,0)
-  for (let i = 1; result.length < maxDias && i <= 90; i++) {
-    const d = new Date(hoy); d.setDate(hoy.getDate() + i)
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  for (let i = 1; result.length < max && i <= 90; i++) {
+    const d = new Date(hoy)
+    d.setDate(hoy.getDate() + i)
     if (diasConHorario.has(jsDayToHorario(d.getDay()))) result.push(d)
   }
   return result
@@ -67,148 +71,268 @@ function proximosDiasConHorario(diasConHorario, maxDias = 21) {
 
 const DIAS_LABEL  = ['Lu','Ma','Mi','Ju','Vi','Sá','Do']
 const MESES_LABEL = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
-const FB = "'DM Sans', system-ui, sans-serif"
-const FD = "'Fraunces', Georgia, serif"
-const FM = "'DM Mono', monospace"
 
 // ══════════════════════════════════════════════════════════════════════════
-//  Componente principal
+//  Componente
 // ══════════════════════════════════════════════════════════════════════════
 export default function SolicitarCitaDrawer({ onClose, onGuardado }) {
   const { user }    = useAuth()
   const { clinica } = useClinic()
 
-  const [paso,    setPaso]    = useState(1)
-  const [exito,   setExito]   = useState(false)
+  // Wizard
+  const [paso,  setPaso]  = useState(1)   // 1 | 2 | 3
+  const [exito, setExito] = useState(false)
 
-  const [tratamientos,     setTratamientos]     = useState([])
-  const [medicos,          setMedicos]          = useState([])
-  const [diasConHorario,   setDiasConHorario]   = useState(new Set())
-  const [slots,            setSlots]            = useState([])
+  // Datos
+  const [tratamientos,   setTratamientos]   = useState([])
+  const [medicos,        setMedicos]        = useState([])
+  const [diasConHorario, setDiasConHorario] = useState(new Set())
+  const [slots,          setSlots]          = useState([])
 
+  // Selecciones
   const [tratamiento, setTratamiento] = useState(null)
   const [medico,      setMedico]      = useState(null)
   const [diaSelec,    setDiaSelec]    = useState(null)
   const [slotSelec,   setSlotSelec]   = useState(null)
   const [notas,       setNotas]       = useState('')
 
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState(null)
-  const [enviando, setEnviando] = useState(false)
+  // UI
+  const [loadingTrats,  setLoadingTrats]  = useState(true)
+  const [loadingMeds,   setLoadingMeds]   = useState(false)
+  const [loadingHors,   setLoadingHors]   = useState(false)
+  const [loadingSlots,  setLoadingSlots]  = useState(false)
+  const [enviando,      setEnviando]      = useState(false)
+  const [error,         setError]         = useState(null)
 
-  // ── Paso 1: tratamientos ─────────────────────────────────────────────
+  // ── Cargar tratamientos (Paso 1) ─────────────────────────────────────
   useEffect(() => {
     let cancelled = false
+    const fallback = (FALLBACK_TRATS ?? [])
+      .filter(t => t.label !== 'Otro')
+      .map((t, i) => ({
+        id:               `mock-t${i}`,
+        nombre:           t.label,
+        descripcion:      t.descripcion ?? null,
+        duracion_minutos: t.duracion ?? t.duracion_minutos ?? 30,
+        precio:           t.precio ?? null,
+      }))
+
     async function load() {
-      setLoading(true)
-      const fallback = FALLBACK_TRATS
-        .filter(t => t.label !== 'Otro')
-        .map((t,i) => ({ id:`mock-${i}`, nombre:t.label, duracion_minutos:t.duracion??30, precio:t.precio }))
+      setLoadingTrats(true)
+
       if (!supabase || !isUUID(clinica?.id)) {
-        if (!cancelled) { setTratamientos(fallback); setLoading(false) }
+        console.log('[SolicitarCita] Usando tratamientos mock (sin Supabase o clinica no UUID)')
+        if (!cancelled) { setTratamientos(fallback); setLoadingTrats(false) }
         return
       }
-      const { data } = await supabase
-        .from('tratamientos').select('id,nombre,descripcion,duracion_minutos,precio')
-        .eq('clinica_id', clinica.id).eq('activo', true).order('nombre')
-      if (!cancelled) { setTratamientos(data?.length ? data : fallback); setLoading(false) }
+
+      try {
+        const { data, error: err } = await supabase
+          .from('tratamientos')
+          .select('id, nombre, descripcion, duracion_minutos, precio')
+          .eq('clinica_id', clinica.id)
+          .eq('activo', true)
+          .order('nombre')
+
+        if (err) throw err
+        console.log('[SolicitarCita] Tratamientos cargados:', data?.length ?? 0)
+        if (!cancelled) {
+          setTratamientos(data?.length ? data : fallback)
+          setLoadingTrats(false)
+        }
+      } catch (e) {
+        console.error('[SolicitarCita] Error cargando tratamientos:', e.message)
+        if (!cancelled) { setTratamientos(fallback); setLoadingTrats(false) }
+      }
     }
+
     load()
     return () => { cancelled = true }
   }, [clinica?.id])
 
-  // ── Paso 2: médicos ──────────────────────────────────────────────────
-  useEffect(() => {
-    if (paso !== 2) return
-    let cancelled = false
-    async function load() {
-      setLoading(true)
-      if (!supabase || !isUUID(clinica?.id)) {
-        if (!cancelled) {
-          setMedicos([
-            { id:'mock-m1', nombre:'Dra. María García', especialidad:'Medicina Estética', foto:null },
-            { id:'mock-m2', nombre:'Dr. Carlos Ruiz',   especialidad:'Dermatología',      foto:null },
-          ])
-          setLoading(false)
-        }
-        return
-      }
-      const { data } = await supabase
-        .from('usuarios').select('id,nombre,especialidad,foto')
-        .eq('clinica_id', clinica.id).eq('rol','medico').eq('activo',true).order('nombre')
-      if (!cancelled) { setMedicos(data ?? []); setLoading(false) }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [paso, clinica?.id])
+  // ── Seleccionar tratamiento y avanzar al Paso 2 ──────────────────────
+  function elegirTratamiento(t) {
+    console.log('[SolicitarCita] Tratamiento seleccionado:', t.nombre)
+    setTratamiento(t)
+    setMedico(null)
+    setDiaSelec(null)
+    setSlotSelec(null)
+    setSlots([])
+    cargarMedicos()
+    setPaso(2)
+  }
 
-  // ── Paso 3: horarios del médico ──────────────────────────────────────
-  useEffect(() => {
-    if (paso !== 3 || !medico) return
-    let cancelled = false
-    async function load() {
-      setLoading(true)
-      if (!supabase || !isUUID(medico.id)) {
-        if (!cancelled) { setDiasConHorario(new Set([0,1,2,3,4])); setLoading(false) }
-        return
-      }
-      const { data } = await supabase
-        .from('horarios_empleados').select('dia_semana')
-        .eq('empleado_id', medico.id).eq('activo', true)
-      if (!cancelled) {
-        setDiasConHorario(new Set((data ?? []).map(h => h.dia_semana)))
-        setLoading(false)
-      }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [paso, medico])
+  // ── Cargar médicos (llamada al avanzar a Paso 2) ─────────────────────
+  async function cargarMedicos() {
+    setLoadingMeds(true)
+    setError(null)
 
-  // ── Calcular slots al cambiar día ────────────────────────────────────
-  const calcularSlotsDelDia = useCallback(async (dia) => {
-    setSlots([]); setSlotSelec(null)
-    if (!dia || !medico) return
-    const horarioDia = jsDayToHorario(dia.getDay())
-    if (!supabase || !isUUID(medico.id)) {
-      setSlots(calcularSlots({ hora_inicio:'09:00', hora_fin:'18:00' }, [], tratamiento?.duracion_minutos ?? 30))
+    const fallback = [
+      { id: 'mock-m1', nombre: 'Dra. María García', especialidad: 'Medicina Estética', foto: null },
+      { id: 'mock-m2', nombre: 'Dr. Carlos Ruiz',   especialidad: 'Dermatología',      foto: null },
+    ]
+
+    if (!supabase || !isUUID(clinica?.id)) {
+      console.log('[SolicitarCita] Usando médicos mock')
+      setMedicos(fallback)
+      setLoadingMeds(false)
       return
     }
-    const { data: hor } = await supabase
-      .from('horarios_empleados').select('hora_inicio,hora_fin')
-      .eq('empleado_id', medico.id).eq('dia_semana', horarioDia).eq('activo',true).maybeSingle()
-    if (!hor) { setSlots([]); return }
-    const diaStr  = toLocalDate(dia)
-    const sigDia  = new Date(dia); sigDia.setDate(sigDia.getDate() + 1)
-    const sigStr  = toLocalDate(sigDia)
-    const { data: citas } = await supabase
-      .from('citas').select('fecha,duracion_minutos')
-      .eq('medico_usuario_id', medico.id)
-      .gte('fecha', `${diaStr}T00:00:00`).lt('fecha', `${sigStr}T00:00:00`)
-      .not('estado','in','("cancelada","no_asistio")')
-    const ocupadas = (citas ?? []).map(c => {
-      const f = new Date(c.fecha)
-      return { hora:`${String(f.getHours()).padStart(2,'0')}:${String(f.getMinutes()).padStart(2,'0')}`, duracion_minutos:c.duracion_minutos??30 }
-    })
-    setSlots(calcularSlots(hor, ocupadas, tratamiento?.duracion_minutos ?? 30))
-  }, [medico, tratamiento])
 
-  useEffect(() => { if (diaSelec) calcularSlotsDelDia(diaSelec) }, [diaSelec, calcularSlotsDelDia])
+    try {
+      const { data, error: err } = await supabase
+        .from('usuarios')
+        .select('id, nombre, especialidad, foto')
+        .eq('clinica_id', clinica.id)
+        .eq('rol', 'medico')
+        .eq('activo', true)
+        .order('nombre')
+
+      if (err) throw err
+      console.log('[SolicitarCita] Médicos cargados:', data?.length ?? 0)
+      setMedicos(data?.length ? data : fallback)
+    } catch (e) {
+      console.error('[SolicitarCita] Error cargando médicos:', e.message)
+      setError('No se pudieron cargar los médicos. Mostrando opciones por defecto.')
+      setMedicos(fallback)
+    } finally {
+      setLoadingMeds(false)
+    }
+  }
+
+  // ── Seleccionar médico y avanzar al Paso 3 ───────────────────────────
+  function elegirMedico(m) {
+    console.log('[SolicitarCita] Médico seleccionado:', m.nombre)
+    setMedico(m)
+    setDiaSelec(null)
+    setSlotSelec(null)
+    setSlots([])
+    cargarHorarios(m)
+    setPaso(3)
+  }
+
+  // ── Cargar días disponibles del médico (Paso 3) ──────────────────────
+  async function cargarHorarios(m) {
+    setLoadingHors(true)
+
+    if (!supabase || !isUUID(m.id)) {
+      console.log('[SolicitarCita] Horarios mock: lunes a viernes')
+      setDiasConHorario(new Set([0,1,2,3,4]))
+      setLoadingHors(false)
+      return
+    }
+
+    try {
+      const { data, error: err } = await supabase
+        .from('horarios_empleados')
+        .select('dia_semana')
+        .eq('empleado_id', m.id)
+        .eq('activo', true)
+
+      if (err) throw err
+      const dias = new Set((data ?? []).map(h => h.dia_semana))
+      console.log('[SolicitarCita] Días con horario:', [...dias])
+      setDiasConHorario(dias)
+    } catch (e) {
+      console.error('[SolicitarCita] Error cargando horarios:', e.message)
+      setDiasConHorario(new Set([0,1,2,3,4])) // fallback lunes-viernes
+    } finally {
+      setLoadingHors(false)
+    }
+  }
+
+  // ── Calcular slots al seleccionar un día ─────────────────────────────
+  const elegirDia = useCallback(async (dia) => {
+    setDiaSelec(dia)
+    setSlotSelec(null)
+    setSlots([])
+    if (!medico) return
+
+    setLoadingSlots(true)
+    const horarioDia = jsDayToHorario(dia.getDay())
+    const dur        = tratamiento?.duracion_minutos ?? 30
+
+    if (!supabase || !isUUID(medico.id)) {
+      const mockSlots = calcularSlots({ hora_inicio:'09:00', hora_fin:'18:00' }, [], dur)
+      console.log('[SolicitarCita] Slots mock:', mockSlots.length)
+      setSlots(mockSlots)
+      setLoadingSlots(false)
+      return
+    }
+
+    try {
+      // 1. Horario del médico ese día
+      const { data: hor, error: e1 } = await supabase
+        .from('horarios_empleados')
+        .select('hora_inicio, hora_fin')
+        .eq('empleado_id', medico.id)
+        .eq('dia_semana', horarioDia)
+        .eq('activo', true)
+        .maybeSingle()
+
+      if (e1) throw e1
+      if (!hor) { console.log('[SolicitarCita] Médico sin horario ese día'); setSlots([]); setLoadingSlots(false); return }
+
+      // 2. Citas ya ocupadas ese día
+      const diaStr  = toLocalDate(dia)
+      const sigStr  = toLocalDate(new Date(dia.getFullYear(), dia.getMonth(), dia.getDate() + 1))
+
+      const { data: citas, error: e2 } = await supabase
+        .from('citas')
+        .select('fecha, duracion_minutos')
+        .eq('medico_usuario_id', medico.id)
+        .gte('fecha', `${diaStr}T00:00:00`)
+        .lt('fecha',  `${sigStr}T00:00:00`)
+        .not('estado', 'in', '("cancelada","no_asistio")')
+
+      if (e2) console.warn('[SolicitarCita] Error cargando citas ocupadas:', e2.message)
+
+      const ocupadas = (citas ?? []).map(c => {
+        const f = new Date(c.fecha)
+        return {
+          hora:             `${String(f.getHours()).padStart(2,'0')}:${String(f.getMinutes()).padStart(2,'0')}`,
+          duracion_minutos: c.duracion_minutos ?? 30,
+        }
+      })
+
+      const libres = calcularSlots(hor, ocupadas, dur)
+      console.log('[SolicitarCita] Slots disponibles:', libres.length, 'ocupadas:', ocupadas.length)
+      setSlots(libres)
+
+    } catch (e) {
+      console.error('[SolicitarCita] Error calculando slots:', e.message)
+      setSlots([])
+    } finally {
+      setLoadingSlots(false)
+    }
+  }, [medico, tratamiento])
 
   // ── Confirmar cita ───────────────────────────────────────────────────
   async function handleConfirmar() {
     if (!tratamiento || !medico || !diaSelec || !slotSelec) return
-    setEnviando(true); setError(null)
+    setEnviando(true)
+    setError(null)
+
+    const [h, m] = slotSelec.split(':').map(Number)
+    const fechaISO = new Date(
+      diaSelec.getFullYear(), diaSelec.getMonth(), diaSelec.getDate(), h, m
+    ).toISOString()
+
     try {
-      const [h, m] = slotSelec.split(':').map(Number)
-      const fechaISO = new Date(diaSelec.getFullYear(), diaSelec.getMonth(), diaSelec.getDate(), h, m).toISOString()
       if (!supabase || !isUUID(clinica?.id) || !isUUID(user?.id)) {
-        await new Promise(r => setTimeout(r, 600))
+        console.log('[SolicitarCita] Demo: simulando INSERT')
+        await new Promise(r => setTimeout(r, 700))
         setExito(true)
-        setTimeout(() => onGuardado({ tratamiento:tratamiento.nombre, fecha:fechaISO, duracion_minutos:tratamiento.duracion_minutos, estado:'pendiente' }), 1800)
+        setTimeout(() => onGuardado({
+          tratamiento: tratamiento.nombre, fecha: fechaISO,
+          duracion_minutos: tratamiento.duracion_minutos, estado: 'pendiente',
+        }), 1800)
         return
       }
+
       const { data: cita, error: err } = await supabase
-        .from('citas').insert({
+        .from('citas')
+        .insert({
           paciente_id:       user.id,
           clinica_id:        clinica.id,
           medico_usuario_id: medico.id,
@@ -218,162 +342,209 @@ export default function SolicitarCitaDrawer({ onClose, onGuardado }) {
           duracion_minutos:  tratamiento.duracion_minutos ?? 30,
           estado:            'pendiente',
           notas_previas:     notas.trim() || null,
-        }).select().single()
+        })
+        .select()
+        .single()
+
       if (err) throw err
+
+      console.log('[SolicitarCita] Cita creada:', cita.id)
       setExito(true)
       setTimeout(() => onGuardado(cita), 1800)
-    } catch (err) {
-      setError(err.message || 'Error al confirmar la cita')
-    } finally { setEnviando(false) }
+
+    } catch (e) {
+      console.error('[SolicitarCita] Error confirmando cita:', e.message)
+      setError(e.message || 'Error al confirmar la cita')
+    } finally {
+      setEnviando(false)
+    }
   }
 
   // ── Render ───────────────────────────────────────────────────────────
-  const diasDisponibles = proximosDiasConHorario(diasConHorario)
-  const puedeAvanzar1  = !!tratamiento
-  const puedeAvanzar2  = !!medico
-  const puedeConfirmar = !!diaSelec && !!slotSelec
+  const diasDisponibles = proximosDiasDisponibles(diasConHorario)
+
+  const PASOS_LABEL = ['Tratamiento', 'Médico', 'Fecha y hora']
 
   return (
     <>
       {/* Overlay */}
-      <div onClick={onClose} style={{
-        position:'fixed', inset:0, zIndex:40,
-        background:'rgba(22,19,19,0.5)', backdropFilter:'blur(2px)',
-        animation:'vlFadeIn 0.2s ease',
-      }} />
+      <div
+        onClick={onClose}
+        style={{
+          position:'fixed', inset:0, zIndex:40,
+          background:'rgba(22,19,19,0.52)',
+          backdropFilter:'blur(2px)',
+          animation:'vlFade 0.2s ease',
+        }}
+      />
 
       {/* Sheet */}
       <div style={{
-        position:'fixed', bottom:0, left:'50%', transform:'translateX(-50%)',
+        position:'fixed', bottom:0, left:'50%',
+        transform:'translateX(-50%)',
         width:'100%', maxWidth:'448px', zIndex:50,
-        background:'#FFFFFF', borderRadius:'16px 16px 0 0',
+        background:'#FFFFFF',
+        borderRadius:'16px 16px 0 0',
         maxHeight:'92vh', display:'flex', flexDirection:'column',
-        animation:'vlSlideUp 0.28s cubic-bezier(0.34,1.3,0.64,1)',
+        animation:'vlUp 0.28s cubic-bezier(0.34,1.3,0.64,1)',
         boxShadow:'0 -8px 40px rgba(22,19,19,0.14)',
       }}>
 
         {/* Handle */}
         <div style={{ display:'flex', justifyContent:'center', padding:'12px 0 4px' }}>
-          <div style={{ width:36, height:4, borderRadius:2, background:'rgba(22,19,19,0.1)' }} />
+          <div style={{ width:36, height:4, borderRadius:2, background:'rgba(22,19,19,0.1)' }}/>
         </div>
 
         {/* Header */}
-        <div style={{ padding:'12px 20px 0', flexShrink:0 }}>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:14 }}>
+        <div style={{ padding:'10px 20px 0', flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12 }}>
             <div>
-              <p style={{ margin:'0 0 3px', fontFamily:FM, fontSize:'9px', letterSpacing:'0.15em', textTransform:'uppercase', color:'rgba(22,19,19,0.28)' }}>
-                {exito ? 'Solicitud enviada' : `Paso ${paso} de 3`}
+              <p style={{ margin:'0 0 3px', fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.15em', textTransform:'uppercase', color:'rgba(22,19,19,0.28)' }}>
+                {exito ? 'Reserva confirmada' : `Paso ${paso} de 3 · ${PASOS_LABEL[paso-1]}`}
               </p>
-              <h2 style={{ margin:0, fontFamily:FD, fontSize:'22px', fontWeight:400, color:'#161313', letterSpacing:'-0.01em' }}>
-                {exito ? '¡Cita solicitada!' : paso===1 ? 'Tratamiento' : paso===2 ? 'Elige médico' : 'Fecha y hora'}
+              <h2 style={{ margin:0, fontFamily:"'Fraunces',Georgia,serif", fontSize:'22px', fontWeight:400, color:'#161313', letterSpacing:'-0.01em' }}>
+                {exito ? '¡Cita solicitada!' : paso===1 ? 'Elige el tratamiento' : paso===2 ? 'Elige al médico' : 'Selecciona día y hora'}
               </h2>
             </div>
             {!exito && (
               <button onClick={onClose} style={{ width:32, height:32, borderRadius:'50%', border:'1px solid rgba(22,19,19,0.1)', background:'transparent', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(22,19,19,0.4)" strokeWidth="2" strokeLinecap="round">
-                  <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
+                ✕
               </button>
             )}
           </div>
 
-          {/* Barra de progreso por pasos */}
+          {/* Barra de pasos */}
           {!exito && (
-            <div style={{ display:'flex', gap:4, marginBottom:16 }}>
+            <div style={{ display:'flex', gap:4, marginBottom:14 }}>
               {[1,2,3].map(n => (
                 <div key={n} style={{
-                  flex: n===paso ? 2 : 1, height:3, borderRadius:2,
+                  height:3, borderRadius:2,
+                  flex: n===paso ? 3 : 1,
                   background: n<=paso ? '#161313' : 'rgba(22,19,19,0.1)',
-                  transition:'all 0.3s ease',
-                }} />
+                  transition:'all 0.35s ease',
+                }}/>
               ))}
             </div>
           )}
         </div>
 
-        {/* Cuerpo scrollable */}
-        <div style={{ flex:1, overflowY:'auto', padding:'0 20px 4px', WebkitOverflowScrolling:'touch' }}>
+        {/* Cuerpo */}
+        <div style={{ flex:1, overflowY:'auto', padding:'0 20px 8px', WebkitOverflowScrolling:'touch' }}>
 
-          {/* ══ ÉXITO ══ */}
+          {/* ── ÉXITO ── */}
           {exito && (
             <div style={{ textAlign:'center', padding:'28px 0 40px' }}>
-              <div style={{ width:60, height:60, borderRadius:'50%', background:'rgba(146,156,146,0.1)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 18px' }}>
+              <div style={{ width:60, height:60, borderRadius:'50%', background:'rgba(146,156,146,0.1)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#929C92" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 6L9 17l-5-5"/>
                 </svg>
               </div>
-              <p style={{ margin:'0 0 6px', fontFamily:FD, fontSize:'20px', fontWeight:400, color:'#161313' }}>Solicitud enviada</p>
-              <p style={{ margin:'0 auto', fontFamily:FB, fontSize:'13px', fontWeight:300, color:'rgba(22,19,19,0.4)', lineHeight:1.6, maxWidth:240 }}>
-                La clínica confirmará tu cita en breve. Recibirás una notificación.
+              <p style={{ margin:'0 0 6px', fontFamily:"'Fraunces',Georgia,serif", fontSize:'20px', fontWeight:400, color:'#161313' }}>
+                Solicitud enviada
               </p>
-              <div style={{ marginTop:22, padding:'14px 16px', border:'1px solid rgba(22,19,19,0.08)', borderRadius:2, textAlign:'left' }}>
-                <SRow label="Tratamiento" value={tratamiento?.nombre} />
-                <SRow label="Médico"      value={medico?.nombre} />
-                <SRow label="Día"         value={diaSelec?.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})} />
-                <SRow label="Hora"        value={slotSelec} last />
+              <p style={{ margin:'0 auto 20px', fontFamily:"'DM Sans',system-ui", fontSize:'13px', fontWeight:300, color:'rgba(22,19,19,0.4)', lineHeight:1.6, maxWidth:240 }}>
+                La clínica confirmará tu cita en breve.
+              </p>
+              <div style={{ padding:'14px 16px', border:'1px solid rgba(22,19,19,0.08)', borderRadius:2, textAlign:'left' }}>
+                {[
+                  ['Tratamiento', tratamiento?.nombre],
+                  ['Médico',      medico?.nombre],
+                  ['Día',         diaSelec?.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})],
+                  ['Hora',        slotSelec],
+                ].map(([label, value], i, arr) => (
+                  <div key={label} style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', padding:'8px 0', borderBottom: i<arr.length-1 ? '1px solid rgba(22,19,19,0.06)' : 'none' }}>
+                    <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(22,19,19,0.3)' }}>{label}</span>
+                    <span style={{ fontFamily:"'DM Sans',system-ui", fontSize:'12px', color:'#161313', textAlign:'right', maxWidth:'60%' }}>{value ?? '—'}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* ══ PASO 1: Tratamiento ══ */}
+          {/* ── PASO 1: Tratamiento ── */}
           {!exito && paso===1 && (
-            loading ? <Spin /> : (
-              <div style={{ display:'flex', flexDirection:'column', gap:6, paddingBottom:8 }}>
-                {tratamientos.map(t => {
-                  const sel = tratamiento?.id===t.id
-                  return (
-                    <button key={t.id} onClick={() => setTratamiento(t)} style={{
-                      width:'100%', textAlign:'left', border:'none', cursor:'pointer',
-                      padding:'14px 16px', borderRadius:2, transition:'all 0.14s',
-                      background: sel ? '#161313' : '#FFFFFF',
-                      outline: sel ? 'none' : '1px solid rgba(22,19,19,0.1)',
-                    }}>
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <p style={{ margin:'0 0 3px', fontFamily:FB, fontSize:'13px', fontWeight:400, color:sel?'#C9D3CA':'#161313' }}>{t.nombre}</p>
-                          {t.descripcion && <p style={{ margin:'0 0 5px', fontFamily:FB, fontSize:'11px', fontWeight:300, lineHeight:1.5, color:sel?'rgba(201,211,202,0.55)':'rgba(22,19,19,0.38)' }}>{t.descripcion}</p>}
-                          <div style={{ display:'flex', gap:12 }}>
-                            {t.duracion_minutos && <span style={{ fontFamily:FM, fontSize:'9px', letterSpacing:'0.08em', color:sel?'rgba(201,211,202,0.45)':'rgba(22,19,19,0.28)' }}>{t.duracion_minutos} min</span>}
-                            {t.precio!=null      && <span style={{ fontFamily:FM, fontSize:'9px', letterSpacing:'0.08em', color:sel?'rgba(201,211,202,0.45)':'rgba(22,19,19,0.28)' }}>{t.precio} €</span>}
-                          </div>
+            loadingTrats ? <LoadSpinner /> : (
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                <p style={{ margin:'0 0 10px', fontFamily:"'DM Sans',system-ui", fontSize:'12px', fontWeight:300, color:'rgba(22,19,19,0.4)', lineHeight:1.5 }}>
+                  Selecciona el servicio que deseas y pasarás automáticamente al siguiente paso.
+                </p>
+                {tratamientos.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => elegirTratamiento(t)}
+                    style={{
+                      width:'100%', textAlign:'left', cursor:'pointer',
+                      padding:'14px 16px', borderRadius:2,
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(22,19,19,0.12)',
+                      transition:'background 0.12s, border-color 0.12s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background='rgba(22,19,19,0.03)'; e.currentTarget.style.borderColor='rgba(22,19,19,0.25)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background='#FFFFFF'; e.currentTarget.style.borderColor='rgba(22,19,19,0.12)' }}
+                  >
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <p style={{ margin:'0 0 3px', fontFamily:"'DM Sans',system-ui", fontSize:'13px', fontWeight:400, color:'#161313' }}>
+                          {t.nombre}
+                        </p>
+                        {t.descripcion && (
+                          <p style={{ margin:'0 0 5px', fontFamily:"'DM Sans',system-ui", fontSize:'11px', fontWeight:300, lineHeight:1.5, color:'rgba(22,19,19,0.4)' }}>
+                            {t.descripcion}
+                          </p>
+                        )}
+                        <div style={{ display:'flex', gap:12 }}>
+                          {t.duracion_minutos && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.06em', color:'rgba(22,19,19,0.3)' }}>{t.duracion_minutos} min</span>}
+                          {t.precio != null   && <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.06em', color:'rgba(22,19,19,0.3)' }}>{t.precio} €</span>}
                         </div>
-                        {sel && <Check />}
                       </div>
-                    </button>
-                  )
-                })}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(22,19,19,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0, marginTop:2 }}>
+                        <polyline points="9 18 15 12 9 6"/>
+                      </svg>
+                    </div>
+                  </button>
+                ))}
               </div>
             )
           )}
 
-          {/* ══ PASO 2: Médico ══ */}
+          {/* ── PASO 2: Médico ── */}
           {!exito && paso===2 && (
-            loading ? <Spin /> : medicos.length===0 ? (
-              <p style={{ fontFamily:FB, fontSize:'13px', fontWeight:300, color:'rgba(22,19,19,0.4)', textAlign:'center', padding:'32px 0' }}>
-                No hay médicos disponibles.
+            loadingMeds ? <LoadSpinner msg="Cargando médicos…" /> : medicos.length===0 ? (
+              <p style={{ fontFamily:"'DM Sans',system-ui", fontSize:'13px', fontWeight:300, color:'rgba(22,19,19,0.4)', textAlign:'center', padding:'32px 0' }}>
+                No hay médicos disponibles en este momento.
               </p>
             ) : (
-              <div style={{ display:'flex', flexDirection:'column', gap:6, paddingBottom:8 }}>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                <p style={{ margin:'0 0 10px', fontFamily:"'DM Sans',system-ui", fontSize:'12px', fontWeight:300, color:'rgba(22,19,19,0.4)', lineHeight:1.5 }}>
+                  Tratamiento: <strong style={{ color:'#161313', fontWeight:400 }}>{tratamiento?.nombre}</strong>
+                </p>
                 {medicos.map(m => {
-                  const sel = medico?.id===m.id
-                  const ini = (m.nombre?.[0]??'M').toUpperCase()
+                  const ini = (m.nombre?.[0] ?? 'M').toUpperCase()
                   return (
-                    <button key={m.id} onClick={() => setMedico(m)} style={{
-                      width:'100%', textAlign:'left', border:'none', cursor:'pointer',
-                      padding:'12px 16px', borderRadius:2, transition:'all 0.14s',
-                      display:'flex', alignItems:'center', gap:14,
-                      background: sel ? '#161313' : '#FFFFFF',
-                      outline: sel ? 'none' : '1px solid rgba(22,19,19,0.1)',
-                    }}>
+                    <button
+                      key={m.id}
+                      onClick={() => elegirMedico(m)}
+                      style={{
+                        width:'100%', textAlign:'left', cursor:'pointer',
+                        padding:'12px 16px', borderRadius:2,
+                        display:'flex', alignItems:'center', gap:14,
+                        background:'#FFFFFF', border:'1px solid rgba(22,19,19,0.12)',
+                        transition:'background 0.12s, border-color 0.12s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background='rgba(22,19,19,0.03)'; e.currentTarget.style.borderColor='rgba(22,19,19,0.25)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background='#FFFFFF'; e.currentTarget.style.borderColor='rgba(22,19,19,0.12)' }}
+                    >
                       {m.foto
-                        ? <img src={m.foto} alt={m.nombre} style={{ width:44, height:44, borderRadius:'50%', objectFit:'cover', flexShrink:0 }} />
-                        : <div style={{ width:44, height:44, borderRadius:'50%', flexShrink:0, background:sel?'rgba(201,211,202,0.12)':'rgba(22,19,19,0.06)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:FD, fontSize:'18px', fontWeight:400, color:sel?'rgba(201,211,202,0.6)':'rgba(22,19,19,0.3)' }}>{ini}</div>
+                        ? <img src={m.foto} alt={m.nombre} style={{ width:44, height:44, borderRadius:'50%', objectFit:'cover', flexShrink:0 }}/>
+                        : <div style={{ width:44, height:44, borderRadius:'50%', flexShrink:0, background:'rgba(22,19,19,0.06)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Fraunces',Georgia,serif", fontSize:'18px', fontWeight:400, color:'rgba(22,19,19,0.3)' }}>{ini}</div>
                       }
                       <div style={{ flex:1, minWidth:0 }}>
-                        <p style={{ margin:'0 0 3px', fontFamily:FB, fontSize:'13px', fontWeight:400, color:sel?'#C9D3CA':'#161313' }}>{m.nombre}</p>
-                        {m.especialidad && <p style={{ margin:0, fontFamily:FM, fontSize:'9px', letterSpacing:'0.1em', textTransform:'uppercase', color:sel?'rgba(201,211,202,0.42)':'rgba(22,19,19,0.28)' }}>{m.especialidad}</p>}
+                        <p style={{ margin:'0 0 3px', fontFamily:"'DM Sans',system-ui", fontSize:'13px', fontWeight:400, color:'#161313' }}>{m.nombre}</p>
+                        {m.especialidad && <p style={{ margin:0, fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.08em', textTransform:'uppercase', color:'rgba(22,19,19,0.28)' }}>{m.especialidad}</p>}
                       </div>
-                      {sel && <Check />}
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(22,19,19,0.2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6"/>
+                      </svg>
                     </button>
                   )
                 })}
@@ -381,33 +552,44 @@ export default function SolicitarCitaDrawer({ onClose, onGuardado }) {
             )
           )}
 
-          {/* ══ PASO 3: Fecha y hora ══ */}
+          {/* ── PASO 3: Fecha y hora ── */}
           {!exito && paso===3 && (
-            loading ? <Spin /> : (
-              <div style={{ paddingBottom:8 }}>
+            loadingHors ? <LoadSpinner msg="Cargando horarios…" /> : (
+              <div>
+                {/* Resumen selección */}
+                <div style={{ padding:'10px 14px', background:'rgba(22,19,19,0.03)', borderRadius:2, marginBottom:16, display:'flex', gap:16 }}>
+                  <MiniInfo label="Tratamiento" value={tratamiento?.nombre} />
+                  <MiniInfo label="Médico"      value={medico?.nombre?.replace(/^(Dr\.|Dra\.) /,'')} />
+                </div>
 
-                {/* Label */}
-                <SLabel>Selecciona un día</SLabel>
+                {/* Grid de días */}
+                <p style={{ margin:'0 0 10px', fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(22,19,19,0.3)' }}>
+                  Selecciona un día
+                </p>
 
                 {diasDisponibles.length===0 ? (
-                  <p style={{ fontFamily:FB, fontSize:'13px', fontWeight:300, color:'rgba(22,19,19,0.4)', padding:'12px 0 20px' }}>
-                    Este médico no tiene horarios configurados.
+                  <p style={{ fontFamily:"'DM Sans',system-ui", fontSize:'13px', fontWeight:300, color:'rgba(22,19,19,0.4)', padding:'12px 0 20px' }}>
+                    Este médico no tiene días configurados. Contacta con la clínica.
                   </p>
                 ) : (
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:5, marginBottom:20 }}>
-                    {diasDisponibles.map((d,i) => {
+                    {diasDisponibles.map((d, i) => {
                       const sel = diaSelec && toLocalDate(d)===toLocalDate(diaSelec)
                       const ds  = jsDayToHorario(d.getDay())
                       return (
-                        <button key={i} onClick={() => setDiaSelec(d)} style={{
-                          padding:'10px 4px', borderRadius:2, border:'none', cursor:'pointer',
-                          background:sel?'#161313':'#FFFFFF',
-                          outline:sel?'none':'1px solid rgba(22,19,19,0.1)',
-                          textAlign:'center', transition:'all 0.12s',
-                        }}>
-                          <p style={{ margin:'0 0 2px', fontFamily:FM, fontSize:'8px', letterSpacing:'0.1em', textTransform:'uppercase', color:sel?'rgba(201,211,202,0.45)':'rgba(22,19,19,0.3)' }}>{DIAS_LABEL[ds]}</p>
-                          <p style={{ margin:'0 0 1px', fontFamily:FB, fontSize:'16px', fontWeight:400, color:sel?'#F7F5F2':'#161313' }}>{d.getDate()}</p>
-                          <p style={{ margin:0, fontFamily:FM, fontSize:'8px', letterSpacing:'0.06em', color:sel?'rgba(201,211,202,0.38)':'rgba(22,19,19,0.22)' }}>{MESES_LABEL[d.getMonth()]}</p>
+                        <button
+                          key={i}
+                          onClick={() => elegirDia(d)}
+                          style={{
+                            padding:'10px 4px', borderRadius:2, border:'none', cursor:'pointer',
+                            background: sel ? '#161313' : '#FFFFFF',
+                            outline:    sel ? 'none'    : '1px solid rgba(22,19,19,0.1)',
+                            textAlign:'center', transition:'all 0.12s',
+                          }}
+                        >
+                          <p style={{ margin:'0 0 2px', fontFamily:"'DM Mono',monospace", fontSize:'8px', letterSpacing:'0.1em', textTransform:'uppercase', color:sel?'rgba(201,211,202,0.5)':'rgba(22,19,19,0.28)' }}>{DIAS_LABEL[ds]}</p>
+                          <p style={{ margin:'0 0 1px', fontFamily:"'DM Sans',system-ui", fontSize:'16px', fontWeight:400, color:sel?'#F7F5F2':'#161313' }}>{d.getDate()}</p>
+                          <p style={{ margin:0, fontFamily:"'DM Mono',monospace", fontSize:'8px', letterSpacing:'0.05em', color:sel?'rgba(201,211,202,0.38)':'rgba(22,19,19,0.22)' }}>{MESES_LABEL[d.getMonth()]}</p>
                         </button>
                       )
                     })}
@@ -417,23 +599,34 @@ export default function SolicitarCitaDrawer({ onClose, onGuardado }) {
                 {/* Slots */}
                 {diaSelec && (
                   <>
-                    <SLabel>Horas disponibles</SLabel>
-                    {slots.length===0 ? (
+                    <p style={{ margin:'0 0 10px', fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(22,19,19,0.3)' }}>
+                      Horas disponibles
+                    </p>
+
+                    {loadingSlots ? <LoadSpinner msg="Calculando disponibilidad…" /> :
+                     slots.length===0 ? (
                       <div style={{ padding:'18px', border:'1px solid rgba(22,19,19,0.08)', borderRadius:2, textAlign:'center', marginBottom:16 }}>
-                        <p style={{ margin:0, fontFamily:FB, fontSize:'13px', fontWeight:300, color:'rgba(22,19,19,0.35)' }}>Sin disponibilidad este día</p>
+                        <p style={{ margin:0, fontFamily:"'DM Sans',system-ui", fontSize:'13px', fontWeight:300, color:'rgba(22,19,19,0.35)' }}>
+                          Sin disponibilidad este día
+                        </p>
                       </div>
                     ) : (
                       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:5, marginBottom:16 }}>
                         {slots.map(s => {
                           const sel = slotSelec===s
                           return (
-                            <button key={s} onClick={() => setSlotSelec(s)} style={{
-                              padding:'10px 4px', borderRadius:2, border:'none', cursor:'pointer',
-                              background:sel?'#161313':'#FFFFFF',
-                              outline:sel?'none':'1px solid rgba(22,19,19,0.1)',
-                              fontFamily:FB, fontSize:'13px', fontWeight:400,
-                              color:sel?'#F7F5F2':'#161313', transition:'all 0.12s',
-                            }}>
+                            <button
+                              key={s}
+                              onClick={() => setSlotSelec(s)}
+                              style={{
+                                padding:'10px 4px', borderRadius:2, border:'none', cursor:'pointer',
+                                background: sel ? '#161313' : '#FFFFFF',
+                                outline:    sel ? 'none'    : '1px solid rgba(22,19,19,0.1)',
+                                fontFamily:"'DM Sans',system-ui", fontSize:'13px', fontWeight:400,
+                                color: sel ? '#F7F5F2' : '#161313',
+                                transition:'all 0.1s',
+                              }}
+                            >
                               {s}
                             </button>
                           )
@@ -446,10 +639,20 @@ export default function SolicitarCitaDrawer({ onClose, onGuardado }) {
                 {/* Notas */}
                 {slotSelec && (
                   <div style={{ marginBottom:8 }}>
-                    <SLabel>Notas <span style={{ textTransform:'none', letterSpacing:0, opacity:0.5 }}>(opcional)</span></SLabel>
-                    <textarea value={notas} onChange={e=>setNotas(e.target.value)} rows={2}
+                    <p style={{ margin:'0 0 8px', fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.14em', textTransform:'uppercase', color:'rgba(22,19,19,0.3)' }}>
+                      Notas <span style={{ textTransform:'none', letterSpacing:0, opacity:0.5 }}>(opcional)</span>
+                    </p>
+                    <textarea
+                      value={notas}
+                      onChange={e => setNotas(e.target.value)}
+                      rows={2}
                       placeholder="Alergias, preferencias, dudas…"
-                      style={{ width:'100%', boxSizing:'border-box', fontFamily:FB, fontSize:'13px', fontWeight:300, color:'#161313', border:'1px solid rgba(22,19,19,0.1)', borderRadius:2, padding:'10px 12px', background:'#FFFFFF', resize:'none', outline:'none' }}
+                      style={{
+                        width:'100%', boxSizing:'border-box',
+                        fontFamily:"'DM Sans',system-ui", fontSize:'13px', fontWeight:300, color:'#161313',
+                        border:'1px solid rgba(22,19,19,0.1)', borderRadius:2,
+                        padding:'10px 12px', background:'#FFFFFF', resize:'none', outline:'none',
+                      }}
                     />
                   </div>
                 )}
@@ -460,96 +663,90 @@ export default function SolicitarCitaDrawer({ onClose, onGuardado }) {
 
         {/* Error */}
         {error && (
-          <div style={{ padding:'10px 20px', background:'rgba(180,60,40,0.06)', borderTop:'1px solid rgba(180,60,40,0.12)' }}>
-            <p style={{ margin:0, fontFamily:FB, fontSize:'12px', fontWeight:300, color:'#A03020' }}>{error}</p>
+          <div style={{ padding:'10px 20px', background:'rgba(180,60,40,0.06)', borderTop:'1px solid rgba(180,60,40,0.1)' }}>
+            <p style={{ margin:0, fontFamily:"'DM Sans',system-ui", fontSize:'12px', fontWeight:300, color:'#A03020' }}>{error}</p>
           </div>
         )}
 
         {/* Footer */}
         {!exito && (
           <div style={{ padding:'12px 20px env(safe-area-inset-bottom,16px)', borderTop:'1px solid rgba(22,19,19,0.06)', display:'flex', gap:8, flexShrink:0, background:'#FFFFFF' }}>
-            {paso>1 && (
-              <button onClick={() => { setPaso(p=>p-1); setError(null) }} style={{
-                flex:1, padding:'13px', borderRadius:2, border:'1px solid rgba(22,19,19,0.12)',
-                background:'transparent', fontFamily:FB, fontSize:'11px', fontWeight:400,
-                letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(22,19,19,0.45)', cursor:'pointer',
-              }}>
-                Atrás
+
+            {/* Atrás — visible siempre en paso 2 y 3 */}
+            {paso > 1 && (
+              <button
+                onClick={() => { setPaso(p => p-1); setError(null) }}
+                style={{
+                  flex:1, padding:'13px', borderRadius:2,
+                  border:'1px solid rgba(22,19,19,0.12)', background:'transparent',
+                  fontFamily:"'DM Sans',system-ui", fontSize:'11px', fontWeight:400,
+                  letterSpacing:'0.1em', textTransform:'uppercase',
+                  color:'rgba(22,19,19,0.45)', cursor:'pointer',
+                }}
+              >
+                ← Atrás
               </button>
             )}
-            {paso<3 ? (
-              <button
-                onClick={() => { setError(null); setPaso(p=>p+1) }}
-                disabled={(paso===1&&!puedeAvanzar1)||(paso===2&&!puedeAvanzar2)}
-                style={{
-                  flex:2, padding:'13px', borderRadius:2, border:'none', cursor:'pointer',
-                  fontFamily:FB, fontSize:'11px', fontWeight:400,
-                  letterSpacing:'0.1em', textTransform:'uppercase',
-                  background:'#161313', color:'#C9D3CA',
-                  opacity:((paso===1&&!puedeAvanzar1)||(paso===2&&!puedeAvanzar2))?0.32:1,
-                  transition:'opacity 0.15s',
-                }}
-              >
-                Continuar
-              </button>
-            ) : (
+
+            {/* Confirmar — solo en paso 3, cuando hay slot seleccionado */}
+            {paso===3 && (
               <button
                 onClick={handleConfirmar}
-                disabled={!puedeConfirmar||enviando}
+                disabled={!slotSelec || enviando}
                 style={{
-                  flex:2, padding:'13px', borderRadius:2, border:'none', cursor:'pointer',
-                  fontFamily:FB, fontSize:'11px', fontWeight:400,
+                  flex:2, padding:'13px', borderRadius:2, border:'none',
+                  fontFamily:"'DM Sans',system-ui", fontSize:'11px', fontWeight:400,
                   letterSpacing:'0.1em', textTransform:'uppercase',
-                  background:'#161313', color:'#C9D3CA',
-                  opacity:(!puedeConfirmar||enviando)?0.32:1,
+                  background: slotSelec && !enviando ? '#161313' : 'rgba(22,19,19,0.25)',
+                  color: '#C9D3CA',
+                  cursor: slotSelec && !enviando ? 'pointer' : 'not-allowed',
                   display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-                  transition:'opacity 0.15s',
+                  transition:'background 0.15s',
                 }}
               >
-                {enviando && <span style={{ width:12,height:12,borderRadius:'50%',border:'1.5px solid currentColor',borderTopColor:'transparent',animation:'vlSpin 0.7s linear infinite',display:'inline-block' }} />}
+                {enviando && (
+                  <span style={{ width:12, height:12, borderRadius:'50%', border:'1.5px solid currentColor', borderTopColor:'transparent', animation:'vlSpin 0.7s linear infinite', display:'inline-block' }}/>
+                )}
                 {enviando ? 'Confirmando…' : 'Confirmar cita'}
               </button>
+            )}
+
+            {/* En pasos 1 y 2, indicar al usuario qué hacer */}
+            {paso < 3 && (
+              <div style={{ flex:2, padding:'13px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <p style={{ margin:0, fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(22,19,19,0.25)' }}>
+                  Toca una opción para continuar
+                </p>
+              </div>
             )}
           </div>
         )}
       </div>
 
       <style>{`
-        @keyframes vlFadeIn  { from{opacity:0}       to{opacity:1} }
-        @keyframes vlSlideUp { from{transform:translateX(-50%) translateY(100%)} to{transform:translateX(-50%) translateY(0)} }
-        @keyframes vlSpin    { to{transform:rotate(360deg)} }
+        @keyframes vlFade { from{opacity:0} to{opacity:1} }
+        @keyframes vlUp   { from{transform:translateX(-50%) translateY(100%)} to{transform:translateX(-50%) translateY(0)} }
+        @keyframes vlSpin { to{transform:rotate(360deg)} }
       `}</style>
     </>
   )
 }
 
 // ── Micro-componentes ────────────────────────────────────────────────────
-function Spin() {
+function LoadSpinner({ msg = 'Cargando…' }) {
   return (
-    <div style={{ display:'flex', justifyContent:'center', padding:'32px 0' }}>
-      <div style={{ width:20,height:20,borderRadius:'50%',border:'2px solid rgba(22,19,19,0.08)',borderTopColor:'rgba(22,19,19,0.32)',animation:'vlSpin 0.7s linear infinite' }} />
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, padding:'28px 0' }}>
+      <div style={{ width:20, height:20, borderRadius:'50%', border:'2px solid rgba(22,19,19,0.08)', borderTopColor:'rgba(22,19,19,0.3)', animation:'vlSpin 0.7s linear infinite' }}/>
+      <p style={{ margin:0, fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.1em', textTransform:'uppercase', color:'rgba(22,19,19,0.28)' }}>{msg}</p>
     </div>
   )
 }
-function Check() {
+
+function MiniInfo({ label, value }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9D3CA" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 6L9 17l-5-5"/>
-    </svg>
-  )
-}
-function SLabel({ children }) {
-  return (
-    <p style={{ margin:'0 0 10px', fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.15em', textTransform:'uppercase', color:'rgba(22,19,19,0.3)' }}>
-      {children}
-    </p>
-  )
-}
-function SRow({ label, value, last }) {
-  return (
-    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', padding:'8px 0', borderBottom:last?'none':'1px solid rgba(22,19,19,0.06)' }}>
-      <span style={{ fontFamily:"'DM Mono',monospace", fontSize:'9px', letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(22,19,19,0.3)' }}>{label}</span>
-      <span style={{ fontFamily:"'DM Sans',system-ui", fontSize:'12px', fontWeight:400, color:'#161313', textAlign:'right', maxWidth:'60%' }}>{value??'—'}</span>
+    <div style={{ flex:1, minWidth:0 }}>
+      <p style={{ margin:'0 0 2px', fontFamily:"'DM Mono',monospace", fontSize:'8px', letterSpacing:'0.12em', textTransform:'uppercase', color:'rgba(22,19,19,0.3)' }}>{label}</p>
+      <p style={{ margin:0, fontFamily:"'DM Sans',system-ui", fontSize:'11px', fontWeight:400, color:'#161313', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{value ?? '—'}</p>
     </div>
   )
 }
