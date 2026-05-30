@@ -262,7 +262,7 @@ export default function App() {
 
           {/* ── Login / Demo ── */}
           <Route path="/login"             element={<PatientShell><LoginPage /></PatientShell>} />
-          <Route path="/demo"              element={<PatientShell><DemoPage /></PatientShell>} />
+          <Route path="/demo"              element={<Navigate to="/login" replace />} />
           <Route path="/reset-password"    element={<PatientShell><ResetPasswordPage /></PatientShell>} />
           <Route path="/nueva-contrasena"  element={<PatientShell><NuevaContrasenaPage /></PatientShell>} />
           <Route path="/registro-clinica"  element={<PatientShell><RegistroClinicaPage /></PatientShell>} />

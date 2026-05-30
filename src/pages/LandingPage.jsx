@@ -257,7 +257,7 @@ export default function LandingPage() {
 
           <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
             <Link to="/registro-clinica" style={btnPrimary}>Empezar gratis →</Link>
-            <Link to="/demo" style={btnOutline}>Ver demo</Link>
+            <Link to="/login" style={btnOutline}>Ver demo</Link>
           </div>
 
           <div style={{ marginTop: '72px', paddingTop: '32px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: '56px', flexWrap: 'wrap' }}>
@@ -454,7 +454,7 @@ export default function LandingPage() {
           </p>
           <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/registro-clinica" style={btnPrimary}>Empezar gratis →</Link>
-            <Link to="/demo" style={btnOutline}>Ver demo</Link>
+            <Link to="/login" style={btnOutline}>Ver demo</Link>
           </div>
         </div>
       </section>

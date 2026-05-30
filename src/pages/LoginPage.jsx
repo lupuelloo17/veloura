@@ -27,25 +27,37 @@ function useInstallBanner() {
 
 const DEMO_ACCOUNTS = [
   {
-    email: 'admin@lumiere.com',
-    label: 'Administrador',
-    desc: 'Panel completo · gestión de clínica',
-    color: '#161313',
-    border: '1px solid rgba(255,255,255,0.15)',
+    email:   'admin@lumiere.com',
+    label:   'Administrador',
+    desc:    'Panel completo · gestión de clínica',
+    color:   '#161313',
+    border:  '1px solid rgba(255,255,255,0.15)',
+    dest:    'dashboard',
   },
   {
-    email: 'dra.garcia@lumiere.com',
-    label: 'Dra. García',
-    desc: 'Medicina Estética · vista de médico',
-    color: '#929C92',
-    border: 'none',
+    email:   'dra.garcia@lumiere.com',
+    label:   'Dra. García',
+    desc:    'Medicina Estética · dashboard de médico',
+    color:   '#929C92',
+    border:  'none',
+    dest:    'dashboard',
   },
   {
-    email: 'paciente@lumiere.com',
-    label: 'Sofía Restrepo',
-    desc: 'Paciente · su perfil, citas, análisis',
-    color: '#A39384',
-    border: 'none',
+    email:   'paciente@lumiere.com',
+    label:   'Sofía Restrepo',
+    desc:    'Paciente · perfil, citas y evolución',
+    color:   '#A39384',
+    border:  'none',
+    dest:    'mi-perfil',
+  },
+  {
+    email:   'dra.garcia@lumiere.com',
+    label:   'Análisis Dermoscópico IA',
+    desc:    'Diagnóstico IA · módulo de dermoscopía',
+    color:   '#2D3B2D',
+    border:  '1px solid rgba(146,156,146,0.3)',
+    dest:    'analisis',    // navega directamente a /analisis
+    icon:    '🔬',
   },
 ]
 
@@ -54,16 +66,27 @@ export default function LoginPage() {
   const { login } = useAuth()
   const { show: showBanner, dismiss: dismissBanner } = useInstallBanner()
 
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [showPass, setShowPass] = useState(false)
-  const [loading,  setLoading]  = useState(false)
-  const [error,    setError]    = useState(null)
+  const [email,       setEmail]       = useState('')
+  const [password,    setPassword]    = useState('')
+  const [showPass,    setShowPass]    = useState(false)
+  const [loading,     setLoading]     = useState(false)
+  const [demoLoading, setDemoLoading] = useState(null) // email de la tarjeta en curso
+  const [error,       setError]       = useState(null)
 
-  function fillDemo(acc) {
-    setEmail(acc.email)
-    setPassword('demo1234')
+  /** Login automático desde una tarjeta demo — sin pasos intermedios */
+  async function autoLogin(acc) {
+    if (demoLoading) return          // evita doble clic
+    setDemoLoading(acc.email + acc.dest)
     setError(null)
+    try {
+      const user = await login(acc.email, 'demo1234')
+      if (!user.clinica_slug) throw new Error('No se encontró la clínica de demo.')
+      navigate(`/clinica/${user.clinica_slug}/${acc.dest}`, { replace: true })
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setDemoLoading(null)
+    }
   }
 
   async function handleSubmit(e) {
@@ -303,76 +326,101 @@ export default function LoginPage() {
             fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase',
             color: 'rgba(247,245,242,0.2)', fontWeight: 300, whiteSpace: 'nowrap',
           }}>
-            Demo
+            Acceso rápido · demo
           </span>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.06)' }} />
         </div>
 
-        {/* Botones demo */}
-        {DEMO_ACCOUNTS.map(acc => (
-          <button
-            key={acc.email}
-            onClick={() => fillDemo(acc)}
-            style={{
-              width: '100%', marginBottom: '8px',
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: '2px', padding: '12px 14px',
-              display: 'flex', alignItems: 'center', gap: '12px',
-              cursor: 'pointer', textAlign: 'left',
-              transition: 'all 0.18s',
-              fontFamily: "'DM Sans', system-ui",
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background    = 'rgba(255,255,255,0.05)'
-              e.currentTarget.style.borderColor   = 'rgba(255,255,255,0.1)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background    = 'rgba(255,255,255,0.03)'
-              e.currentTarget.style.borderColor   = 'rgba(255,255,255,0.06)'
-            }}
-          >
-            {/* Avatar */}
-            <div style={{
-              width: '32px', height: '32px', borderRadius: '50%',
-              background: acc.color,
-              border: acc.border,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '12px', fontWeight: 400, color: '#F7F5F2',
-              flexShrink: 0,
-            }}>
-              {acc.label[0]}
-            </div>
+        {/* Tarjetas de acceso directo — login automático al hacer clic */}
+        {DEMO_ACCOUNTS.map(acc => {
+          const cardKey     = acc.email + acc.dest
+          const isThisCard  = demoLoading === cardKey
+          const anyLoading  = !!demoLoading
 
-            {/* Info */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{
-                margin: '0 0 2px',
-                fontSize: '13px', fontWeight: 400,
-                color: 'rgba(247,245,242,0.75)',
+          return (
+            <button
+              key={cardKey}
+              onClick={() => autoLogin(acc)}
+              disabled={anyLoading}
+              style={{
+                width: '100%', marginBottom: '8px',
+                background: isThisCard ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)',
+                border: isThisCard
+                  ? '1px solid rgba(255,255,255,0.18)'
+                  : '1px solid rgba(255,255,255,0.06)',
+                borderRadius: '2px', padding: '12px 14px',
+                display: 'flex', alignItems: 'center', gap: '12px',
+                cursor: anyLoading ? 'not-allowed' : 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.18s',
                 fontFamily: "'DM Sans', system-ui",
+                opacity: anyLoading && !isThisCard ? 0.4 : 1,
+              }}
+              onMouseEnter={e => {
+                if (!anyLoading) {
+                  e.currentTarget.style.background  = 'rgba(255,255,255,0.06)'
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'
+                }
+              }}
+              onMouseLeave={e => {
+                if (!anyLoading) {
+                  e.currentTarget.style.background  = 'rgba(255,255,255,0.03)'
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'
+                }
+              }}
+            >
+              {/* Avatar / icono */}
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '50%',
+                background: acc.color,
+                border: acc.border,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: acc.icon ? '16px' : '12px',
+                fontWeight: 400, color: '#F7F5F2',
+                flexShrink: 0,
               }}>
-                {acc.label}
-              </p>
-              <p style={{
-                margin: 0,
-                fontSize: '11px', fontWeight: 300,
-                color: 'rgba(247,245,242,0.3)', letterSpacing: '0.02em',
-              }}>
-                {acc.desc}
-              </p>
-            </div>
+                {isThisCard ? (
+                  <span style={{
+                    width: '12px', height: '12px', borderRadius: '50%',
+                    border: '1.5px solid rgba(247,245,242,0.4)',
+                    borderTopColor: '#F7F5F2',
+                    animation: 'spin 0.7s linear infinite',
+                    display: 'inline-block',
+                  }} />
+                ) : (
+                  acc.icon ?? acc.label[0]
+                )}
+              </div>
 
-            {/* Badge */}
-            <span style={{
-              marginLeft: 'auto', flexShrink: 0,
-              fontSize: '10px', fontFamily: "'DM Mono', monospace",
-              color: 'rgba(247,245,242,0.2)',
-            }}>
-              demo1234
-            </span>
-          </button>
-        ))}
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  margin: '0 0 2px',
+                  fontSize: '13px', fontWeight: 400,
+                  color: isThisCard ? '#F7F5F2' : 'rgba(247,245,242,0.75)',
+                  fontFamily: "'DM Sans', system-ui",
+                }}>
+                  {isThisCard ? 'Accediendo…' : acc.label}
+                </p>
+                <p style={{
+                  margin: 0,
+                  fontSize: '11px', fontWeight: 300,
+                  color: 'rgba(247,245,242,0.3)', letterSpacing: '0.02em',
+                }}>
+                  {acc.desc}
+                </p>
+              </div>
+
+              {/* Flecha — desaparece mientras carga */}
+              {!isThisCard && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="rgba(247,245,242,0.2)" strokeWidth="2" strokeLinecap="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       <style>{`
